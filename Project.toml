@@ -1,0 +1,7 @@
+name = "IndexSpaces"
+uuid = "3ceaaf38-e7b4-4193-a23a-303dd231a83a"
+authors = ["Erik Schnetter <schnetter@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+CUDASIMDTypes = "ba1ee33b-8807-41fd-9812-6d5f2ce04139"
