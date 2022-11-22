@@ -3,14 +3,7 @@ using Primes
 using Random
 using Test
 
-struct Value_Int4Tag <: IndexTag end
-struct Value_Int8Tag <: IndexTag end
-struct CplxTag <: IndexTag end
-struct BeamTag <: IndexTag end
-struct DishTag <: IndexTag end
-struct FreqTag <: IndexTag end
-struct PolrTag <: IndexTag end
-struct TimeTag <: IndexTag end
+@enum CHORDTag Value_Int4Tag Value_Int8Tag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag
 
 const Value_Int4 = Index{Physics,Value_Int4Tag}
 const Value_Int8 = Index{Physics,Value_Int8Tag}

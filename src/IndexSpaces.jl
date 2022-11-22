@@ -5,43 +5,37 @@ using CUDASIMDTypes
 ################################################################################
 
 export IndexType, Physics, Machine
-abstract type IndexType end
-struct Physics <: IndexType end
-struct Machine <: IndexType end
+@enum IndexType Physics Machine
 
-export IndexTag, SIMDTag, ThreadTag, WarpTag, BlockTag, SharedTag, MemoryTag, LoopTag, RegisterTag
-abstract type IndexTag end
-struct SIMDTag <: IndexTag end
-struct ThreadTag <: IndexTag end
-struct WarpTag <: IndexTag end
-struct BlockTag <: IndexTag end
-struct SharedTag <: IndexTag end
-struct MemoryTag <: IndexTag end
-struct LoopTag <: IndexTag end
-struct RegisterTag <: IndexTag end
+const IndexTag = Any
+
+export MachineIndexTag, SIMDTag, ThreadTag, WarpTag, BlockTag, SharedTag, MemoryTag, LoopTag, RegisterTag
+@enum MachineIndexTag SIMDTag ThreadTag WarpTag BlockTag SharedTag MemoryTag LoopTag RegisterTag
 
 export Index
-struct Index{Typ<:IndexType,Tag<:IndexTag}
+struct Index{Typ,Tag}
     name::Symbol
     offset::Int
     length::Int
-    function Index{Typ,Tag}(name::Symbol, offset::Integer, length::Integer) where {Typ<:IndexType,Tag<:IndexTag}
+    function Index{Typ,Tag}(name::Symbol, offset::Integer, length::Integer) where {Typ,Tag}
+        @assert Typ isa IndexType
+        @assert Tag isa IndexTag
         @assert offset ≥ 1
         @assert length ≥ 2
         return new{Typ,Tag}(name, offset, length)
     end
 end
 
-make_tuple(i::Index{Typ,Tag}) where {Typ<:IndexType,Tag<:IndexTag} = (Symbol(Typ), Symbol(Tag), i.name, i.offset, i.length)
+make_tuple(i::Index{Typ,Tag}) where {Typ,Tag} = (Typ, Tag, i.name, i.offset, i.length)
 
-function Base.show(io::IO, index::Index{Typ,Tag}) where {Typ<:IndexType,Tag<:IndexTag}
+function Base.show(io::IO, index::Index{Typ,Tag}) where {Typ,Tag}
     print(io, "$Typ.$(index.name):$(index.offset)/$(index.length)")
     return nothing
 end
 
 export indextype, indextag
-indextype(::Type{<:Index{Typ}}) where {Typ<:IndexType} = Typ
-indextag(::Type{<:Index{<:Any,Tag}}) where {Tag<:IndexTag} = Tag
+indextype(::Type{<:Index{Typ}}) where {Typ} = Typ
+indextag(::Type{<:Index{<:Any,Tag}}) where {Tag} = Tag
 indextype(index::Index) = indextype(typeof(index))
 indextag(index::Index) = indextag(typeof(index))
 
@@ -91,7 +85,7 @@ function Base.in(x::Range, y::Range)
     return ybeg ≤ xbeg && xend ≤ yend
 end
 Base.in(x::Index, y::Index) = false
-Base.in(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ<:IndexType,Tag<:IndexTag} = x.name == y.name && Range(x) ∈ Range(y)
+Base.in(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag} = x.name == y.name && Range(x) ∈ Range(y)
 
 function Base.isdisjoint(x::Range, y::Range)
     xbeg = x.offset
@@ -101,7 +95,7 @@ function Base.isdisjoint(x::Range, y::Range)
     return yend ≤ xbeg || xend ≤ ybeg
 end
 Base.isdisjoint(x::Index, y::Index) = true
-function Base.isdisjoint(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ<:IndexType,Tag<:IndexTag}
+function Base.isdisjoint(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag}
     return x.name ≠ y.name || isdisjoint(Range(x), Range(y))
 end
 
@@ -114,9 +108,11 @@ function pairwise_disjoint(indices::AbstractVector{<:Index})
 end
 
 export Layout
-struct Layout{Typ1<:IndexType,Typ2<:IndexType}
+struct Layout{Typ1,Typ2}
     dict::Dict{Index{Typ1},Index{Typ2}}
-    function Layout{Typ1,Typ2}(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1<:IndexType,Typ2<:IndexType}
+    function Layout{Typ1,Typ2}(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2}
+        @assert Typ1 isa IndexType
+        @assert Typ2 isa IndexType
         pairwise_disjoint(collect(keys(dict))) || throw(ArgumentError("Layout: $Typ1 indices (keys) are overlapping"))
         pairwise_disjoint(collect(values(dict))) || throw(ArgumentError("Layout: $Typ2 indices (values) are overlapping"))
         all(k.length == v.length for (k, v) in dict) || throw(
@@ -127,11 +123,11 @@ struct Layout{Typ1<:IndexType,Typ2<:IndexType}
         )
         return new{Typ1,Typ2}(dict)
     end
-    Layout(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1<:IndexType,Typ2<:IndexType} = Layout{Typ1,Typ2}(dict)
+    Layout(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2} = Layout{Typ1,Typ2}(dict)
 end
 
-function Base.show(io::IO, layout::Layout{K,V}) where {K<:IndexType,V<:IndexType}
-    println(io, "Layout{$K,$V}:")
+function Base.show(io::IO, layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
+    println(io, "Layout{$Typ1,$Typ2}:")
     for k in sort!(collect(keys(layout.dict)))
         v = layout.dict[k]
         println(io, "    $k => $v")
@@ -169,15 +165,15 @@ function normalize!(layout::Layout)
     return layout
 end
 
-function Base.:(==)(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.:(==)(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return layout1.dict == layout2.dict
 end
 
-function Base.inv(layout::Layout{Typ1,Typ2}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.inv(layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return Layout(Dict{Index{Typ2},Index{Typ1}}(v => k for (k, v) in layout.dict))
 end
 
-function Base.in(key::Index{Typ1}, layout::Layout{Typ1,Typ2}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.in(key::Index{Typ1}, layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     key ∈ keys(layout.dict) && return true
     for (k, v) in layout.dict
         key ∈ k && return true
@@ -185,7 +181,7 @@ function Base.in(key::Index{Typ1}, layout::Layout{Typ1,Typ2}) where {Typ1<:Index
     return false
 end
 
-function Base.getindex(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.getindex(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,Typ2}
     val = get(layout.dict, key, nothing)
     val ≢ nothing && return val
 
@@ -215,7 +211,7 @@ function Base.getindex(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1<
     throw(KeyError("Index $key not found"))
 end
 
-function Base.setindex!(layout::Layout{Typ1,Typ2}, value::Index{Typ2}, key::Index{Typ1}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.setindex!(layout::Layout{Typ1,Typ2}, value::Index{Typ2}, key::Index{Typ1}) where {Typ1,Typ2}
     dict = layout.dict
 
     @assert all(isdisjoint(key, k) for k in keys(dict))
@@ -227,7 +223,7 @@ function Base.setindex!(layout::Layout{Typ1,Typ2}, value::Index{Typ2}, key::Inde
     return normalize!(layout)
 end
 
-function Base.delete!(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1<:IndexType,Typ2<:IndexType}
+function Base.delete!(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,Typ2}
     dict = layout.dict
 
     keybeg = key.offset
@@ -296,23 +292,63 @@ end
 
 const Code = Union{Expr,Number,Symbol}
 
+evaluate_partially(any::Any) = any
+function evaluate_partially(expr::Expr)
+    expr = Expr(expr.head, evaluate_partially.(expr.args)...)
+    if expr.head ≡ :call && length(expr.args) == 3
+        # Evaluate an expression
+        if expr.args[2] isa Number && expr.args[3] isa Number
+            expr.args[1] ≡ :+ && return expr.args[2] + expr.args[3]
+            expr.args[1] ≡ :- && return expr.args[2] - expr.args[3]
+            expr.args[1] ≡ :* && return expr.args[2] * expr.args[3]
+            expr.args[1] ≡ :÷ && return expr.args[2] ÷ expr.args[3]
+            expr.args[1] ≡ :% && return expr.args[2] % expr.args[3]
+            expr.args[1] ≡ :& && return expr.args[2] & expr.args[3]
+            expr.args[1] ≡ :| && return expr.args[2] | expr.args[3]
+            expr.args[1] ≡ :⊻ && return expr.args[2] ⊻ expr.args[3]
+        end
+        # Remove neutral elements
+        expr.args[1] ≡ :+ && expr.args[2] == 0 && return expr.args[3]
+        expr.args[1] ≡ :+ && expr.args[3] == 0 && return expr.args[2]
+        expr.args[1] ≡ :- && expr.args[3] == 0 && return expr.args[2]
+        expr.args[1] ≡ :* && expr.args[2] == 1 && return expr.args[3]
+        expr.args[1] ≡ :* && expr.args[3] == 1 && return expr.args[2]
+        expr.args[1] ≡ :÷ && expr.args[3] == 1 && return expr.args[2]
+        expr.args[1] ≡ :| && expr.args[2] == 0 && return expr.args[3]
+        expr.args[1] ≡ :| && expr.args[3] == 0 && return expr.args[2]
+        expr.args[1] ≡ :⊻ && expr.args[2] == 0 && return expr.args[3]
+        expr.args[1] ≡ :⊻ && expr.args[3] == 0 && return expr.args[2]
+        # Handle cancellative elements
+        expr.args[1] ≡ :* && expr.args[2] == 0 && return expr.args[2]
+        expr.args[1] ≡ :* && expr.args[3] == 0 && return expr.args[3]
+        expr.args[1] ≡ :& && expr.args[2] == 0 && return expr.args[2]
+        expr.args[1] ≡ :& && expr.args[3] == 0 && return expr.args[3]
+    end
+    return expr
+end
+
 struct State
     dict::Dict{Symbol,Int32}
 end
+State() = State(Dict{Symbol,Int32}())
+Base.copy(state::State) = State(copy(state.dict))
+
 function register_name(name::Symbol, state::State)
-    return Symbol(name, join([string(state.dict[r]) for r in sort!(collect(keys(state.dict)))], "_"))
+    return Symbol(name, "_", join([string(r) * string(state.dict[r]) for r in sort!(collect(keys(state.dict)))], "_"))
 end
 
 function register_loop(f, layout::Layout{Physics,Machine})
-    registers = sort!(filter!(mach -> indextag(mach) isa RegisterTag, collect(values(layout.dict))))
+    registers = sort!(filter!(mach -> mach isa Register, collect(values(layout.dict))))
     function go(state::State, n::Int)
         if n == 0
             f(state)
         else
             reg = registers[n]
+            newstate = copy(state)
             for r in 0:(reg.length - 1)
-                state.dict[reg.name] = reg.offset * r
-                go(state, n - 1)
+                val = get(state.dict, reg.name, Int32(0))
+                newstate.dict[reg.name] = val + reg.offset * r
+                go(newstate, n - 1)
             end
         end
     end
@@ -330,7 +366,7 @@ indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
 function physics_values(state::State, reg_layout::Layout{Physics,Machine})
-    vals = Dict{Index,Code}()
+    vals = Dict{IndexTag,Code}()
     for (phys, mach) in reg_layout.dict
         mach isa SIMD && continue
         machtag = indextag(mach)
@@ -348,10 +384,10 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physval = :($oldphysval + $physval)
         vals[phystag] = physval
     end
-    return vals
+    return Dict{IndexTag,Code}(k => evaluate_partially(v) for (k, v) in vals)
 end
 
-function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Physics,Machine}, vals::Dict{Index,Code})
+function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Physics,Machine}, vals::Dict{IndexTag,Code})
     # Ensure that SIMDTag layouts match
     for (phys, mach) in reg_layout.dict
         if mach isa SIMD
@@ -383,7 +419,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         machval = :($val * $machoff)
         addr = :($addr + $machval)
     end
-    return addr::Code
+    return evaluate_partially(addr)::Code
 end
 
 ################################################################################
@@ -455,25 +491,28 @@ get_lo16(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2}} = T(prm
 get_hi16(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2}} = T(prmt(r0.val, r1.val, 0x7632))
 
 # TODO: Accept a SubIndex to describe Register and SIMD
-function Base.permute!(
-    emitter::Emitter, res::Symbol, var::Symbol, ::Type{RegisterTag}, register_bit::Int, ::Type{SIMDTag}, simd_bit::Int
-)
+function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Register, simd::SIMD)
     var_layout = emitter.environment[var]
-    @show var_layout
 
     @assert res ∉ emitter.environment
 
-    register_index = SubIndex(RegisterTag(), 2^register_bit, 2)
-    simd_index = SubIndex(SIMDTag(), 2^register_bit, 2)
-    register_phys_index = inv(var_layout)[register_index]
-    simd_phys_index = inv(var_layout)[simd_index]
+    @assert register.length == 2
+    register_bit = round(Int, log2(register.offset))
+    @assert register.offset == 1 << register_bit
+    register_phys = inv(var_layout)[register]
 
-    res_layout = copy(var_layout)
-    delete!(res_layout, register_phys_index)
-    delete!(res_layout, simd_phys_index)
-    res_layout[register_phys_index] = simd_index
-    res_layout[simd_phys_index] = register_index
-    @show res_layout
+    @assert simd.length == 2
+    simd_bit = round(Int, log2(simd.offset))
+    @assert simd.offset == 1 << simd_bit
+    simd_phys = inv(var_layout)[simd]
+
+    tmp_layout = copy(var_layout)
+    delete!(tmp_layout, register_phys)
+    delete!(tmp_layout, simd_phys)
+
+    res_layout = copy(tmp_layout)
+    res_layout[register_phys] = simd
+    res_layout[simd_phys] = register
 
     emitter.environment[res] = res_layout
 
@@ -490,19 +529,17 @@ function Base.permute!(
         @assert false
     end
 
-    register_loop(res_layout) do state
+    register_loop(tmp_layout) do state
         mask = 1 << register_bit
-        bit = state.register & (1 << register_bit) ≠ 0
-        state0 = State(state.register & ~mask)
-        state1 = State(state.register | mask)
-        reg_name = register_name(res, state)
+        state0 = state
+        state1 = copy(state)
+        state1.dict[register.name] = get(state1.dict, register.name, Int32(0)) + Int32(1 << register_bit)
+        res0_name = register_name(res, state0)
+        res1_name = register_name(res, state1)
         var0_name = register_name(var, state0)
         var1_name = register_name(var, state1)
-        if !bit
-            push!(emitter.statements, :($reg_name = $get_lo($var0_name, $var1_name)))
-        else
-            push!(emitter.statements, :($reg_name = $get_hi($var0_name, $var1_name)))
-        end
+        push!(emitter.statements, :($res0_name = $get_lo($var0_name, $var1_name)))
+        push!(emitter.statements, :($res1_name = $get_hi($var0_name, $var1_name)))
     end
 
     return nothing
