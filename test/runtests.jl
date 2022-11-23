@@ -3,10 +3,8 @@ using Primes
 using Random
 using Test
 
-@enum CHORDTag Value_Int4Tag Value_Int8Tag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag
+@enum CHORDTag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag
 
-const Value_Int4 = Index{Physics,Value_Int4Tag}
-const Value_Int8 = Index{Physics,Value_Int8Tag}
 const Cplx = Index{Physics,CplxTag}
 const Beam = Index{Physics,BeamTag}
 const Dish = Index{Physics,DishTag}
@@ -30,15 +28,15 @@ Random.seed!(0)
     mach_indices = Index{Machine}[simd, register, thread, warp, block, shared, memory, loopT1, loopT2]
 
     # Physics indices
-    value_int4 = Value_Int4(:Int4, 1, 4)
-    value_int8 = Value_Int8(:Int8, 1, 8)
+    int4value = IntValue(:intvalue, 1, 4)
+    int8value = IntValue(:intvalue, 1, 8)
     cplx = Cplx(:cplx, 1, 2)
     beam = Beam(:beam, 1, 96)
     dish = Dish(:dish, 1, 512)
     freq = Freq(:freq, 1, 16)
     polr = Polr(:polr, 1, 2)
     time = Time(:time, 1, 32768)
-    phys_indices = Index{Physics}[value_int4, value_int8, cplx, beam, dish, freq, polr, time]
+    phys_indices = Index{Physics}[int4value, int8value, cplx, beam, dish, freq, polr, time]
 
     for indices in [mach_indices, phys_indices]
         # Basic tests for index comparisons
@@ -92,7 +90,7 @@ Random.seed!(0)
 
     layout_E_memory = Layout(
         Dict(
-            value_int4 => SIMD(:simd, 1, 4),
+            int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish2etc => Memory(:memory, 1, 128),
@@ -111,7 +109,7 @@ Random.seed!(0)
 
     layout_E_shared = Layout(
         Dict(
-            value_int4 => SIMD(:simd, 1, 4),
+            int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish2etc => Shared(:shared, 1, 128),
@@ -132,7 +130,7 @@ Random.seed!(0)
 
     layout_E_registers = Layout(
         Dict(
-            value_int4 => SIMD(:simd, 1, 4),
+            int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish23 => Register(:register, 1, 4),
