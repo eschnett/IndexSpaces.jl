@@ -154,7 +154,7 @@ function normalize!(layout::Layout)
     for (key, val) in dict
         for (key′, val′) in dict
             key′ == key && continue
-            if indextag(key′) == indextag(key) && indextag(val′) == indextag(val)
+            if indextag(key′) == indextag(key) && key′.name == key.name && indextag(val′) == indextag(val) && val′.name == val.name
                 # Index types and tags are the same
                 if key.offset * key.length == key′.offset && val.offset * val.length == val′.offset
                     # Both index ranges can be combined
@@ -175,6 +175,12 @@ end
 
 function Base.:(==)(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return layout1.dict == layout2.dict
+end
+function Base.in(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
+    for (key, val) in layout1.dict
+        (key in keys(layout2.dict) && layout2.dict[key] == val) || return false
+    end
+    return true
 end
 
 function Base.inv(layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
@@ -294,6 +300,26 @@ function Base.delete!(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,T
     end
 
     return normalize!(layout)
+end
+
+function get_value_type(layout::Layout)
+    # We need to look for larger types first
+    for (bits, type, tag, name) in [
+        (5, Int32, IntValueTag, :intvalue),
+        (4, Int16x2, IntValueTag, :intvalue),
+        (3, Int8x4, IntValueTag, :intvalue),
+        (1, Int4x8, IntValueTag, :intvalue),
+        (5, Float32, FloatValueTag, :floatvalue),
+        (4, Float16x2, FloatValueTag, :floatvalue),
+        (4, BFloat16x2, BFloatValueTag, :bfloatvalue),
+    ]
+        value_index = Index{Physics,tag}(name, 1, 1 << bits)
+        if value_index ∈ layout
+            @assert layout[value_index] == SIMD(:simd, 1, 1 << bits)
+            return type
+        end
+    end
+    @assert false
 end
 
 ################################################################################
@@ -487,9 +513,10 @@ Base.setindex!(env::Environment, layout::Layout{Physics,Machine}, var::Symbol) =
 export Emitter
 struct Emitter
     environment::Environment
+    initializations::Vector{Code}
     statements::Vector{Code}
 end
-Emitter() = Emitter(Environment(), Code[])
+Emitter() = Emitter(Environment(), Code[], Code[])
 
 ################################################################################
 
@@ -499,12 +526,14 @@ export block!
 function block!(body!, emitter::Emitter)
     environment′ = copy(emitter.environment)
 
-    emitter′ = Emitter(environment′, Code[])
+    emitter′ = Emitter(environment′, Code[], Code[])
     body!(emitter′)
 
+    append!(emitter.initializations, emitter′.initializations)
     push!(
         emitter.statements,
         quote
+            # $(emitter′.initializations...)
             let
                 $(emitter′.statements...)
             end
@@ -521,12 +550,14 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Code[])
+    emitter′ = Emitter(environment′, Code[], Code[])
     body!(emitter′)
 
+    append!(emitter.initializations, emitter′.initializations)
     push!(
         emitter.statements,
         quote
+            # $(emitter′.initializations...)
             for $(loop.name) in ($(Int32(0))):($(Int32(loop.offset))):($(Int32(loop.offset * loop.length - 1)))
                 $(emitter′.statements...)
             end
@@ -543,9 +574,16 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},L
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Code[])
+    emitter′ = Emitter(environment′, Code[], Code[])
     body!(emitter′)
 
+    append!(emitter.initializations, emitter′.initializations)
+    # push!(
+    #     emitter.statements,
+    #     quote
+    #         $(emitter′.initializations...)
+    #     end,
+    # )
     for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
         push!(
             emitter.statements,
@@ -849,10 +887,10 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
 
     emitter.environment[res] = res_layout
 
-    inv_res_layout = inv(res_layout)
-    value = inv_res_layout[SIMD(:simd, 1, 2)]
-    value_tag = indextag(value)
-    @assert value_tag isa ValueTag
+    # inv_res_layout = inv(res_layout)
+    # value = inv_res_layout[SIMD(:simd, 1, 2)]
+    # value_tag = indextag(value)
+    # @assert value_tag isa ValueTag
 
     loop_over_registers(tmp_layout) do state
         state0 = copy(state)
@@ -869,9 +907,9 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
         elseif value_tag == IntValueTag && simd_bit == 4
             stmt = :($res_name = convert(Int16x2, ($var0_name, $var1_name)))
         elseif value_tag == FloatValueTag && simd_bit == 4
-            stmt = :($res_name = convert(NTuple{2,Float32}, ($var0_name, $var1_name)))
+            stmt = :($res_name = convert(Float16x2, ($var0_name, $var1_name)))
         elseif value_tag == BFloatValueTag && simd_bit == 4
-            stmt = :($res_name = convert(NTuple{2,BFloat32}, ($var0_name, $var1_name)))
+            stmt = :($res_name = convert(BFloat16x2, ($var0_name, $var1_name)))
         else
             @assert false
         end
@@ -881,15 +919,140 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     return nothing
 end
 
+export narrow3!
+function narrow3!(
+    emitter::Emitter,
+    res::Symbol,
+    var::Symbol,
+    register_simd1::Pair{Register,SIMD},
+    register_simd2::Pair{Register,SIMD},
+    register_simd3::Pair{Register,SIMD},
+)
+    register1, simd1 = register_simd1
+    register2, simd2 = register_simd2
+    register3, simd3 = register_simd3
+
+    var_layout = emitter.environment[var]
+
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
+
+    @assert register1.length == 2
+    @assert register2.length == 2
+    @assert register3.length == 2
+    @assert ispow2(register1.offset)
+    @assert ispow2(register2.offset)
+    @assert ispow2(register3.offset)
+    register1_bit = trailing_zeros(register1.offset)
+    register2_bit = trailing_zeros(register2.offset)
+    register3_bit = trailing_zeros(register3.offset)
+    @assert register1.offset == 1 << register1_bit
+    @assert register2.offset == 1 << register2_bit
+    @assert register3.offset == 1 << register3_bit
+    register1_phys = inv(var_layout)[register1]
+    register2_phys = inv(var_layout)[register2]
+    register3_phys = inv(var_layout)[register3]
+
+    @assert simd1.length == 2
+    @assert simd2.length == 2
+    @assert simd3.length == 2
+    @assert ispow2(simd1.offset)
+    @assert ispow2(simd2.offset)
+    @assert ispow2(simd3.offset)
+    simd1_bit = trailing_zeros(simd1.offset)
+    simd2_bit = trailing_zeros(simd2.offset)
+    simd3_bit = trailing_zeros(simd3.offset)
+    @assert simd1.offset == 1 << simd1_bit
+    @assert simd2.offset == 1 << simd2_bit
+    @assert simd3.offset == 1 << simd3_bit
+
+    tmp_layout = copy(var_layout)
+    delete!(tmp_layout, register1_phys)
+    delete!(tmp_layout, register2_phys)
+    delete!(tmp_layout, register3_phys)
+
+    res_layout = copy(tmp_layout)
+    inv_res_layout = inv(res_layout)
+    value = inv_res_layout[SIMD(:simd, 1, 2)]
+    value_tag = indextag(value)::ValueTag
+    @assert Index{Physics,value_tag}(value.name, simd1.offset, simd1.length) ∈ res_layout
+    @assert Index{Physics,value_tag}(value.name, simd2.offset, simd2.length) ∈ res_layout
+    @assert Index{Physics,value_tag}(value.name, simd3.offset, simd3.length) ∈ res_layout
+    delete!(res_layout, Index{Physics,value_tag}(value.name, simd1.offset, simd1.length))
+    delete!(res_layout, Index{Physics,value_tag}(value.name, simd2.offset, simd2.length))
+    delete!(res_layout, Index{Physics,value_tag}(value.name, simd3.offset, simd3.length))
+    res_layout[register1_phys] = simd1
+    res_layout[register2_phys] = simd2
+    res_layout[register3_phys] = simd3
+
+    emitter.environment[res] = res_layout
+
+    @assert value_tag == IntValueTag
+    @assert simd1_bit == 2
+    @assert simd2_bit == 3
+    @assert simd3_bit == 4
+
+    loop_over_registers(tmp_layout) do state
+        state0 = copy(state)
+        state1 = copy(state)
+        state2 = copy(state)
+        state3 = copy(state)
+        state4 = copy(state)
+        state5 = copy(state)
+        state6 = copy(state)
+        state7 = copy(state)
+        state0.dict[register1.name] = get(state0.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state1.dict[register1.name] = get(state1.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state2.dict[register1.name] = get(state2.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state3.dict[register1.name] = get(state3.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state4.dict[register1.name] = get(state4.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state5.dict[register1.name] = get(state5.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state6.dict[register1.name] = get(state6.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state7.dict[register1.name] = get(state7.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state0.dict[register2.name] = get(state0.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state1.dict[register2.name] = get(state1.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state2.dict[register2.name] = get(state2.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        state3.dict[register2.name] = get(state3.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        state4.dict[register2.name] = get(state4.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state5.dict[register2.name] = get(state5.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state6.dict[register2.name] = get(state6.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        state7.dict[register2.name] = get(state7.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        state0.dict[register3.name] = get(state0.dict, register3.name, Int32(0)) + Int32(0 * register3.offset)
+        state1.dict[register3.name] = get(state1.dict, register3.name, Int32(0)) + Int32(0 * register3.offset)
+        state2.dict[register3.name] = get(state2.dict, register3.name, Int32(0)) + Int32(0 * register3.offset)
+        state3.dict[register3.name] = get(state3.dict, register3.name, Int32(0)) + Int32(0 * register3.offset)
+        state4.dict[register3.name] = get(state4.dict, register3.name, Int32(0)) + Int32(1 * register3.offset)
+        state5.dict[register3.name] = get(state5.dict, register3.name, Int32(0)) + Int32(1 * register3.offset)
+        state6.dict[register3.name] = get(state6.dict, register3.name, Int32(0)) + Int32(1 * register3.offset)
+        state7.dict[register3.name] = get(state7.dict, register3.name, Int32(0)) + Int32(1 * register3.offset)
+        res_name = register_name(res, state)
+        var0_name = register_name(var, state0)
+        var1_name = register_name(var, state1)
+        var2_name = register_name(var, state2)
+        var3_name = register_name(var, state3)
+        var4_name = register_name(var, state4)
+        var5_name = register_name(var, state5)
+        var6_name = register_name(var, state6)
+        var7_name = register_name(var, state7)
+        push!(
+            emitter.statements,
+            :($res_name = Int4x8($var0_name, $var1_name, $var2_name, $var3_name, $var4_name, $var5_name, $var6_name, $var7_name)),
+        )
+    end
+
+    return nothing
+end
+
 export split!
-function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, index::Index{Physics})
+function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, register::Register)
     @assert !isempty(ress)
     @assert length(Set(ress)) == length(ress)
-    @assert all(res ∉ emitter.environment for res in ress)
+    # res may or may not already exist
+    # @assert all(res ∉ emitter.environment for res in ress)
 
-    @assert index.length == length(ress)
+    @assert register.length == length(ress)
     var_layout = emitter.environment[var]
-    var_layout[index]::Register
+    index = inv(var_layout)[register]
 
     res_layout = delete!(copy(var_layout), index)
     for res in ress
@@ -908,6 +1071,10 @@ function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, ind
 
     return nothing
 end
+function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, index::Index{Physics})
+    split!(emitter, ress, var, emitter.environment[var][index]::Register)
+    return nothing
+end
 
 function Base.merge!(
     emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, index_register::Pair{<:Index{Physics},<:Index{Machine}}
@@ -915,7 +1082,8 @@ function Base.merge!(
     index, register = index_register
     @assert index.length == register.length
 
-    @assert length(Set(vars)) == length(vars)
+    # We allow duplicate variables
+    # @assert length(Set(vars)) == length(vars)
 
     @assert index.length == length(vars)
     var_layouts = [emitter.environment[var] for var in vars]
@@ -924,7 +1092,8 @@ function Base.merge!(
     @assert all(vl == var_layout for vl in var_layouts)
     @assert index ∉ var_layout
 
-    @assert res ∉ emitter.environment
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
     res_layout = copy(var_layout)
     res_layout[index] = register
     emitter.environment[res] = res_layout
@@ -952,6 +1121,8 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     @assert res ∉ emitter.environment
     res_layout = copy(var_layout)
     delete!(res_layout, phys_register)
+    res_layout[phys_register] = loop
+    value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
 
     loop_over_registers(res_layout) do state
@@ -961,8 +1132,43 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
             state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
             var_name = register_name(var, state′)
             if i == 0
-                push!(emitter.statements, :($res_name = zero($var_name)))
+                push!(emitter.statements, :($res_name = zero($value_type)))
             end
+            push!(
+                emitter.statements,
+                quote
+                    if $(loop.name) == $(Int32(i))
+                        $res_name = $var_name
+                    end
+                end,
+            )
+        end
+    end
+
+    return nothing
+end
+
+export unselect!
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{Loop,Register})
+    loop, register = loop_register
+
+    var_layout = emitter.environment[var]
+    phys_loop = inv(var_layout)[loop]
+
+    @assert res ∉ emitter.environment
+    res_layout = copy(var_layout)
+    delete!(res_layout, phys_loop)
+    res_layout[phys_loop] = register
+    value_type = get_value_type(res_layout)
+    emitter.environment[res] = res_layout
+
+    loop_over_registers(var_layout) do state
+        var_name = register_name(var, state)
+        for i in 0:(loop.offset):(loop.offset * loop.length - 1)
+            state′ = copy(state)
+            state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
+            res_name = register_name(res, state′)
+            push!(emitter.initializations, :($res_name = zero($value_type)))
             push!(
                 emitter.statements,
                 quote
@@ -1104,16 +1310,7 @@ function mma_row_col_m8n8k16_s8!(
         C1_name = register_name(C, state1)
         D0_name = register_name(D, state0)
         D1_name = register_name(D, state1)
-        push!(
-            emitter.statements,
-            quote
-                A_frag = $A_name::Int8x4
-                B_frag = $B_name::Int8x4
-                C_frag = ($C0_name, $C1_name)::NTuple{2,Int32}
-                D_frag = IndexSpaces.mma_m8n8k16(A_frag, B_frag, C_frag)::NTuple{2,Int32}
-                ($D0_name, $D1_name) = D_frag
-            end,
-        )
+        push!(emitter.statements, :(($D0_name, $D1_name) = IndexSpaces.mma_m8n8k16($A_name, $B_name, ($C0_name, $C1_name))))
     end
 
     return nothing
@@ -1135,28 +1332,8 @@ function apply!(emitter::Emitter, res::Symbol, res_layout::Layout{Physics,Machin
 
     loop_over_registers(res_layout) do state
         res_name = register_name(res, state)
-        # if value_tag == IntValueTag && value_bits == 2
-        #     stmt = :($res_name = Int4x8($code, $code, $code, $code, $code, $code, $code, $code))
-        # elseif value_tag == IntValueTag && value_bits == 3
-        #     stmt = :($res_name = Int8x4($code, $code, $code, $code))
-        # elseif value_tag == IntValueTag && value_bits == 4
-        #     stmt = :($res_name = Int16x2($code, $code))
-        # elseif value_tag == IntValueTag && value_bits == 5
-        #     stmt = :($res_name = Int32($code))
-        # elseif value_tag == FloatValueTag && value_bits == 4
-        #     stmt = :($res_name = Float16x2($code, $code))
-        # elseif value_tag == FloatValueTag && value_bits == 5
-        #     stmt = :($res_name = Float32($code))
-        # elseif value_tag == BFloatValueTag && value_bits == 4
-        #     stmt = :($res_name = BFloat16x2($code, $code))
-        # elseif value_tag == BFloatValueTag && value_bits == 5
-        #     stmt = :($res_name = BFloat32($code))
-        # else
-        #     @assert false
-        # end
-        # push!(emitter.statements, stmt)
-
         # TODO: Check type
+        # TODO: Allow type changes
         push!(emitter.statements, :($res_name = $code))
     end
 
@@ -1167,7 +1344,9 @@ function apply!(emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, cod
     @assert !isempty(vars)
     var_layouts = [emitter.environment[var] for var in vars]
     var_layout = var_layouts[1]
-    @assert all(vl == var_layout for vl in var_layouts)
+    # We allow the second and following layouts to be "smaller" than the first
+    # @assert all(vl == var_layout for vl in var_layouts)
+    @assert all(vl ∈ var_layout for vl in var_layouts)
 
     # res might or might not exist
     # @assert res ∉ emitter.environment
@@ -1182,9 +1361,16 @@ function apply!(emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, cod
         value_bits += 1
     end
 
+    # Keep only those state symbols that are in the layout
+    function filter_state(state::State, layout::Layout)
+        names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
+        return State(filter(kv -> kv[1] ∈ names, state.dict))
+    end
+
     loop_over_registers(res_layout) do state
+        var_states = [filter_state(state, var_layout) for var_layout in var_layouts]
         res_name = register_name(res, state)
-        var_names = [register_name(var, state) for var in vars]
+        var_names = [register_name(var, var_state) for (var, var_state) in zip(vars, var_states)]
         push!(emitter.statements, :($res_name = $(code(var_names...))))
     end
 
