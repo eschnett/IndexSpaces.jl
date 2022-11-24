@@ -20,7 +20,7 @@ Random.seed!(0)
     warp = Warp(:warp, 1, 32)
     block = Block(:block, 1, 1024)
     shared = Shared(:shared, 1, 131072)
-    memory = Memory(:memory, 1, 2^30)
+    memory = Memory(:memory, 1, 2^32)
     # TODO: Split register
     register = Register(:register, 1, 256)
     loopT1 = Loop(:T1, 1, 4)
