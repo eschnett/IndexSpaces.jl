@@ -1,37 +1,13 @@
-#= /Users/eschnett/src/jl/IndexSpaces/kernels/bb.jl:520 =# @inbounds begin
-        s = s_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 96 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 192) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-        A_beam0_cplx0_dish0 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish0 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish0 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish0 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish4 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish4 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish4 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish4 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish8 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish8 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish8 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish8 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish12 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish12 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish12 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish12 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish16 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish16 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish16 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish16 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish20 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish20 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish20 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish20 = A_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish24 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish24 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish24 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish24 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx0_dish28 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx0_dish28 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam0_cplx1_dish28 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
-        A_beam8_cplx1_dish28 = A_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + 32) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2) % 96) * 256) + 0x01]
+#= /Users/eschnett/src/jl/IndexSpaces/kernels/bb.jl:460 =# @inbounds begin
+        s = s_memory[((((IndexSpaces.cuda_blockidx() % 2) % 2) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 192) + 0x01]
+        (A_beam0_cplx0_dish0, A_beam0_cplx1_dish0, A_beam0_cplx0_dish4, A_beam0_cplx1_dish4) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() % 2) * 32 + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam8_cplx0_dish0, A_beam8_cplx1_dish0, A_beam8_cplx0_dish4, A_beam8_cplx1_dish4) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() % 2) * 32 + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam0_cplx0_dish8, A_beam0_cplx1_dish8, A_beam0_cplx0_dish12, A_beam0_cplx1_dish12) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + ((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((64 + (IndexSpaces.cuda_threadidx() % 2) * 32) + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam8_cplx0_dish8, A_beam8_cplx1_dish8, A_beam8_cplx0_dish12, A_beam8_cplx1_dish12) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((64 + (IndexSpaces.cuda_threadidx() % 2) * 32) + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam0_cplx0_dish16, A_beam0_cplx1_dish16, A_beam0_cplx0_dish20, A_beam0_cplx1_dish20) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 1) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() % 2) * 32 + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam8_cplx0_dish16, A_beam8_cplx1_dish16, A_beam8_cplx0_dish20, A_beam8_cplx1_dish20) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + ((((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 1) + 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((IndexSpaces.cuda_threadidx() % 2) * 32 + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam0_cplx0_dish24, A_beam0_cplx1_dish24, A_beam0_cplx0_dish28, A_beam0_cplx1_dish28) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + (((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 1) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((64 + (IndexSpaces.cuda_threadidx() % 2) * 32) + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
+        (A_beam8_cplx0_dish24, A_beam8_cplx1_dish24, A_beam8_cplx0_dish28, A_beam8_cplx1_dish28) = IndexSpaces.unsafe_load4_global(A_memory, (((((IndexSpaces.cuda_blockidx() % 2) % 2) * 24576 + ((((((IndexSpaces.cuda_threadidx() ÷ 8) % 4) * 2 + 1) + 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) * 256) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 49152) + ((((64 + (IndexSpaces.cuda_threadidx() % 2) * 32) + ((IndexSpaces.cuda_threadidx() ÷ 2) % 4) * 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 2) % 256) + 0x01)
         (A_beam0_cplx0_dish0, A_beam0_cplx1_dish0) = (IndexSpaces.get_lo16(A_beam0_cplx0_dish0, A_beam0_cplx1_dish0), IndexSpaces.get_hi16(A_beam0_cplx0_dish0, A_beam0_cplx1_dish0))
         (A_beam8_cplx0_dish0, A_beam8_cplx1_dish0) = (IndexSpaces.get_lo16(A_beam8_cplx0_dish0, A_beam8_cplx1_dish0), IndexSpaces.get_hi16(A_beam8_cplx0_dish0, A_beam8_cplx1_dish0))
         (A_beam0_cplx0_dish4, A_beam0_cplx1_dish4) = (IndexSpaces.get_lo16(A_beam0_cplx0_dish4, A_beam0_cplx1_dish4), IndexSpaces.get_hi16(A_beam0_cplx0_dish4, A_beam0_cplx1_dish4))
@@ -489,14 +465,11 @@
             Jper_time96 = zero(Int4x8)
             for T2 = 0:32:127
                 let
-                    E_dish0 = E_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 2048 + (((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32768) * 4096) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 128) + 0x01]
-                    E_dish4 = E_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 2048 + (((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32768) * 4096) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 128) + 0x01]
-                    E_dish8 = E_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 2048 + (((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32768) * 4096) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 128) + 0x01]
-                    E_dish12 = E_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 2048 + (((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32768) * 4096) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 128) + 0x01]
-                    E_shared[((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128 + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129) + 0x01] = E_dish0
-                    E_shared[((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128 + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129) + 0x01] = E_dish4
-                    E_shared[((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128 + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129) + 0x01] = E_dish8
-                    E_shared[((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128 + ((((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129) + 0x01] = E_dish12
+                    (E_dish0, E_dish4, E_dish8, E_dish12) = IndexSpaces.unsafe_load4_global(E_memory, (((((((((T2 ÷ 32) % 4) * 32 + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32768) * 4096 + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 128) + ((IndexSpaces.cuda_blockidx() % 2) % 2) * 2048) + (((IndexSpaces.cuda_threadidx() % 8) * 16 + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01)
+                    E_shared[(((((((T2 ÷ 32) % 4) * 32 + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129 + (((IndexSpaces.cuda_threadidx() % 8) * 16 + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01] = E_dish0
+                    E_shared[(((((((T2 ÷ 32) % 4) * 32 + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129 + ((((IndexSpaces.cuda_threadidx() % 8) * 16 + 4) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01] = E_dish4
+                    E_shared[(((((((T2 ÷ 32) % 4) * 32 + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129 + ((((IndexSpaces.cuda_threadidx() % 8) * 16 + 8) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01] = E_dish8
+                    E_shared[(((((((T2 ÷ 32) % 4) * 32 + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 8) * 4) % 32) * 129 + ((((IndexSpaces.cuda_threadidx() % 8) * 16 + 12) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01] = E_dish12
                 end
                 IndexSpaces.cuda_sync_threads()
                 let
@@ -675,7 +648,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -738,7 +711,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -801,7 +774,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -864,7 +837,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -927,7 +900,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -990,7 +963,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1053,7 +1026,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1116,7 +1089,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1137,8 +1110,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                     let
                         B = 8
@@ -1314,7 +1287,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1377,7 +1350,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1440,7 +1413,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1503,7 +1476,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1566,7 +1539,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1629,7 +1602,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1692,7 +1665,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1755,7 +1728,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -1776,8 +1749,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                 end
                 let
@@ -1956,7 +1929,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2019,7 +1992,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2082,7 +2055,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2145,7 +2118,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2208,7 +2181,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2271,7 +2244,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2334,7 +2307,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2397,7 +2370,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2418,8 +2391,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                     let
                         B = 8
@@ -2595,7 +2568,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2658,7 +2631,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2721,7 +2694,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2784,7 +2757,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2847,7 +2820,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2910,7 +2883,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -2973,7 +2946,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3036,7 +3009,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3057,8 +3030,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                 end
                 let
@@ -3237,7 +3210,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3300,7 +3273,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3363,7 +3336,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3426,7 +3399,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3489,7 +3462,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3552,7 +3525,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3615,7 +3588,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3678,7 +3651,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3699,8 +3672,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                     let
                         B = 8
@@ -3876,7 +3849,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -3939,7 +3912,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4002,7 +3975,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4065,7 +4038,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4128,7 +4101,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4191,7 +4164,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4254,7 +4227,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4317,7 +4290,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4338,8 +4311,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                 end
                 let
@@ -4518,7 +4491,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4581,7 +4554,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4644,7 +4617,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4707,7 +4680,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4770,7 +4743,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4833,7 +4806,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4896,7 +4869,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4959,7 +4932,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -4980,8 +4953,8 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                     let
                         B = 8
@@ -5157,7 +5130,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5220,7 +5193,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5283,7 +5256,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5346,7 +5319,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5409,7 +5382,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5472,7 +5445,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5535,7 +5508,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5598,7 +5571,7 @@
                             end
                             Aim = AselBD_cplx0
                             Are = AselBD_cplx1
-                            E0 = E_shared[(((((D ÷ 4) % 8) * 4) ÷ 4) % 128 + ((((T2 ÷ 32) % 4) * 32) % 32) * 129) + 0x01]
+                            E0 = E_shared[(((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 129 + (((((D ÷ 4) % 8) * 4 + (IndexSpaces.cuda_threadidx() % 4) * 32) + (IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 4) % 128) + 0x01]
                             (E1_cplx0, E1_cplx1) = convert(NTuple{2, Int8x4}, E0)
                             E1re = E1_cplx0
                             E1im = E1_cplx1
@@ -5619,27 +5592,27 @@
                         Ju_cplx1_time1 = (Ju_cplx1_time1 + 64) >> 0x00000007
                         Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
                         Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                        Ju_shared[(((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time0
-                        Ju_shared[((((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072 + 96) + (((B ÷ 8) % 2) * 8) % 96) + 0x01] = Ju_time1
+                        Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time0
+                        Ju_shared[(((((((((T2 ÷ 32) % 4) * 32 + (IndexSpaces.cuda_threadidx() % 4) * 2) + ((T1 ÷ 128) % 256) * 128) + 1) + ((T3 ÷ 8) % 4) * 8) % 32) * 96 + ((((B ÷ 8) % 2) * 8 + (IndexSpaces.cuda_threadidx() ÷ 4) % 8) + ((IndexSpaces.cuda_warpidx() ÷ 4) % 6) * 16) % 96) + ((((IndexSpaces.cuda_warpidx() % 4) * 128) ÷ 128) % 4) * 3072) + 0x01] = Ju_time1
                     end
                 end
                 IndexSpaces.cuda_sync_threads()
-                Ju_dish0_time0 = Ju_shared[(((((T2 ÷ 32) % 4) * 32) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish128_time0 = Ju_shared[((3072 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish256_time0 = Ju_shared[((6144 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish384_time0 = Ju_shared[((9216 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish0_time8 = Ju_shared[(((((T2 ÷ 32) % 4) * 32) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish128_time8 = Ju_shared[((3072 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish256_time8 = Ju_shared[((6144 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish384_time8 = Ju_shared[((9216 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish0_time16 = Ju_shared[(((((T2 ÷ 32) % 4) * 32) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish128_time16 = Ju_shared[((3072 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish256_time16 = Ju_shared[((6144 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish384_time16 = Ju_shared[((9216 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish0_time24 = Ju_shared[(((((T2 ÷ 32) % 4) * 32) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish128_time24 = Ju_shared[((3072 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish256_time24 = Ju_shared[((6144 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
-                Ju_dish384_time24 = Ju_shared[((9216 + ((((T2 ÷ 32) % 4) * 32) % 32) * 96) + ((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) + 0x01]
+                Ju_dish0_time0 = Ju_shared[((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 0x01]
+                Ju_dish128_time0 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 3072) + 0x01]
+                Ju_dish256_time0 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 6144) + 0x01]
+                Ju_dish384_time0 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 9216) + 0x01]
+                Ju_dish0_time8 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 8) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 0x01]
+                Ju_dish128_time8 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 8) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 3072) + 0x01]
+                Ju_dish256_time8 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 8) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 6144) + 0x01]
+                Ju_dish384_time8 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 8) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 9216) + 0x01]
+                Ju_dish0_time16 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 16) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 0x01]
+                Ju_dish128_time16 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 16) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 3072) + 0x01]
+                Ju_dish256_time16 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 16) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 6144) + 0x01]
+                Ju_dish384_time16 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 16) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 9216) + 0x01]
+                Ju_dish0_time24 = Ju_shared[(((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 24) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 0x01]
+                Ju_dish128_time24 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 24) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 3072) + 0x01]
+                Ju_dish256_time24 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 24) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 6144) + 0x01]
+                Ju_dish384_time24 = Ju_shared[((((((((T2 ÷ 32) % 4) * 32 + IndexSpaces.cuda_threadidx() % 8) + ((T1 ÷ 128) % 256) * 128) + 24) % 32) * 96 + ((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) + 9216) + 0x01]
                 (Ju_cplx0_dish0_time0, Ju_cplx1_dish0_time0) = convert(NTuple{2, Int32}, Ju_dish0_time0)
                 (Ju_cplx0_dish128_time0, Ju_cplx1_dish128_time0) = convert(NTuple{2, Int32}, Ju_dish128_time0)
                 (Ju_cplx0_dish256_time0, Ju_cplx1_dish256_time0) = convert(NTuple{2, Int32}, Ju_dish256_time0)
@@ -5872,13 +5845,6 @@
                         (dst, Jper_time96)
                     end
                 end
-            J_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 8192 + ((((IndexSpaces.cuda_threadidx() ÷ 4) % 2) * 32) ÷ 4) % 8192) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 16384) + (((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) * 262144) + 0x01] = Jper_time0
-            J_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 8192 + ((((IndexSpaces.cuda_threadidx() ÷ 4) % 2) * 32) ÷ 4) % 8192) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 16384) + (((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) * 262144) + 0x01] = Jper_time32
-            J_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 8192 + ((((IndexSpaces.cuda_threadidx() ÷ 4) % 2) * 32) ÷ 4) % 8192) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 16384) + (((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) * 262144) + 0x01] = Jper_time64
-            J_memory[(((((IndexSpaces.cuda_blockidx() % 2) % 2) * 8192 + ((((IndexSpaces.cuda_threadidx() ÷ 4) % 2) * 32) ÷ 4) % 8192) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 16384) + (((IndexSpaces.cuda_warpidx() % 24) * 4) % 96) * 262144) + 0x01] = Jper_time96
+            IndexSpaces.unsafe_store4_global!(J_memory, (((((((((IndexSpaces.cuda_threadidx() ÷ 2) % 2) * 64 + ((IndexSpaces.cuda_threadidx() ÷ 4) % 2) * 32) + ((T1 ÷ 128) % 256) * 128) + (IndexSpaces.cuda_threadidx() % 2) * 16) ÷ 4) % 8192 + ((IndexSpaces.cuda_blockidx() % 2) % 2) * 8192) + (((IndexSpaces.cuda_blockidx() ÷ 2) % 16) % 16) * 16384) + (((IndexSpaces.cuda_warpidx() % 24) * 4 + (IndexSpaces.cuda_threadidx() ÷ 8) % 4) % 96) * 262144) + 0x01, (Jper_time0, Jper_time32, Jper_time64, Jper_time96))
         end
     end
-CHORD 8-bit baseband beamformer
-J[t,p,f,b] = s[b,p,f] Σ[d] A[d,b,p,f] E[d,p,f,t]
- Allocate input data...
-Done.

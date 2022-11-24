@@ -446,7 +446,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physoff = Int32(phys.offset)
         # physlen = Int32(phys.length)
         physval = :($val * $physoff)
-        oldphysval = get(vals, phys, Int32(0))
+        oldphysval = get(vals, phystag, Int32(0))
         physval = :($oldphysval + $physval)
         vals[phystag] = physval
     end
@@ -670,11 +670,49 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
     @assert reg_var ∉ emitter.environment
     emitter.environment[reg_var] = reg_layout
 
-    loop_over_registers(reg_layout) do state
-        reg_name = register_name(reg_var, state)
-        vals = physics_values(state, reg_layout)
-        addr = memory_index(reg_layout, mem_layout, vals)
-        push!(emitter.statements, :($reg_name = $mem_var[$addr + 0x1]))
+    if align == 4
+        loop_over_registers(reg_layout) do state
+            reg_name = register_name(reg_var, state)
+            vals = physics_values(state, reg_layout)
+            addr = memory_index(reg_layout, mem_layout, vals)
+            push!(emitter.statements, :($reg_name = $mem_var[$addr + 0x1]))
+        end
+    elseif align == 16
+        # Find registers with strides 1 and 2
+        # TODO: Better error message if not accessing global memory
+        phys0 = inv(mem_layout)[Memory(:memory, 1, 2)]
+        register0 = reg_layout[phys0]::Register
+        phys1 = inv(mem_layout)[Memory(:memory, 2, 2)]
+        register1 = reg_layout[phys1]::Register
+        tmp_layout = copy(reg_layout)
+        delete!(tmp_layout, phys0)
+        delete!(tmp_layout, phys1)
+        loop_over_registers(tmp_layout) do state
+            state0 = copy(state)
+            state1 = copy(state)
+            state2 = copy(state)
+            state3 = copy(state)
+            state0.dict[register0.name] = get(state0.dict, register0.name, Int32(0)) + Int32(0 * register0.offset)
+            state1.dict[register0.name] = get(state1.dict, register0.name, Int32(0)) + Int32(1 * register0.offset)
+            state2.dict[register0.name] = get(state2.dict, register0.name, Int32(0)) + Int32(0 * register0.offset)
+            state3.dict[register0.name] = get(state3.dict, register0.name, Int32(0)) + Int32(1 * register0.offset)
+            state0.dict[register1.name] = get(state0.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+            state1.dict[register1.name] = get(state1.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+            state2.dict[register1.name] = get(state2.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+            state3.dict[register1.name] = get(state3.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+            reg0_name = register_name(reg_var, state0)
+            reg1_name = register_name(reg_var, state1)
+            reg2_name = register_name(reg_var, state2)
+            reg3_name = register_name(reg_var, state3)
+            vals = physics_values(state0, reg_layout)
+            addr = memory_index(reg_layout, mem_layout, vals)
+            push!(
+                emitter.statements,
+                :(($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global($mem_var, $addr + 0x1)),
+            )
+        end
+    else
+        @assert false
     end
 
     return nothing
@@ -722,11 +760,49 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
     mem_var, mem_layout = mem
     reg_layout = emitter.environment[reg_var]
 
-    loop_over_registers(reg_layout) do state
-        reg_name = register_name(reg_var, state)
-        vals = physics_values(state, reg_layout)
-        addr = memory_index(reg_layout, mem_layout, vals)
-        push!(emitter.statements, :($mem_var[$addr + 0x1] = $reg_name))
+    if align == 4
+        loop_over_registers(reg_layout) do state
+            reg_name = register_name(reg_var, state)
+            vals = physics_values(state, reg_layout)
+            addr = memory_index(reg_layout, mem_layout, vals)
+            push!(emitter.statements, :($mem_var[$addr + 0x1] = $reg_name))
+        end
+    elseif align == 16
+        # Find registers with strides 1 and 2
+        # TODO: Better error message if not accessing global memory
+        phys0 = inv(mem_layout)[Memory(:memory, 1, 2)]
+        register0 = reg_layout[phys0]::Register
+        phys1 = inv(mem_layout)[Memory(:memory, 2, 2)]
+        register1 = reg_layout[phys1]::Register
+        tmp_layout = copy(reg_layout)
+        delete!(tmp_layout, phys0)
+        delete!(tmp_layout, phys1)
+        loop_over_registers(tmp_layout) do state
+            state0 = copy(state)
+            state1 = copy(state)
+            state2 = copy(state)
+            state3 = copy(state)
+            state0.dict[register0.name] = get(state0.dict, register0.name, Int32(0)) + Int32(0 * register0.offset)
+            state1.dict[register0.name] = get(state1.dict, register0.name, Int32(0)) + Int32(1 * register0.offset)
+            state2.dict[register0.name] = get(state2.dict, register0.name, Int32(0)) + Int32(0 * register0.offset)
+            state3.dict[register0.name] = get(state3.dict, register0.name, Int32(0)) + Int32(1 * register0.offset)
+            state0.dict[register1.name] = get(state0.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+            state1.dict[register1.name] = get(state1.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+            state2.dict[register1.name] = get(state2.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+            state3.dict[register1.name] = get(state3.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+            reg0_name = register_name(reg_var, state0)
+            reg1_name = register_name(reg_var, state1)
+            reg2_name = register_name(reg_var, state2)
+            reg3_name = register_name(reg_var, state3)
+            vals = physics_values(state0, reg_layout)
+            addr = memory_index(reg_layout, mem_layout, vals)
+            push!(
+                emitter.statements,
+                :(IndexSpaces.unsafe_store4_global!($mem_var, $addr + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name))),
+            )
+        end
+    else
+        @assert false
     end
 
     return nothing
