@@ -132,11 +132,11 @@ function make_bb_kernel()
         Dict(
             int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
-            time01 => Memory(:memory, 1, 4),
-            time2etc => Memory(:memory, 4, 8192),
-            polr => Memory(:memory, 4 * 8192, 2),
-            freq => Memory(:memory, 4 * 8192 * 2, 16),
-            beam => Memory(:memory, 4 * 8192 * 2 * 16, 96),
+            time01 => SIMD(:simd, 8, 4),
+            time2etc => Memory(:memory, 1, 8192),
+            polr => Memory(:memory, 8192, 2),
+            freq => Memory(:memory, 8192 * 2, 16),
+            beam => Memory(:memory, 8192 * 2 * 16, 96),
         ),
     )
 
@@ -270,11 +270,11 @@ function make_bb_kernel()
 
         load!(emitter, :s => layout_s_registers, :s_memory => layout_s_global)
 
-        load!(emitter, :A0 => layout_A0_registers, :A_memory => layout_A_memory)
-        permute!(emitter, :A1, :A0, Register(:cplx, 1, 2), SIMD(:simd, 16, 2))
-        permute!(emitter, :A2, :A1, Register(:cplx, 1, 2), SIMD(:simd, 8, 2))
-        permute!(emitter, :A3, :A2, Register(:dish, 8, 2), Thread(:thread, 2, 2))
-        permute!(emitter, :A, :A3, Register(:dish, 16, 2), Thread(:thread, 4, 2))
+        load!(emitter, :A => layout_A0_registers, :A_memory => layout_A_memory; align=16)
+        permute!(emitter, :A, :A, Register(:cplx, 1, 2), SIMD(:simd, 16, 2))
+        permute!(emitter, :A, :A, Register(:cplx, 1, 2), SIMD(:simd, 8, 2))
+        permute!(emitter, :A, :A, Register(:dish, 8, 2), Thread(:thread, 2, 2))
+        permute!(emitter, :A, :A, Register(:dish, 16, 2), Thread(:thread, 4, 2))
         @assert emitter.environment[:A] == layout_A_registers
     end
 
@@ -283,7 +283,7 @@ function make_bb_kernel()
 
             # Step 1: transferring global memory to shared memory
             block!(emitter) do emitter
-                load!(emitter, :E => layout_E_registers, :E_memory => layout_E_memory)
+                load!(emitter, :E => layout_E_registers, :E_memory => layout_E_memory; align=16)
                 store!(emitter, :E_shared => layout_E_shared, :E)
                 nothing
             end
@@ -340,7 +340,6 @@ function make_bb_kernel()
 
                         # TODO: Don't undo offset encoding, don't shift right; fold this into a fixup after multiplying by A
                         widen!(emitter, :E1, :E0, SIMD(:simd, 4, 2) => Register(:cplx, 1, 2))
-                        #TODO @assert env[:E2] == map_E_registers_multiply
 
                         split!(emitter, [:E1re, :E1im], :E1, cplx)
 
@@ -417,10 +416,10 @@ function make_bb_kernel()
             load!(emitter, :Ju => layout_Ju_registers, :Ju_shared => layout_Ju_shared)
             widen!(emitter, :Ju, :Ju, SIMD(:simd, 16, 2) => Register(:cplx, 1, 2))
             split!(emitter, [:Julo, :Juhi], :Ju, Dish(:dish, 128, 2))
-            #TODO use add_sat
+            # TODO use add_sat
             apply!(emitter, :Ju, [:Julo, :Juhi], (Julo, Juhi) -> :($Julo + $Juhi))
             split!(emitter, [:Julo, :Juhi], :Ju, Dish(:dish, 256, 2))
-            #TODO use add_sat
+            # TODO use add_sat
             apply!(emitter, :J, [:Julo, :Juhi], (Julo, Juhi) -> :($Julo + $Juhi))
             @assert emitter.environment[:J] == layout_J_registers
 
@@ -438,48 +437,30 @@ function make_bb_kernel()
                 Register(:time, 16, 2) => SIMD(:simd, 16, 2),
             )
 
-            #TODO    # Section 5, eqn. (26)
-            #TODO    map_J3_registers = let
-            #TODO        b = -1
-            #TODO        Layout(
-            #TODO            Int32,
-            #TODO            Dict(
-            #TODO                Cplx(0) => SIMD(2),
-            #TODO                Time(0) => Thread(0),
-            #TODO                Time(1) => Thread(1),
-            #TODO                Time(2) => Thread(2),
-            #TODO                Time(3) => SIMD(3),
-            #TODO                Time(4) => SIMD(4),
-            #TODO                Time(5) => LoopT1(0),
-            #TODO                Time(6) => LoopT1(1),
-            #TODO                [Time(t) => LoopT(t - 7) for t in 7:(ceil(Int, log2(T)) - 1)]...,
-            #TODO                Beam(0) => Thread(3),
-            #TODO                Beam(1) => Thread(4),
-            #TODO                Beam(2) => Warp(0),
-            #TODO                Beam(3) => Warp(1),
-            #TODO                (@CHORDARR Beam(4) => Warp(2))...,
-            #TODO                (@CHORDARR Beam(5) => Warp(3))...,
-            #TODO                (@CHORDARR Beam(6) => Warp(4))...,
-            #TODO                (@CHORDARR Polr(0) => Block(b += 1))...,
-            #TODO                (@PATHFINDERARR Polr(0) => Register(5))...,
-            #TODO                [Freq(f) => Block(b += 1) for f in 0:(ceil(Int, log2(F)) - 1)]...,
-            #TODO            ),
-            #TODO        )
-            #TODO    end
-            #TODO    @assert env[:J3] == map_J3_registers
-
             unselect!(emitter, :Jper, :J, loopT2 => Register(:time, 32, 4))
 
             nothing
         end
+
+        permute!(emitter, :Jper, :Jper, Register(:time, 32, 2), SIMD(:simd, 8, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 32, 2), Thread(:thread, 1, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 32, 2), SIMD(:simd, 8, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 64, 2), Thread(:thread, 2, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 64, 2), SIMD(:simd, 16, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 32, 2), Thread(:thread, 4, 2))
+        permute!(emitter, :Jper, :Jper, Register(:time, 64, 2), Thread(:thread, 1, 2))
+
+        store!(emitter, :J_memory => layout_J_memory, :Jper; align=16)
 
         nothing
     end
 
     stmts = clean_code(
         quote
-            $(emitter.initializations...)
-            $(emitter.statements...)
+            @inbounds begin
+                $(emitter.init_statements...)
+                $(emitter.statements...)
+            end
         end,
     )
 
@@ -501,7 +482,7 @@ total_shared_size = (Ju_shared_offset + Ju_shared_size + cacheline_size - 1) & -
 shmem_bytes = sizeof(UInt32) * total_shared_size
 
 bb_kernel = make_bb_kernel()
-println(bb_kernel)
+# println(bb_kernel)
 
 @eval function bb(A_memory, E_memory, s_memory, J_memory)
     E_shared = @cuDynamicSharedMem($E_shared_type, $E_shared_size, $(sizeof(UInt32) * E_shared_offset))
@@ -528,7 +509,7 @@ function main()
     A_memory = zeros(Int8x4, 256 * 96 * 2 * 16) #TODO: calculate automatically
     E_memory = zeros(Int4x8, 128 * 16 * 2 * 32768) #TODO: calculate automatically
     s_memory = zeros(Int32, 96 * 2 * 16) #TODO: calculate automatically
-    J_memory = zeros(Int4x8, 4 * 8192 * 2 * 16 * 96)#TODO: calculate automatically
+    J_memory = zeros(Int4x8, 8192 * 2 * 16 * 96)#TODO: calculate automatically
 
     # bb(A_memory, E_memory, s_memory, J_memory)
 
@@ -566,4 +547,4 @@ function main()
     return nothing
 end
 
-@device_code_warntype main()
+@device_code_sass main()

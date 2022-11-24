@@ -458,7 +458,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     for (phys, mach) in reg_layout.dict
         if mach isa SIMD
             phys ∈ keys(mem_layout.dict) ||
-                throw(ArgumentError("$phys maps to SIMDTag bits in the register layout, but not in the machine layout"))
+                throw(ArgumentError("$phys maps to SIMD bits in the register layout, but not in the machine layout"))
             @assert mem_layout[phys] == mach
         end
     end
@@ -508,15 +508,17 @@ Environment() = Environment(Dict{Symbol,Layout{Physics,Machine}}())
 Base.copy(env::Environment) = Environment(copy(env.dict))
 Base.getindex(env::Environment, var::Symbol) = env.dict[var]
 Base.in(var::Symbol, env::Environment) = var ∈ keys(env.dict)
+Base.iterate(env::Environment, state...) = iterate(env.dict, state...)
 Base.setindex!(env::Environment, layout::Layout{Physics,Machine}, var::Symbol) = env.dict[var] = layout
 
 export Emitter
 struct Emitter
     environment::Environment
-    initializations::Vector{Code}
+    output_environment::Environment
+    init_statements::Vector{Code}
     statements::Vector{Code}
 end
-Emitter() = Emitter(Environment(), Code[], Code[])
+Emitter() = Emitter(Environment(), Environment(), Code[], Code[])
 
 ################################################################################
 
@@ -526,14 +528,18 @@ export block!
 function block!(body!, emitter::Emitter)
     environment′ = copy(emitter.environment)
 
-    emitter′ = Emitter(environment′, Code[], Code[])
+    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
-    append!(emitter.initializations, emitter′.initializations)
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ emitter.environment
+        emitter.environment[k] = v
+    end
+
     push!(
         emitter.statements,
         quote
-            # $(emitter′.initializations...)
+            $(emitter′.init_statements...)
             let
                 $(emitter′.statements...)
             end
@@ -550,14 +556,18 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Code[], Code[])
+    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
-    append!(emitter.initializations, emitter′.initializations)
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ emitter.environment
+        emitter.environment[k] = v
+    end
+
     push!(
         emitter.statements,
         quote
-            # $(emitter′.initializations...)
+            $(emitter′.init_statements...)
             for $(loop.name) in ($(Int32(0))):($(Int32(loop.offset))):($(Int32(loop.offset * loop.length - 1)))
                 $(emitter′.statements...)
             end
@@ -574,16 +584,20 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},L
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Code[], Code[])
+    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
-    append!(emitter.initializations, emitter′.initializations)
-    # push!(
-    #     emitter.statements,
-    #     quote
-    #         $(emitter′.initializations...)
-    #     end,
-    # )
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ keys(emitter.environment)
+        emitter.environment[k] = v
+    end
+
+    push!(
+        emitter.statements,
+        quote
+            $(emitter′.init_statements...)
+        end,
+    )
     for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
         push!(
             emitter.statements,
@@ -616,8 +630,41 @@ end
 
 # Memory access
 
+# Address space 1 is global, 3 is shared
+function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,1})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(1)* %0 to [4 x i32] addrspace(1)*
+           %val = load [4 x i32], [4 x i32] addrspace(1)* %ptr, align 16
+           ret [4 x i32] %val
+        """,
+        NTuple{4,Int32},
+        Tuple{Core.LLVMPtr{Int32,1}},
+        ptr,
+    )
+end
+function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,3})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(3)* %0 to [4 x i32] addrspace(3)*
+           %val = load [4 x i32], [4 x i32] addrspace(3)* %ptr, align 16
+           ret [4 x i32] %val
+        """,
+        NTuple{4,Int32},
+        Tuple{Core.LLVMPtr{Int32,3}},
+        ptr,
+    )
+end
+unsafe_load4_global(arr::CuDeviceArray{Int32}, idx::Integer) = unsafe_load4_global(pointer(arr, idx))
+function unsafe_load4_global(arr::CuDeviceArray{T}, idx::Integer) where {T}
+    @assert sizeof(T) == sizeof(Int32)
+    res = unsafe_load4_global(reinterpret(Int32, arr), idx)::NTuple{4,Int32}
+    # return ntuple(n -> reinterpret(T, res[n]), 4)::NTuple{4,T}
+    return ntuple(n -> T(res[n] % UInt32), 4)::NTuple{4,T}
+end
+
 export load!
-function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem::Pair{Symbol,Layout{Physics,Machine}})
+function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem::Pair{Symbol,Layout{Physics,Machine}}; align::Int=4)
     reg_var, reg_layout = reg
     mem_var, mem_layout = mem
     @assert reg_var ∉ emitter.environment
@@ -633,8 +680,45 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
     return nothing
 end
 
+export unsafe_store4_global!
+# Address space 1 is global, 3 is shared
+function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,1}, val::NTuple{4,Int32})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(1)* %0 to [4 x i32] addrspace(1)*
+           store [4 x i32] %1, [4 x i32] addrspace(1)* %ptr, align 16
+           ret void
+        """,
+        Nothing,
+        Tuple{Core.LLVMPtr{Int32,1},NTuple{4,Int32}},
+        ptr,
+        val,
+    )
+end
+function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,3}, val::NTuple{4,Int32})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(3)* %0 to [4 x i32] addrspace(3)*
+           store [4 x i32] %1, [4 x i32] addrspace(3)* %ptr, align 16
+           ret void
+        """,
+        Nothing,
+        Tuple{Core.LLVMPtr{Int32,3},NTuple{4,Int32}},
+        ptr,
+        val,
+    )
+end
+function unsafe_store4_global!(arr::CuDeviceArray{Int32}, idx::Integer, val::NTuple{4,Int32})
+    return unsafe_store4_global!(pointer(arr, idx), val)
+end
+function unsafe_store4_global!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{4,T}) where {T}
+    @assert sizeof(T) == sizeof(Int32)
+    val′ = ntuple(n -> val[n].val % Int32, 4)::NTuple{4,Int32}
+    return unsafe_store4_global!(reinterpret(Int32, arr), idx, val′)
+end
+
 export store!
-function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol)
+function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4)
     mem_var, mem_layout = mem
     reg_layout = emitter.environment[reg_var]
 
@@ -662,7 +746,8 @@ get_hi16(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2}} = T(prm
 function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Register, simd::SIMD)
     var_layout = emitter.environment[var]
 
-    @assert res ∉ emitter.environment
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
 
     @assert register.length == 2
     @assert ispow2(register.offset)
@@ -708,13 +793,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
         res1_name = register_name(res, state1)
         var0_name = register_name(var, state0)
         var1_name = register_name(var, state1)
-        push!(
-            emitter.statements,
-            quote
-                $res0_name = $get_lo($var0_name, $var1_name)
-                $res1_name = $get_hi($var0_name, $var1_name)
-            end,
-        )
+        push!(emitter.statements, :(($res0_name, $res1_name) = ($get_lo($var0_name, $var1_name), $get_hi($var0_name, $var1_name))))
     end
 
     return nothing
@@ -733,7 +812,8 @@ CUDA.@device_override cuda_shfl_xor_sync(threadmask, val, mask) = shfl_xor_sync(
 function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Register, thread::Thread)
     var_layout = emitter.environment[var]
 
-    @assert res ∉ emitter.environment
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
 
     @assert register.length == 2
     register_phys = inv(var_layout)[register]
@@ -759,7 +839,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     push!(
         emitter.statements,
         quote
-            is_hi_thread = IndexSpaces.cuda_threadidx() & $thread_mask ≠ 0
+            is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0
         end,
     )
     loop_over_registers(tmp_layout) do state
@@ -774,14 +854,10 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
         push!(
             emitter.statements,
             quote
-                src = is_hi_thread ? $var0_name : $var1_name
-                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, $thread_mask)
-                if is_hi_thread
-                    $res0_name = dst
-                    $res1_name = $var1_name
-                else
-                    $res0_name = $var0_name
-                    $res1_name = dst
+                ($res0_name, $res1_name) = let
+                    src = is_lo_thread ? $var1_name : $var0_name
+                    dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, $thread_mask)
+                    is_lo_thread ? ($var0_name, dst) : (dst, $var1_name)
                 end
             end,
         )
@@ -1161,6 +1237,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
     res_layout[phys_loop] = register
     value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
+    emitter.output_environment[res] = res_layout
 
     loop_over_registers(var_layout) do state
         var_name = register_name(var, state)
@@ -1168,7 +1245,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
             state′ = copy(state)
             state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
             res_name = register_name(res, state′)
-            push!(emitter.initializations, :($res_name = zero($value_type)))
+            push!(emitter.init_statements, :($res_name = zero($value_type)))
             push!(
                 emitter.statements,
                 quote
