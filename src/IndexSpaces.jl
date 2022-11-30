@@ -5,6 +5,21 @@ using CUDASIMDTypes
 
 ################################################################################
 
+export i8, i16, i32, i64, u8, u16, u32, u64
+struct IntLiteral{I<:Integer} <: Integer end
+Base.convert(::Type{I}, ::IntLiteral{J}) where {I<:Integer,J<:Integer} = convert(I, J(1))
+Base.promote_rule(::Type{<:Integer}, ::Type{IntLiteral{I}}) where {I<:Integer} = I
+const i8 = IntLiteral{Int8}()
+const i16 = IntLiteral{Int16}()
+const i32 = IntLiteral{Int32}()
+const i64 = IntLiteral{Int64}()
+const u8 = IntLiteral{UInt8}()
+const u16 = IntLiteral{UInt16}()
+const u32 = IntLiteral{UInt32}()
+const u64 = IntLiteral{UInt64}()
+
+################################################################################
+
 export IndexType, Physics, Machine
 @enum IndexType Physics Machine
 
@@ -25,12 +40,12 @@ struct Index{Typ,Tag}
         @assert Typ isa IndexType
         @assert Tag isa IndexTag
         @assert offset ≥ 1
-        @assert length ≥ 2
+        @assert length ≥ 1
         return new{Typ,Tag}(name, offset, length)
     end
 end
 
-make_tuple(i::Index{Typ,Tag}) where {Typ,Tag} = (Typ, Symbol(Tag), i.name, i.offset, i.length)
+make_tuple(i::Index{Typ,Tag}) where {Typ,Tag} = (Typ, Symbol(Tag), i.name, i.length == 1 ? 1 : i.offset, i.length)
 
 function Base.show(io::IO, index::Index{Typ,Tag}) where {Typ,Tag}
     print(io, "$Typ.$Tag.$(index.name):$(index.offset)/$(index.length)")
@@ -79,13 +94,15 @@ struct Range
     length::Int
     function Range(offset::Integer, length::Integer)
         @assert offset ≥ 1
-        @assert length ≥ 2
+        @assert length ≥ 1
         return new(offset, length)
     end
 end
 Range(index::Index) = Range(index.offset, index.length)
 
 function Base.in(x::Range, y::Range)
+    x.length == 1 && return true
+    y.length == 1 && return false
     xbeg = x.offset
     xend = x.offset * x.length
     ybeg = y.offset
@@ -96,6 +113,8 @@ Base.in(x::Index, y::Index) = false
 Base.in(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag} = x.name == y.name && Range(x) ∈ Range(y)
 
 function Base.isdisjoint(x::Range, y::Range)
+    (y.length == 1 || y.length == 1) && return true
+
     xbeg = x.offset
     xend = x.offset * x.length
     ybeg = y.offset
@@ -129,7 +148,7 @@ struct Layout{Typ1,Typ2}
                 join(["lengths $(k.name)/$(v.name) = $(k.length)/$(v.length)" for (k, v) in dict], ", "),
             ),
         )
-        return new{Typ1,Typ2}(dict)
+        return normalize!(new{Typ1,Typ2}(dict))
     end
     Layout(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2} = Layout{Typ1,Typ2}(dict)
 end
@@ -147,6 +166,9 @@ Base.copy(layout::Layout) = Layout(copy(layout.dict))
 export normalize!
 function normalize!(layout::Layout)
     dict = layout.dict
+
+    # Remove empty indices
+    filter!(kv -> kv[1].length > 1, dict)
 
     # Combine index ranges where possible
     @label restart
@@ -405,7 +427,7 @@ function loop_over_registers(f, layout::Layout{Physics,Machine})
             reg = registers[n]
             newstate = copy(state)
             for r in 0:(reg.length - 1)
-                val = get(state.dict, reg.name, Int32(0))
+                val = get(state.dict, reg.name, 0i32)
                 newstate.dict[reg.name] = val + reg.offset * r
                 go(newstate, n - 1)
             end
@@ -415,12 +437,12 @@ function loop_over_registers(f, layout::Layout{Physics,Machine})
     return nothing
 end
 
-cuda_threadidx() = Int32(0)
-cuda_warpidx() = Int32(0)
-cuda_blockidx() = Int32(0)
-CUDA.@device_override cuda_threadidx() = threadIdx().x - 0x1
-CUDA.@device_override cuda_warpidx() = threadIdx().y - 0x1
-CUDA.@device_override cuda_blockidx() = blockIdx().x - 0x1
+cuda_threadidx() = 0i32
+cuda_warpidx() = 0i32
+cuda_blockidx() = 0i32
+CUDA.@device_override cuda_threadidx() = threadIdx().x - 1i32
+CUDA.@device_override cuda_warpidx() = threadIdx().y - 1i32
+CUDA.@device_override cuda_blockidx() = blockIdx().x - 1i32
 
 indexvalue(::State, ::SIMD) = @assert false # needs to be handled by the caller
 indexvalue(state::State, register::Register) = state.dict[register.name]::Code
@@ -446,7 +468,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physoff = Int32(phys.offset)
         # physlen = Int32(phys.length)
         physval = :($val * $physoff)
-        oldphysval = get(vals, phystag, Int32(0))
+        oldphysval = get(vals, phystag, 0i32)
         physval = :($oldphysval + $physval)
         vals[phystag] = physval
     end
@@ -472,7 +494,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     is_memory = any(mach isa Memory for (phys, mach) in mem_layout.dict)
     @assert is_shared ⊻ is_memory
 
-    addr = Int32(0)
+    addr = 0i32
     for (phys, mach) in mem_layout.dict
         mach isa SIMD && continue
         # Ensure that we are mapping to memory
@@ -708,7 +730,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
             addr = memory_index(reg_layout, mem_layout, vals)
             push!(
                 emitter.statements,
-                :(($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global($mem_var, $addr + 0x1)),
+                :(($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global($mem_var, $addr + 1i32)),
             )
         end
     else
@@ -910,7 +932,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
 
     emitter.environment[res] = res_layout
 
-    thread_mask = UInt32(1 << thread_bit)
+    thread_mask = 1u32 << thread_bit
 
     push!(
         emitter.statements,
@@ -1047,8 +1069,8 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     loop_over_registers(tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
-        state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
-        state1.dict[register.name] = get(state1.dict, register.name, Int32(0)) + Int32(1 * register.offset)
+        state0.dict[register.name] = get(state0.dict, register.name, 0i32) + Int32(0 * register.offset)
+        state1.dict[register.name] = get(state1.dict, register.name, 0i32) + Int32(1 * register.offset)
         res_name = register_name(res, state)
         var0_name = register_name(var, state0)
         var1_name = register_name(var, state1)
@@ -1214,7 +1236,7 @@ function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, reg
     loop_over_registers(res_layout) do state
         for (n, res) in enumerate(ress)
             state′ = copy(state)
-            state′.dict[index.name] = get(state′.dict, index.name, Int32(0)) + Int32((n - 1) * index.offset)
+            state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
             res_name = register_name(res, state)
             var_name = register_name(var, state′)
             push!(emitter.statements, :($res_name = $var_name))
@@ -1253,7 +1275,7 @@ function Base.merge!(
     loop_over_registers(var_layout) do state
         for (n, var) in enumerate(vars)
             state′ = copy(state)
-            state′.dict[index.name] = get(state′.dict, index.name, Int32(0)) + Int32((n - 1) * index.offset)
+            state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
             res_name = register_name(res, state′)
             var_name = register_name(var, state)
             push!(emitter.statements, :($res_name = $var_name))
@@ -1281,7 +1303,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
         res_name = register_name(res, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
-            state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
             var_name = register_name(var, state′)
             if i == 0
                 push!(emitter.statements, :($res_name = zero($value_type)))
@@ -1319,7 +1341,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
         var_name = register_name(var, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
-            state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
             res_name = register_name(res, state′)
             push!(emitter.init_statements, :($res_name = zero($value_type)))
             push!(
@@ -1455,8 +1477,8 @@ function mma_row_col_m8n8k16_s8!(
     loop_over_registers(tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
-        state0.dict[C_col[1].name] = get(state0.dict, C_col[1].name, Int32(0)) + Int32(0 * C_col[1].offset)
-        state1.dict[C_col[1].name] = get(state1.dict, C_col[1].name, Int32(0)) + Int32(1 * C_col[1].offset)
+        state0.dict[C_col[1].name] = get(state0.dict, C_col[1].name, 0i32) + Int32(0 * C_col[1].offset)
+        state1.dict[C_col[1].name] = get(state1.dict, C_col[1].name, 0i32) + Int32(1 * C_col[1].offset)
         A_name = register_name(A, state)
         B_name = register_name(B, state)
         C0_name = register_name(C, state0)

@@ -59,22 +59,20 @@ Random.seed!(0)
         for iter in 1:20
             ind = rand(indices)
             fs = factor(ind.length)
-            fs = vcat([repeat([k], v) for (k, v) in fs]...)
+            fs = Int[[repeat([k], v) for (k, v) in fs]...;]
             @assert prod(fs) == ind.length
             # Choose destination for each prime factor: 1 => offset, 2 => length, 3 => unused
             fs3 = rand(1:3, length(fs))
             off = prod(fs[i] for i in 1:length(fs) if fs3[i] == 1; init=1)
             len = prod(fs[i] for i in 1:length(fs) if fs3[i] == 2; init=1)
-            if len > 1
-                subind = Index{indextype(ind),indextag(ind)}(ind.name, ind.offset * off, len)
-                @test subind ∈ ind
-                if subind == ind
-                    @test ind ∈ subind
-                else
-                    @test ind ∉ subind
-                end
-                push!(indices, subind)
+            subind = Index{indextype(ind),indextag(ind)}(ind.name, ind.offset * off, len)
+            @test subind ∈ ind
+            if subind == ind
+                @test ind ∈ subind
+            else
+                @test ind ∉ subind
             end
+            push!(indices, subind)
         end
 
         sort!(indices)
