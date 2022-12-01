@@ -27,13 +27,61 @@ const Time = Index{Physics,TimeTag}
 # const P = 2
 # const F = 16
 
-# Testing
+# Benchmarks
 const C = 2
 const T = 32768
 const D = 512
 const B = 128
 const P = 2
-const F = 16
+const F = 84 ÷ 2
+
+# # Testing
+# const C = 2
+# const T = 32768
+# const D = 512
+# const B = 128
+# const P = 2
+# const F = 16
+
+# Benchmark results:
+
+# Setup for full CHORD:
+
+# benchmark-result:
+#   kernel: "bb"
+#   setup:
+#     C: 2
+#     T: 32768
+#     D: 512
+#     B: 128
+#     P: 2
+#     F: 42
+#   result-μsec:
+#     runtime: 9016.2
+#     num-frequencies: 42
+#     scaled-runtime: 3434.7
+#     scaled-frequencies: 16
+#     sampling-time: 1.7
+#     dataframe-length: 55705.6
+#     dataframe-percent: 6.2
+
+# benchmark-result:
+#   kernel: "bb"
+#   setup:
+#     C: 2
+#     T: 32768
+#     D: 512
+#     B: 128
+#     P: 2
+#     F: 42
+#     sampling-time: 1.7
+#   result-μsec:
+#     runtime: 9355.1
+#     num-frequencies: 42
+#     scaled-runtime: 3563.9
+#     scaled-frequencies: 16
+#     dataframe-length: 55705.6
+#     dataframe-percent: 6.4
 
 const σ = trailing_zeros(D ÷ 4) - 4
 
@@ -168,13 +216,14 @@ function make_bb_kernel()
 
     # E-matrix layout
 
+    # Section 3, eqn. (13)
     layout_E_shared = Layout(
         Dict(
             int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish2etc => Shared(:shared, 1, D ÷ 4),
-            time01234 => Shared(:shared, (D ÷ 4) + 1, 32),
+            time01234 => Shared(:shared, D ÷ 4 + 1, 32),
             time56 => loopT2,
             time7etc => loopT1,
             polr => Block(:block, 1, P),
@@ -189,10 +238,10 @@ function make_bb_kernel()
             int16value => SIMD(:simd, 1, 16),
             cplx => SIMD(:simd, 16, 2),
             beam => Shared(:shared, 1, B),
-            time01234 => Shared(:shared, B, 32),
+            time01234 => Shared(:shared, B + 4, 32),
             time56 => loopT2,
             time7etc => loopT1,
-            dish78 => Shared(:shared, B * 32, 4),
+            dish78 => Shared(:shared, (B + 4) * 32, 4),
             polr => Block(:block, 1, P),
             freq => Block(:block, P, F),
         ),
@@ -314,7 +363,7 @@ function make_bb_kernel()
             sync_threads!(emitter)
 
             # Step 2: matrix multiplication
-            unrolled_loop!(emitter, Time(:time, loopT3.offset, loopT3.length) => loopT3) do emitter
+            loop!(emitter, Time(:time, loopT3.offset, loopT3.length) => loopT3) do emitter
                 unrolled_loop!(emitter, Beam(:beam, loopB.offset, loopB.length) => loopB) do emitter
                     select!(emitter, :AselB, :A, Register(:beam, loopB.offset, loopB.length) => loopB)
 
@@ -407,6 +456,7 @@ function make_bb_kernel()
                     apply!(emitter, :Ju, [:Ju], Ju -> :(($Ju + $(Int32(1 << (σ - 1)))) >> $(UInt32(σ))))
 
                     # Note: `cvs_pack_s16` saturates, so we don't need to clamp
+                    # Note: We wouldn't need to clamp anyway since the shift above prevents overflow
                     # apply!(emitter, :Ju, :Ju, Ju -> :(clamp($Ju, (-Int32(0x7fff)):(+Int32(0x7fff)))))
                     narrow!(emitter, :Ju, :Ju, Register(:cplx, 1, C) => SIMD(:simd, 16, 2))
 
@@ -494,13 +544,13 @@ end
 const cacheline_length = 32     # counting in UInt32
 
 # TODO: make these const
-E_shared_type = Int4x8    # TODO: determine automatically
+E_shared_type = Int4x8          # TODO: determine automatically
 E_shared_offset = 0
-E_shared_length = (D ÷ 4 + 1) * 32  # TODO: calculate automatically
+E_shared_length = (D ÷ 4 + 1) * 32 # TODO: calculate automatically
 
 Ju_shared_type = Int16x2        # TODO: determine automatically
 Ju_shared_offset = (E_shared_offset + E_shared_length + cacheline_length - 1) & -cacheline_length
-Ju_shared_length = B * 32 * 4    # TODO: calculate automatically
+Ju_shared_length = (B + 4) * 32 * 4 # TODO: calculate automatically
 
 total_shared_length = (Ju_shared_offset + Ju_shared_length + cacheline_length - 1) & -cacheline_length
 shmem_bytes = sizeof(UInt32) * total_shared_length
@@ -516,7 +566,7 @@ println("[Done creating bb kernel]")
     return nothing
 end
 
-function main(; compile_only::Bool=false)
+function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftest::Bool=false, nruns::Int=0)
     if !compile_only
         println("CHORD 8-bit baseband beamformer")
         println("J[t,p,f,b] = s[b,p,f] Σ[d] A[d,b,p,f] E[d,p,f,t]")
@@ -534,70 +584,73 @@ function main(; compile_only::Bool=false)
     kernel = @cuda launch = false minthreads = nthreads * nwarps blocks_per_sm = blocks_per_sm bb(
         CUDA.zeros(Int8x4, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Int4x8, 0)
     )
+    attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
     if compile_only
         return nothing
     end
 
-    open("output/bb.jl", "w") do fh
-        println(fh, bb_kernel)
-    end
-    kernel_name = let
-        line = filter(line -> match(r"\.globl", line) ≠ nothing, readlines("output/bb.ptx"))[begin]
-        match(r"\.globl\s+(\S+)", line).captures[1]
-    end
-    open("output/bb.yaml", "w") do fh
-        print(
-            fh,
-            """
-    --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
-    kernel-description:
-      name: "bb"
-      description: "baseband beamformer"
-      design-parameters:
-        number-of-beams: $B
-        number-of-complex-components: $C
-        number-of-dishes: $D
-        number-of-frequencies: $F
-        number-of-polarizations: $P
-        number-of-timesamples: $T
-        shift-parameter-σ: $σ
-      compile-parameters:
-        minthreads: $(nthreads * nwarps)
-        blocks_per_sm: $blocks_per_sm
-      call-parameters:
-        threads: [$nthreads, $nwarps]
-        blocks: [$nblocks]
-        shmem: $shmem_bytes
-      kernel-name: "$kernel_name"
-      kernel-arguments:
-        - name: "A"
-          intent: in
-          type: Int8
-          indices: [C, D, B, P, F]
-          shape: [$C, $D, $B, $P, $F]
-          strides: [1, $C, $(C*D), $(C*D*B), $(C*D*B*P)]
-        - name: "E"
-          intent: in
-          type: Int4
-          indices: [C, D, F, P, T]
-          shape: [$C, $D, $F, $P, $T]
-          strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
-        - name: "s"
-          intent: in
-          type: Int32
-          indices: [B, P, F]
-          shape: [$B, $P, $F]
-          strides: [1, $B, $(B*P)]
-        - name: "J"
-          intent: out
-          type: Int4
-          indices: [C, T, P, F, B]
-          shape: [$C, $T, $P, $F, $B]
-          strides: [1, $C, $(C*T), $(C*T*P), $(C*T*P*F)]
-    ...
-    """,
-        )
+    if output_kernel
+        open("output/bb.jl", "w") do fh
+            println(fh, bb_kernel)
+        end
+        kernel_name = let
+            line = filter(line -> match(r"\.globl", line) ≠ nothing, readlines("output/bb.ptx"))[begin]
+            match(r"\.globl\s+(\S+)", line).captures[1]
+        end
+        open("output/bb.yaml", "w") do fh
+            print(
+                fh,
+                """
+        --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
+        kernel-description:
+          name: "bb"
+          description: "baseband beamformer"
+          design-parameters:
+            number-of-beams: $B
+            number-of-complex-components: $C
+            number-of-dishes: $D
+            number-of-frequencies: $F
+            number-of-polarizations: $P
+            number-of-timesamples: $T
+            shift-parameter-σ: $σ
+          compile-parameters:
+            minthreads: $(nthreads * nwarps)
+            blocks_per_sm: $blocks_per_sm
+          call-parameters:
+            threads: [$nthreads, $nwarps]
+            blocks: [$nblocks]
+            shmem: $shmem_bytes
+          kernel-name: "$kernel_name"
+          kernel-arguments:
+            - name: "A"
+              intent: in
+              type: Int8
+              indices: [C, D, B, P, F]
+              shape: [$C, $D, $B, $P, $F]
+              strides: [1, $C, $(C*D), $(C*D*B), $(C*D*B*P)]
+            - name: "E"
+              intent: in
+              type: Int4
+              indices: [C, D, F, P, T]
+              shape: [$C, $D, $F, $P, $T]
+              strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+            - name: "s"
+              intent: in
+              type: Int32
+              indices: [B, P, F]
+              shape: [$B, $P, $F]
+              strides: [1, $B, $(B*P)]
+            - name: "J"
+              intent: out
+              type: Int4
+              indices: [C, T, P, F, B]
+              shape: [$C, $T, $P, $F, $B]
+              strides: [1, $C, $(C*T), $(C*T*P), $(C*T*P*F)]
+        ...
+        """,
+            )
+        end
     end
 
     println("Allocating input data...")
@@ -617,7 +670,7 @@ function main(; compile_only::Bool=false)
     # map!(i -> rand(Int4x8), E_memory, E_memory)
     # map!(i -> rand(Int32(1):Int32(10)), s_memory, s_memory)
 
-    input = :random
+    input = :zero
     if input == :zero
         # do nothing
     elseif input == :random
@@ -678,25 +731,27 @@ function main(; compile_only::Bool=false)
         @assert false
     end
 
-    println("Evaluating kernel on CPU...")
-    Threads.@threads for b in 0:(B - 1)
-        for f in 0:(F - 1), p in 0:(P - 1), t in 0:(T - 1)
-            s = s_memory[(f * P + p) * B + b + 1]
-            Ju = 0 + 0im
-            for d in 0:(D - 1)
-                A = Complex{Int}(reverse(reinterpret(NTuple{2,Int8}, A_memory)[((f * P + p) * B + b) * D + d + 1])...)
-                E = Complex{Int}(
-                    reverse(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * P + p) * F + f) * D + d + 1]))...
+    if run_selftest
+        println("Evaluating kernel on CPU...")
+        Threads.@threads for b in 0:(B - 1)
+            for f in 0:(F - 1), p in 0:(P - 1), t in 0:(T - 1)
+                s = s_memory[(f * P + p) * B + b + 1]
+                Ju = 0 + 0im
+                for d in 0:(D - 1)
+                    A = Complex{Int}(reverse(reinterpret(NTuple{2,Int8}, A_memory)[((f * P + p) * B + b) * D + d + 1])...)
+                    E = Complex{Int}(
+                        reverse(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * P + p) * F + f) * D + d + 1]))...
+                    )
+                    Ju += A * E
+                end
+                Ju = shift(Ju, σ)
+                @assert max(abs(Ju.re), abs(Ju.im)) ≤ 32767
+                J = Ju
+                J = shift(J, s)
+                reinterpret(Int4x2, J_wanted)[((b * F + f) * P + p) * T + t + 1] = Int4x2(
+                    Int32(clamp(J.im, -7:+7)), Int32(clamp(J.re, -7:+7))
                 )
-                Ju += A * E
             end
-            Ju = shift(Ju, σ)
-            @assert max(abs(Ju.re), abs(Ju.im)) ≤ 32767
-            J = Ju
-            J = shift(J, s)
-            reinterpret(Int4x2, J_wanted)[((b * F + f) * P + p) * T + t + 1] = Int4x2(
-                Int32(clamp(J.im, -7:+7)), Int32(clamp(J.re, -7:+7))
-            )
         end
     end
 
@@ -707,46 +762,92 @@ function main(; compile_only::Bool=false)
     J_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), (T ÷ 4) * P * F * B)
 
     println("Running kernel...")
-    attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
     kernel(A_cuda, E_cuda, s_cuda, J_cuda; threads=(nthreads, nwarps), blocks=nblocks, shmem=shmem_bytes)
     synchronize()
+
+    if nruns > 0
+        stats = @timed begin
+            for run in 1:nruns
+                kernel(A_cuda, E_cuda, s_cuda, J_cuda; threads=(nthreads, nwarps), blocks=nblocks, shmem=shmem_bytes)
+            end
+            synchronize()
+        end
+        # All times in μsec
+        runtime = stats.time / nruns * 1.0e+6
+        num_frequencies = 16
+        runtime_scaled = runtime / F * num_frequencies
+        sampling_time = 1.7
+        dataframe_length = T * sampling_time
+        fraction = runtime_scaled / dataframe_length
+        round1(x) = round(x; digits=1)
+        println("""
+        benchmark-result:
+          kernel: "bb"
+          setup:
+            C: $C
+            T: $T
+            D: $D
+            B: $B
+            P: $P
+            F: $F
+            sampling-time: $sampling_time
+          result-μsec:
+            runtime: $(round1(runtime))
+            num-frequencies: $F
+            scaled-runtime: $(round1(runtime_scaled))
+            scaled-frequencies: $num_frequencies
+            dataframe-length: $(round1(dataframe_length))
+            dataframe-percent: $(round1(fraction * 100))
+        """)
+    end
 
     println("Copying data back from GPU to CPU...")
     J_memory = Array(J_cuda)
 
-    println("Checking results...")
-
-    error_count = 0
-    checked_J = falses(B, T, P, F)
-    for f in 0:(F - 1), p in 0:(P - 1), t in 0:4:(T - 1), b in 0:(B - 1)
-        @assert !any(checked_J[b + 1, (t + 1):(t + 4), p + 1, f + 1])
-        checked_J[b + 1, (t + 1):(t + 4), p + 1, f + 1] .= true
-        J = J_memory[(((b * F + f) * P + p) * T + t) ÷ 4 + 1]
-        Jwant = J_wanted[(((b * F + f) * P + p) * T + t) ÷ 4 + 1]
-        if J ≠ Jwant
-            if error_count ≤ 100
-                println("    ERROR: freq=$f polr=$p time=$t beam=$b J=$J Jwant=$Jwant")
+    if run_selftest
+        println("Checking results...")
+        error_count = 0
+        checked_J = falses(B, T, P, F)
+        for f in 0:(F - 1), p in 0:(P - 1), t in 0:4:(T - 1), b in 0:(B - 1)
+            @assert !any(checked_J[b + 1, (t + 1):(t + 4), p + 1, f + 1])
+            checked_J[b + 1, (t + 1):(t + 4), p + 1, f + 1] .= true
+            J = J_memory[(((b * F + f) * P + p) * T + t) ÷ 4 + 1]
+            Jwant = J_wanted[(((b * F + f) * P + p) * T + t) ÷ 4 + 1]
+            if J ≠ Jwant
+                if error_count ≤ 100
+                    println("    ERROR: freq=$f polr=$p time=$t beam=$b J=$J Jwant=$Jwant")
+                end
+                error_count += 1
             end
-            error_count += 1
         end
+        @assert all(checked_J)
+        println("    J: $error_count errors found")
     end
-    @assert all(checked_J)
-    println("    J: $error_count errors found")
 
     println("Done.")
     return nothing
 end
 
 if CUDA.functional()
-    open("output/bb.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main(; compile_only=true)
-        end
-    end
-    open("output/bb.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main(compile_only=true)
-        end
-    end
-    main()
+    # # Output kernel
+    # open("output/bb.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true)
+    #     end
+    # end
+    # open("output/bb.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(compile_only=true)
+    #     end
+    # end
+    # main(; output_kernel=true)
+
+    # # Run test
+    # main(; run_selftest=true)
+
+    # Run benchmark
+    main(; nruns=100)
+
+    # # Regular run, also for profiling
+    # main()
 end
