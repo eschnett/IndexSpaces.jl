@@ -11,3 +11,18 @@ TODO * [![codecov](https://codecov.io/gh/eschnett/IndexSpaces.jl/branch/main/gra
 
 (CI code coverage is bad because the CI tests don't test the CUDA
 code; these tests need to be run manually.)
+
+
+## Notes
+
+Run benchmarks:
+```sh
+julia --project=@. --optimize=3 kernels/bb.jl
+```
+
+Run with profiling:
+```sh
+ncu -f -o profile --set full --target-processes all env LD_LIBRARY_PATH="/home/eschnett/julia-1.8/lib/julia:$LD_LIBRARY_PATH" ~/julia-1.8/bin/julia --project=@. --optimize=3 kernels/bb.jl
+```
+The juliaup-installed Julia does not work.
+One cannot extract PTX or SASS while profiling.
