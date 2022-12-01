@@ -964,8 +964,16 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     return nothing
 end
 
+# Convert `Int4x8` to `NTuple{2,Int8x4}`, but skip shifting the high nibbles and skip removing the offset encoding.
+# This returns `n + 8` for the low values (even indices) and  `16 * (n + 8)` for the high values (odd indices).
+function int4x8_to_2int8x4_unshifted_withoffset(a::Int4x8)
+    a_lo = lop3(a.val, 0x08080808, 0x0f0f0f0f, CUDASIMDTypes.xor_and_lut)
+    a_hi = lop3(a.val, 0x80808080, 0xf0f0f0f0, CUDASIMDTypes.xor_and_lut)
+    return (Int8x4(a_lo), Int8x4(a_hi))::NTuple{2,Int8x4}
+end
+
 export widen!
-function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{SIMD,Register})
+function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{SIMD,Register}; unshifted_withoffset::Bool=false)
     simd, register = simd_register
 
     var_layout = emitter.environment[var]
@@ -1011,7 +1019,11 @@ function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{
         res1_name = register_name(res, state1)
         var_name = register_name(var, state)
         if value_tag == IntValueTag && simd_bit == 2
-            stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int8x4}, $var_name))
+            if unshifted_withoffset
+                stmt = :(($res0_name, $res1_name) = IndexSpaces.int4x8_to_2int8x4_unshifted_withoffset($var_name))
+            else
+                stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int8x4}, $var_name))
+            end
         elseif value_tag == IntValueTag && simd_bit == 3
             stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int16x2}, $var_name))
         elseif value_tag == IntValueTag && simd_bit == 4
