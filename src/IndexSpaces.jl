@@ -571,6 +571,31 @@ function block!(body!, emitter::Emitter)
     return nothing
 end
 
+export if!
+function if!(body!, emitter::Emitter, cond::Code)
+    environment′ = copy(emitter.environment)
+
+    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
+    body!(emitter′)
+
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ emitter.environment
+        emitter.environment[k] = v
+    end
+
+    push!(
+        emitter.statements,
+        quote
+            $(emitter′.init_statements...)
+            if $(cond)
+                $(emitter′.statements...)
+            end
+        end,
+    )
+
+    return nothing
+end
+
 export loop!
 function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     index, loop = layout
