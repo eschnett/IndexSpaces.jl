@@ -1,8 +1,12 @@
+# CHORD 8-bit baseband beamformer
+# <https://www.overleaf.com/project/6228adae742a3a2da1afe437>
+
 using CUDA
 using CUDASIMDTypes
 using IndexSpaces
 using Random
 
+idiv(i::Integer, j::Integer) = (@assert i % j == 0; i ÷ j)
 shift(x::Number, s) = (x + (1 << (s - 1))) >> s
 shift(x::Complex, s) = Complex(shift(x.re, s), shift(x.im, s))
 Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
@@ -17,7 +21,7 @@ const Freq = Index{Physics,FreqTag}
 const Polr = Index{Physics,PolrTag}
 const Time = Index{Physics,TimeTag}
 
-# Problem size
+# Setup
 
 # # Full CHORD
 # const C = 2
@@ -27,21 +31,35 @@ const Time = Index{Physics,TimeTag}
 # const P = 2
 # const F = 16
 
-# Benchmarks
-const C = 2
-const T = 32768
-const D = 512
-const B = 128
-const P = 2
-const F = 84 ÷ 2
-
-# # Testing
+# # Benchmarks
 # const C = 2
 # const T = 32768
 # const D = 512
 # const B = 128
 # const P = 2
-# const F = 16
+# const F = idiv(84, 2)
+
+# Testing
+const C = 2
+const T = 32768
+const D = 512
+const B = 128
+const P = 2
+const F = 16
+
+const T1_stride = 128
+const T2_stride = 32
+
+@assert T % T1_stride == 0
+@assert T1_stride % T2_stride == 0
+
+const Wb = 8
+const Wd = 4
+const Wp = 1
+
+@assert B % Wb == 0
+@assert D % Wd == 0
+@assert P % Wp == 0
 
 # Benchmark results:
 
@@ -83,7 +101,9 @@ const F = 84 ÷ 2
 #     dataframe-length: 55705.6
 #     dataframe-percent: 6.4
 
-const σ = trailing_zeros(D ÷ 4) - 4
+# We need to shift the intermediate `Ju` results by `σ` bits to ensure
+# they fit into 16 bits
+const σ = trailing_zeros(idiv(D, Wd)) - 4
 
 function make_bb_kernel()
     # Machine indices
@@ -94,13 +114,14 @@ function make_bb_kernel()
     shared = Shared(:shared, 1, 131072)
     memory = Memory(:memory, 1, 2^32)
 
-    loopT3 = Loop(:T3, 8, 4)
-    loopT2 = Loop(:T2, 32, 4)
-    loopT1 = Loop(:T1, 128, T ÷ 128)
+    loopT3 = Loop(:T3, 8, idiv(T2_stride, 8)) # 8 time samples enter the tensor core mma
+    loopT2 = Loop(:T2, T2_stride, idiv(T1_stride, T2_stride))
+    loopT1 = Loop(:T1, T1_stride, idiv(T, T1_stride))
 
-    loopD = Loop(:D, 4, 8)
+    loopD = Loop(:D, 4, idiv(D, 16 * Wd)) # 16 dishes enter the tensor core mma
 
-    loopB = Loop(:B, 8, 2)
+    num_A_beam_registers = idiv(B, 8 * Wb)
+    loopB = Loop(:B, 8, num_A_beam_registers) # 8 beams enter the tensor core mma
 
     # Physics indices
     int4value = IntValue(:intvalue, 1, 4)
@@ -117,17 +138,17 @@ function make_bb_kernel()
     dish0 = Dish(:dish, 1, 2)
     dish01 = Dish(:dish, 1, 4)
     dish1 = Dish(:dish, 2, 2)
-    dish1etc = Dish(:dish, 2, D ÷ 2)
+    dish1etc = Dish(:dish, 2, idiv(D, 2))
     dish2 = Dish(:dish, 4, 2)
     dish23 = Dish(:dish, 4, 4)
     dish234 = Dish(:dish, 4, 8)
-    dish2etc = Dish(:dish, 4, D ÷ 4)
+    dish2etc = Dish(:dish, 4, idiv(D, 4))
     dish34 = Dish(:dish, 8, 4)
     dish456 = Dish(:dish, 16, 8)
     dish5 = Dish(:dish, 32, 2)
     dish56 = Dish(:dish, 32, 4)
     dish6 = Dish(:dish, 64, 2)
-    dish78 = Dish(:dish, 128, 4)
+    dish78 = Dish(:dish, 128, idiv(D, 128))
 
     beam0 = Beam(:beam, 1, 2)
     beam01 = Beam(:beam, 1, 4)
@@ -135,9 +156,9 @@ function make_bb_kernel()
     beam1 = Beam(:beam, 2, 2)
     beam12 = Beam(:beam, 2, 4)
     beam2 = Beam(:beam, 4, 2)
-    beam23456 = Beam(:beam, 4, B ÷ 4)
+    beam23456 = Beam(:beam, 4, idiv(B, 4))
     beam3 = Beam(:beam, 8, 2)
-    beam456 = Beam(:beam, 16, B ÷ 16)
+    beam456 = Beam(:beam, 16, idiv(B, 16))
 
     time0 = Time(:time, 1, 2)
     time01 = Time(:time, 1, 4)
@@ -147,10 +168,10 @@ function make_bb_kernel()
     time12 = Time(:time, 2, 4)
     time2 = Time(:time, 4, 2)
     time234 = Time(:time, 4, 8)
-    time2etc = Time(:time, 4, T ÷ 4)
+    time2etc = Time(:time, 4, idiv(T, 4))
     time34 = Time(:time, 8, 4)
     time56 = Time(:time, 32, 4)
-    time7etc = Time(:time, 128, T ÷ 128)
+    time7etc = Time(:time, 128, idiv(T, 128))
 
     # # Physics quantities
     # E = Quantity(:E, [cplx, dish, freq, polr, time, int4value])
@@ -167,9 +188,9 @@ function make_bb_kernel()
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish2etc => Memory(:memory, 1, D ÷ 4),
-            freq => Memory(:memory, D ÷ 4, F),
-            polr => Memory(:memory, (D ÷ 4) * F, P),
-            time => Memory(:memory, (D ÷ 4) * F * P, T),
+            freq => Memory(:memory, idiv(D, 4), F),
+            polr => Memory(:memory, idiv(D, 4) * F, P),
+            time => Memory(:memory, idiv(D, 4) * F * P, T),
         ),
     )
 
@@ -180,10 +201,10 @@ function make_bb_kernel()
             int8value => SIMD(:simd, 1, 8),
             cplx => SIMD(:simd, 8, 2),
             dish0 => SIMD(:simd, 8 * 2, 2),
-            dish1etc => Memory(:memory, 1, D ÷ 2),
-            beam => Memory(:memory, D ÷ 2, B),
-            polr => Memory(:memory, (D ÷ 2) * B, P),
-            freq => Memory(:memory, (D ÷ 2) * B * P, F),
+            dish1etc => Memory(:memory, 1, idiv(D, 2)),
+            beam => Memory(:memory, idiv(D, 2), B),
+            polr => Memory(:memory, idiv(D, 2) * B, P),
+            freq => Memory(:memory, idiv(D, 2) * B * P, F),
         ),
     )
 
@@ -205,10 +226,10 @@ function make_bb_kernel()
             int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             time01 => SIMD(:simd, 8, 4),
-            time2etc => Memory(:memory, 1, T ÷ 4),
-            polr => Memory(:memory, T ÷ 4, P),
-            freq => Memory(:memory, (T ÷ 4) * P, F),
-            beam => Memory(:memory, (T ÷ 4) * P * F, B),
+            time2etc => Memory(:memory, 1, idiv(T, 4)),
+            polr => Memory(:memory, idiv(T, 4), P),
+            freq => Memory(:memory, idiv(T, 4) * P, F),
+            beam => Memory(:memory, idiv(T, 4) * P * F, B),
         ),
     )
 
@@ -222,8 +243,8 @@ function make_bb_kernel()
             int4value => SIMD(:simd, 1, 4),
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
-            dish2etc => Shared(:shared, 1, D ÷ 4),
-            time01234 => Shared(:shared, D ÷ 4 + 1, 32),
+            dish2etc => Shared(:shared, 1, idiv(D, 4)),
+            time01234 => Shared(:shared, idiv(D, 4) + 1, 32),
             time56 => loopT2,
             time7etc => loopT1,
             polr => Block(:block, 1, P),
@@ -251,16 +272,39 @@ function make_bb_kernel()
 
     # E-matrix layout
 
+    num_time_warps_for_Ecopy = prevpow(2, Wb)
+    num_time_iters_for_Ecopy = idiv(8, num_time_warps_for_Ecopy)
+    num_warps_for_Ecopy = Wd * num_time_warps_for_Ecopy
+    @assert 1 ≤ num_warps_for_Ecopy ≤ 32
     layout_E_registers = Layout(
         Dict(
             int4value => SIMD(:simd, 1, 4),
-            cplx => SIMD(:simd, 4, 2),
-            dish01 => SIMD(:simd, 4 * 2, 4),
+            cplx => SIMD(:simd, 4, C),
+            dish01 => SIMD(:simd, 4 * C, 4),
             dish23 => Register(:dish, 4, 4),
             dish456 => Thread(:thread, 1, 8),
-            dish78 => Warp(:warp, 1, 4),
+            dish78 => Warp(:warp, 1, Wd),
             time01 => Thread(:thread, 8, 4),
-            time234 => Warp(:warp, 4, 8),
+            Time(:time, 4, num_time_warps_for_Ecopy) => Warp(:warp, Wd, num_time_warps_for_Ecopy),
+            Time(:time, 4 * num_time_warps_for_Ecopy, num_time_iters_for_Ecopy) =>
+                Loop(:Ecopy, 4 * num_time_warps_for_Ecopy, num_time_iters_for_Ecopy),
+            time56 => loopT2,
+            time7etc => loopT1,
+            polr => Block(:block, 1, P),
+            freq => Block(:block, P, F),
+        ),
+    )
+
+    layout_E0_registers = Layout(
+        Dict(
+            int4value => SIMD(:simd, 1, 4),
+            cplx => SIMD(:simd, 4, C),
+            dish01 => SIMD(:simd, 4 * C, 4), # mma input k, bits 01
+            dish234 => loopD,
+            dish56 => Thread(:thread, 1, 4),# mma input k, bits 23
+            dish78 => Warp(:warp, 1, Wd),
+            time012 => Thread(:thread, 4, 8),# mma input n, bits 012
+            time34 => loopT3,
             time56 => loopT2,
             time7etc => loopT1,
             polr => Block(:block, 1, P),
@@ -274,13 +318,13 @@ function make_bb_kernel()
         Dict(
             int8value => SIMD(:simd, 1, 8),
             cplx => Register(:cplx, 1, C),
-            dish01 => SIMD(:simd, 8, 4), # mma input 01
+            dish01 => SIMD(:simd, 8, 4), # mma input k, bits 01
             dish234 => Register(:dish, 4, 8),
-            dish56 => Thread(:thread, 1, 4), # mma input 23
-            dish78 => Warp(:warp, 1, 4),
-            beam012 => Thread(:thread, 4, 8), # mma output 012
-            beam3 => Register(:beam, 8, 2),
-            beam456 => Warp(:warp, 4, B ÷ 16), # since Wb = 6
+            dish56 => Thread(:thread, 1, 4), # mma input k, bits 23
+            dish78 => Warp(:warp, 1, Wd),
+            beam012 => Thread(:thread, 4, 8), # mma output m, bits 012
+            beam3 => Register(:beam, 8, num_A_beam_registers),
+            beam456 => Warp(:warp, Wd, Wb),
             polr => Block(:block, 1, P),
             freq => Block(:block, P, F),
         ),
@@ -342,6 +386,7 @@ function make_bb_kernel()
         )
 
         load!(emitter, :s => layout_s_registers, :s_memory => layout_s_global)
+        apply!(emitter, :s, [:s], (s,) -> :($s - $σ))
 
         load!(emitter, :A => layout_A0_registers, :A_memory => layout_A_memory; align=16)
         permute!(emitter, :A, :A, Register(:cplx, 1, C), SIMD(:simd, 16, 2))
@@ -355,9 +400,16 @@ function make_bb_kernel()
         loop!(emitter, Time(:time, loopT2.offset, loopT2.length) => loopT2) do emitter
 
             # Step 1: transferring global memory to shared memory
-            block!(emitter) do emitter
-                load!(emitter, :E => layout_E_registers, :E_memory => layout_E_memory; align=16)
-                store!(emitter, :E_shared => layout_E_shared, :E)
+            if!(emitter, :(IndexSpaces.cuda_warpidx() < $(Int32(num_warps_for_Ecopy)))) do emitter
+                unrolled_loop!(
+                    emitter,
+                    Time(:time, 4 * num_time_warps_for_Ecopy, num_time_iters_for_Ecopy) =>
+                        Loop(:Ecopy, 4 * num_time_warps_for_Ecopy, num_time_iters_for_Ecopy),
+                ) do emitter
+                    load!(emitter, :E => layout_E_registers, :E_memory => layout_E_memory; align=16)
+                    store!(emitter, :E_shared => layout_E_shared, :E)
+                    nothing
+                end
                 nothing
             end
             sync_threads!(emitter)
@@ -391,23 +443,6 @@ function make_bb_kernel()
                     unrolled_loop!(emitter, Dish(:dish, loopD.offset, loopD.length) => loopD) do emitter
                         select!(emitter, :AselBD, :AselB, Register(:dish, 4, 8) => loopD)
                         split!(emitter, [:Aim, :Are], :AselBD, cplx)
-
-                        layout_E0_registers = Layout(
-                            Dict(
-                                int4value => SIMD(:simd, 1, 4),
-                                cplx => SIMD(:simd, 4, 2),
-                                dish01 => SIMD(:simd, 8, 4),
-                                dish234 => loopD,
-                                dish56 => Thread(:thread, 1, 4),
-                                dish78 => Warp(:warp, 1, 4), # since Wd = 4
-                                time012 => Thread(:thread, 4, 8),
-                                time34 => loopT3,
-                                time56 => loopT2,
-                                time7etc => loopT1,
-                                polr => Block(:block, 1, P),
-                                freq => Block(:block, P, F),
-                            ),
-                        )
 
                         load!(emitter, :E0 => layout_E0_registers, :E_shared => layout_E_shared)
 
@@ -576,11 +611,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         println("Compiling kernel...")
     end
     nthreads = 32
-    nwarps = B ÷ 4              # TODO: calculate automatically
-    nblocks = P * F             # TODO: calculate automatically
-    # @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
-
+    nwarps = Wb * Wd * Wp
+    nblocks = (P ÷ Wp) * F
     blocks_per_sm = 1           # TODO: calculate automatically
+    @assert Wb * Wd * Wp * blocks_per_sm ≤ 32
+
+    # @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = nthreads * nwarps blocks_per_sm = blocks_per_sm bb(
         CUDA.zeros(Int8x4, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Int4x8, 0)
     )
@@ -594,10 +630,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         open("output/bb.jl", "w") do fh
             println(fh, bb_kernel)
         end
-        kernel_name = let
-            line = filter(line -> match(r"\.globl", line) ≠ nothing, readlines("output/bb.ptx"))[begin]
-            match(r"\.globl\s+(\S+)", line).captures[1]
+        ptx = read("output/bb.ptx", String)
+        ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
+        open("output/bb.ptx", "w") do fh
+            write(fh, ptx)
         end
+        kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
         open("output/bb.yaml", "w") do fh
             print(
                 fh,
@@ -664,20 +702,20 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     println("Setting up input data...")
     map!(i -> zero(Int8x4), A_memory, A_memory)
     map!(i -> zero(Int4x8), E_memory, E_memory)
-    map!(i -> Int32(1), s_memory, s_memory)
+    map!(i -> Int32(σ + 1), s_memory, s_memory)
     map!(i -> zero(Int4x8), J_wanted, J_wanted)
     # map!(i -> rand(Int8x4), A_memory, A_memory)
     # map!(i -> rand(Int4x8), E_memory, E_memory)
     # map!(i -> rand(Int32(1):Int32(10)), s_memory, s_memory)
 
-    input = :zero
+    input = :random
     if input == :zero
         # do nothing
     elseif input == :random
         Random.seed!(0)
 
         # Choose all s
-        s_memory .= rand(1:10, F * P * B)
+        s_memory .= rand((σ + 1):(σ + 10), F * P * B)
 
         # Choose A and E
         for iter in 1:1000
@@ -829,24 +867,24 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # open("output/bb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # open("output/bb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(compile_only=true)
-    #     end
-    # end
-    # main(; output_kernel=true)
+    # Output kernel
+    open("output/bb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    open("output/bb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
+    main(; output_kernel=true)
 
     # # Run test
     # main(; run_selftest=true)
 
-    # Run benchmark
-    main(; nruns=100)
+    # # Run benchmark
+    # main(; nruns=100)
 
     # # Regular run, also for profiling
     # main()
