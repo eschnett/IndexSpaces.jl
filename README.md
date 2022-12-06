@@ -17,12 +17,12 @@ code; these tests need to be run manually.)
 
 Run benchmarks:
 ```sh
-julia --project=@. --optimize=3 kernels/bb.jl
+julia --optimize=3 --project=@. --threads=$(nproc) kernels/bb.jl
 ```
 
 Run with profiling:
 ```sh
-ncu -f -o profile --set full --target-processes all env LD_LIBRARY_PATH="/home/eschnett/julia-1.8/lib/julia:$LD_LIBRARY_PATH" ~/julia-1.8/bin/julia --project=@. --optimize=3 kernels/bb.jl
+ncu -f -o profile --set full --target-processes all env LD_LIBRARY_PATH="/home/eschnett/julia-1.8/lib/julia:$LD_LIBRARY_PATH" ~/julia-1.8/bin/julia --optimize=3 --project=@. --threads=$(nproc) kernels/bb.jl
 ```
 The juliaup-installed Julia does not work.
 One cannot extract PTX or SASS while profiling.

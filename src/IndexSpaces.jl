@@ -5,6 +5,12 @@ using CUDASIMDTypes
 
 ################################################################################
 
+@inline unreachable() = Core.Intrinsics.llvmcall("unreachable;", Nothing, Tuple{})
+# @inline unreachable() = @assert false
+# @inline unreachable() = nothing
+
+################################################################################
+
 export i8, i16, i32, i64, u8, u16, u32, u64
 struct IntLiteral{I<:Integer} <: Integer end
 Base.convert(::Type{I}, ::IntLiteral{J}) where {I<:Integer,J<:Integer} = convert(I, J(1))
@@ -140,14 +146,27 @@ struct Layout{Typ1,Typ2}
     function Layout{Typ1,Typ2}(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2}
         @assert Typ1 isa IndexType
         @assert Typ2 isa IndexType
-        pairwise_disjoint(collect(keys(dict))) || throw(ArgumentError("Layout: $Typ1 indices (keys) are overlapping"))
-        pairwise_disjoint(collect(values(dict))) || throw(ArgumentError("Layout: $Typ2 indices (values) are overlapping"))
-        all(k.length == v.length for (k, v) in dict) || throw(
-            ArgumentError(
-                "Layout: Index space lengths disagree: " *
-                join(["lengths $(k.name)/$(v.name) = $(k.length)/$(v.length)" for (k, v) in dict], ", "),
-            ),
-        )
+        if !pairwise_disjoint(collect(keys(dict)))
+            names = sort!(unique([k.name for k in keys(dict)]))
+            ranges = [
+                "begin/end $(k.name) = $(k.offset)/$(k.offset * k.length)" for name in names for k in keys(dict) if k.name == name
+            ]
+            throw(ArgumentError("Layout: $Typ1 indices (keys) are overlapping: " * join(ranges, ", ")))
+        end
+        if !pairwise_disjoint(collect(values(dict)))
+            names = sort!(unique([v.name for v in values(dict)]))
+            ranges = [
+                "begin/end $(v.name) = $(v.offset)/$(v.offset * v.length)" for name in names for v in values(dict) if v.name == name
+            ]
+            throw(ArgumentError("Layout: $Type indices (values) are overlapping: " * join(ranges, ", ")))
+        end
+        if !all(k.length == v.length for (k, v) in dict)
+            names = sort!(unique([k.name for k in keys(dict)]))
+            lengths = [
+                "lengths $(k.name)/$(v.name) = $(k.length)/$(v.length)" for name in names for (k, v) in dict if k.name == name
+            ]
+            throw(ArgumentError("Layout: Index space lengths disagree: " * join(lengths, ", ")))
+        end
         return normalize!(new{Typ1,Typ2}(dict))
     end
     Layout(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2} = Layout{Typ1,Typ2}(dict)
@@ -346,6 +365,15 @@ end
 
 ################################################################################
 
+export KernelSetup
+struct KernelSetup
+    num_threads::Int
+    num_warps::Int
+    num_blocks::Int
+    num_blocks_per_sm::Int
+    shmem_bytes::Int
+end
+
 const Code = Union{Expr,Number,Symbol}
 
 # Remove line numbers. Line numbers are usually wrong because they
@@ -409,16 +437,17 @@ function evaluate_partially(expr::Expr)
 end
 
 struct State
+    kernel_setup::KernelSetup
     dict::Dict{Symbol,Int32}
 end
-State() = State(Dict{Symbol,Int32}())
-Base.copy(state::State) = State(copy(state.dict))
+State(kernel_setup::KernelSetup) = State(kernel_setup, Dict{Symbol,Int32}())
+Base.copy(state::State) = State(state.kernel_setup, copy(state.dict))
 
 function register_name(name::Symbol, state::State)
     return Symbol(join([name; [string(r) * string(state.dict[r]) for r in sort!(collect(keys(state.dict)))]], "_"))
 end
 
-function loop_over_registers(f, layout::Layout{Physics,Machine})
+function loop_over_registers(f, kernel_setup::KernelSetup, layout::Layout{Physics,Machine})
     registers = sort!(filter!(mach -> mach isa Register, collect(values(layout.dict))))
     function go(state::State, n::Int)
         if n == 0
@@ -426,15 +455,26 @@ function loop_over_registers(f, layout::Layout{Physics,Machine})
         else
             reg = registers[n]
             newstate = copy(state)
-            for r in 0:(reg.length - 1)
-                val = get(state.dict, reg.name, 0i32)
-                newstate.dict[reg.name] = val + reg.offset * r
-                go(newstate, n - 1)
+            if reg.length > 1
+                for r in 0:(reg.length - 1)
+                    val = get(state.dict, reg.name, 0i32)
+                    newstate.dict[reg.name] = val + reg.offset * r
+                    go(newstate, n - 1)
+                end
             end
         end
     end
-    go(State(), length(registers))
+    go(State(kernel_setup), length(registers))
     return nothing
+end
+
+function assert_inrange(x, start, stop)
+    start ≤ x < stop || IndexSpaces.unreachable()
+    return x
+end
+function assert_inrange(x, start, step, stop)
+    start ≤ x < stop && x % step == start || IndexSpaces.unreachable()
+    return x
 end
 
 cuda_threadidx() = 0i32
@@ -446,10 +486,18 @@ CUDA.@device_override cuda_blockidx() = blockIdx().x - 1i32
 
 indexvalue(::State, ::SIMD) = @assert false # needs to be handled by the caller
 indexvalue(state::State, register::Register) = state.dict[register.name]::Code
-indexvalue(::State, ::Thread) = :(IndexSpaces.cuda_threadidx())::Code
-indexvalue(::State, ::Warp) = :(IndexSpaces.cuda_warpidx())::Code
-indexvalue(::State, ::Block) = :(IndexSpaces.cuda_blockidx())::Code
-indexvalue(::State, loop::Loop) = loop.name::Code
+function indexvalue(state::State, ::Thread)
+    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0i32, $(Int32(state.kernel_setup.num_threads))))::Code
+end
+function indexvalue(state::State, ::Warp)
+    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0i32, $(Int32(state.kernel_setup.num_warps))))::Code
+end
+function indexvalue(state::State, ::Block)
+    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
+end
+function indexvalue(::State, loop::Loop)
+    return :(IndexSpaces.assert_inrange($(loop.name), 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
+end
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
@@ -535,12 +583,13 @@ Base.setindex!(env::Environment, layout::Layout{Physics,Machine}, var::Symbol) =
 
 export Emitter
 struct Emitter
+    kernel_setup::KernelSetup
     environment::Environment
     output_environment::Environment
     init_statements::Vector{Code}
     statements::Vector{Code}
 end
-Emitter() = Emitter(Environment(), Environment(), Code[], Code[])
+Emitter(kernel_setup::KernelSetup) = Emitter(kernel_setup, Environment(), Environment(), Code[], Code[])
 
 ################################################################################
 
@@ -550,7 +599,7 @@ export block!
 function block!(body!, emitter::Emitter)
     environment′ = copy(emitter.environment)
 
-    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
+    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
     for (k, v) in emitter′.output_environment
@@ -575,7 +624,7 @@ export if!
 function if!(body!, emitter::Emitter, cond::Code)
     environment′ = copy(emitter.environment)
 
-    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
+    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
     for (k, v) in emitter′.output_environment
@@ -603,7 +652,7 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
+    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
     for (k, v) in emitter′.output_environment
@@ -631,7 +680,7 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},L
     environment′ = copy(emitter.environment)
     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-    emitter′ = Emitter(environment′, Environment(), Code[], Code[])
+    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
 
     for (k, v) in emitter′.output_environment
@@ -718,7 +767,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
     emitter.environment[reg_var] = reg_layout
 
     if align == 4
-        loop_over_registers(reg_layout) do state
+        loop_over_registers(emitter.kernel_setup, reg_layout) do state
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
@@ -734,7 +783,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
-        loop_over_registers(tmp_layout) do state
+        loop_over_registers(emitter.kernel_setup, tmp_layout) do state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
@@ -808,7 +857,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
     reg_layout = emitter.environment[reg_var]
 
     if align == 4
-        loop_over_registers(reg_layout) do state
+        loop_over_registers(emitter.kernel_setup, reg_layout) do state
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
@@ -824,7 +873,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
-        loop_over_registers(tmp_layout) do state
+        loop_over_registers(emitter.kernel_setup, tmp_layout) do state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
@@ -907,7 +956,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
         @assert false
     end
 
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
@@ -962,10 +1011,10 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     push!(
         emitter.statements,
         quote
-            is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0
+            is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0x0
         end,
     )
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
@@ -1035,7 +1084,7 @@ function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{
     value_tag = indextag(value)
     @assert value_tag isa ValueTag
 
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
@@ -1103,7 +1152,7 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     # value_tag = indextag(value)
     # @assert value_tag isa ValueTag
 
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, 0i32) + Int32(0 * register.offset)
@@ -1203,7 +1252,7 @@ function narrow3!(
     @assert simd2_bit == 3
     @assert simd3_bit == 4
 
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state2 = copy(state)
@@ -1270,7 +1319,7 @@ function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, reg
         emitter.environment[res] = res_layout
     end
 
-    loop_over_registers(res_layout) do state
+    loop_over_registers(emitter.kernel_setup, res_layout) do state
         for (n, res) in enumerate(ress)
             state′ = copy(state)
             state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
@@ -1309,7 +1358,7 @@ function Base.merge!(
     res_layout[index] = register
     emitter.environment[res] = res_layout
 
-    loop_over_registers(var_layout) do state
+    loop_over_registers(emitter.kernel_setup, var_layout) do state
         for (n, var) in enumerate(vars)
             state′ = copy(state)
             state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
@@ -1327,20 +1376,24 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     register, loop = register_loop
 
     var_layout = emitter.environment[var]
-    phys_register = inv(var_layout)[register]
+    phys_register = register.length == 1 ? nothing : inv(var_layout)[register]
 
     @assert res ∉ emitter.environment
     res_layout = copy(var_layout)
-    delete!(res_layout, phys_register)
-    res_layout[phys_register] = loop
+    if phys_register ≢ nothing
+        delete!(res_layout, phys_register)
+        res_layout[phys_register] = loop
+    end
     value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
 
-    loop_over_registers(res_layout) do state
+    loop_over_registers(emitter.kernel_setup, res_layout) do state
         res_name = register_name(res, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
-            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
+            if loop.length > 1
+                state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
+            end
             var_name = register_name(var, state′)
             if i == 0
                 push!(emitter.statements, :($res_name = zero($value_type)))
@@ -1364,21 +1417,25 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
     loop, register = loop_register
 
     var_layout = emitter.environment[var]
-    phys_loop = inv(var_layout)[loop]
+    phys_loop = loop.length == 1 ? nothing : inv(var_layout)[loop]
 
     @assert res ∉ emitter.environment
     res_layout = copy(var_layout)
-    delete!(res_layout, phys_loop)
-    res_layout[phys_loop] = register
+    if phys_loop ≢ nothing
+        delete!(res_layout, phys_loop)
+        res_layout[phys_loop] = register
+    end
     value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
     emitter.output_environment[res] = res_layout
 
-    loop_over_registers(var_layout) do state
+    loop_over_registers(emitter.kernel_setup, var_layout) do state
         var_name = register_name(var, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
-            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
+            if loop.length > 1
+                state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32(i)
+            end
             res_name = register_name(res, state′)
             push!(emitter.init_statements, :($res_name = zero($value_type)))
             push!(
@@ -1511,7 +1568,7 @@ function mma_row_col_m8n8k16_s8!(
 
     tmp_layout = copy(D_layout)
     delete!(tmp_layout, C_col[1])
-    loop_over_registers(tmp_layout) do state
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[C_col[1].name] = get(state0.dict, C_col[1].name, 0i32) + Int32(0 * C_col[1].offset)
@@ -1542,7 +1599,7 @@ function apply!(emitter::Emitter, res::Symbol, res_layout::Layout{Physics,Machin
         value_bits += 1
     end
 
-    loop_over_registers(res_layout) do state
+    loop_over_registers(emitter.kernel_setup, res_layout) do state
         res_name = register_name(res, state)
         # TODO: Check type
         # TODO: Allow type changes
@@ -1558,6 +1615,9 @@ function apply!(emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, cod
     var_layout = var_layouts[1]
     # We allow the second and following layouts to be "smaller" than the first
     # @assert all(vl == var_layout for vl in var_layouts)
+    if !all(vl ∈ var_layout for vl in var_layouts)
+        @show var_layout var_layouts
+    end
     @assert all(vl ∈ var_layout for vl in var_layouts)
 
     # res might or might not exist
@@ -1576,10 +1636,10 @@ function apply!(emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, cod
     # Keep only those state symbols that are in the layout
     function filter_state(state::State, layout::Layout)
         names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
-        return State(filter(kv -> kv[1] ∈ names, state.dict))
+        return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
     end
 
-    loop_over_registers(res_layout) do state
+    loop_over_registers(emitter.kernel_setup, res_layout) do state
         var_states = [filter_state(state, var_layout) for var_layout in var_layouts]
         res_name = register_name(res, state)
         var_names = [register_name(var, var_state) for (var, var_state) in zip(vars, var_states)]
