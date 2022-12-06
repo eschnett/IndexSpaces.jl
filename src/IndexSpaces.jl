@@ -908,6 +908,17 @@ end
 
 # Layout rearrangements
 
+function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, index1::Index{Physics}, index2::Index{Physics})
+    @assert index1 ≠ index2
+    var_layout = emitter.environment[var]
+    if var_layout[index1] isa Register
+        permute!(emitter, res, var, var_layout[index1], var_layout[index2])
+    else
+        permute!(emitter, res, var, var_layout[index2], var_layout[index1])
+    end
+    return nothing
+end
+
 get_lo4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val << 0x0, r1.val << 0x4))
 get_hi4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val >> 0x4, r1.val >> 0x0))
 get_lo8(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4}} = T(prmt(r0.val, r1.val, 0x6240))
@@ -922,9 +933,9 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     # @assert res ∉ emitter.environment
 
     @assert register.length == 2
-    @assert ispow2(register.offset)
-    register_bit = trailing_zeros(register.offset)
-    @assert register.offset == 1 << register_bit
+    # @assert ispow2(register.offset)
+    # register_bit = trailing_zeros(register.offset)
+    # @assert register.offset == 1 << register_bit
     register_phys = inv(var_layout)[register]
 
     @assert simd.length == 2
@@ -1062,9 +1073,9 @@ function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{
     simd_phys = inv(var_layout)[simd]
 
     @assert register.length == 2
-    @assert ispow2(register.offset)
-    register_bit = trailing_zeros(register.offset)
-    @assert register.offset == 1 << register_bit
+    # @assert ispow2(register.offset)
+    # register_bit = trailing_zeros(register.offset)
+    # @assert register.offset == 1 << register_bit
 
     tmp_layout = copy(var_layout)
     delete!(tmp_layout, simd_phys)
@@ -1125,9 +1136,9 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     # @assert res ∉ emitter.environment
 
     @assert register.length == 2
-    @assert ispow2(register.offset)
-    register_bit = trailing_zeros(register.offset)
-    @assert register.offset == 1 << register_bit
+    # @assert ispow2(register.offset)
+    # register_bit = trailing_zeros(register.offset)
+    # @assert register.offset == 1 << register_bit
     register_phys = inv(var_layout)[register]
 
     @assert simd.length == 2
