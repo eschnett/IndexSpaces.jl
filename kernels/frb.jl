@@ -49,6 +49,14 @@ const Tr = idiv(Touter, 2 * Tω)
 # Fsh1 layout
 const ΣF1 = D == 64 ? 260 : 257
 
+# Fsh2 layout
+const ΣF2 = D == 32 * (M + 1) + Mt
+
+# Registers/thread
+
+const RF1 = (D + W - 1) ÷ W
+const RF2 = Mr * Tr
+
 # Machine setup
 
 const num_simd_bits = 32
@@ -93,9 +101,11 @@ const layout_Fsh1_shared = Layout(
         Cplx(:cplx, 1, 2) => SIMD(:simd, 16, 2),
         Dish(:dish, 1, 8) => Shared(:shared, 32, 8),
         Dish(:dish, 8, idiv(D, 8)) => Shared(:shared, ΣF1, idiv(D, 8)),
+        Freq(:freq, 1, F) => Block(:block, 1, F),
+        Polr(:polr, 1, 2) => SIMD(:simd, 4, 2),
         Time(:time, 1, idiv(Touter, 2)) => Shared(:shared, 1, idiv(Touter, 2)),
         Time(:time, idiv(Touter, 2), 2) => SIMD(:simd, 8, 2),
-        Polr(:polr, 1, 2) => SIMD(:simd, 4, 2),
+        Time(:time, Touter, idiv(T, Touter)) => Loop(:T1, Touter, idiv(T, Touter)),
     ),
 )
 
@@ -153,6 +163,25 @@ function copy_global_memory_to_Fsh1!(emitter)
     return nothing
 end
 
+# Reading shared memory (Fsh1) into registers (Freg1) (section 4.7)
+function read_Fsh1!(emitter)
+    layout_Freg1_registers = Layout(
+        Dict(
+            IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+            Cplx(:cplx, 1, 2) => SIMD(:simd, 16, 2),
+            Dish(:dish, 1, W) => Warp(:warp, 1, W),
+            Dish(:dish, W, RF1) => Register(:dish, W, RF1),
+            Freq(:freq, 1, F) => Block(:block, 1, F),
+            Polr(:polr, 1, 2) => SIMD(:simd, 4, 2),
+            Time(:time, 1, idiv(Touter, 2)) => Thread(:thread, 1, idiv(Touter, 2)),
+            Time(:time, idiv(Touter, 2), 2) => SIMD(:simd, 8, 2),
+            Time(:time, Touter, idiv(T, Touter)) => Loop(:T1, Touter, idiv(T, Touter)),
+        ),
+    )
+    load!(emitter, :Freg1 => layout_Freg1_registers, :Fsh1 => layout_Fsh1_shared)
+    return nothing
+end
+
 function make_frb_kernel()
     emitter = Emitter(kernel_setup)
 
@@ -161,6 +190,12 @@ function make_frb_kernel()
     loop!(emitter, Time(:time, Touter, idiv(T, Touter)) => Loop(:T1, Touter, idiv(T, Touter))) do emitter
         copy_global_memory_to_Fsh1!(emitter)
         sync_threads!(emitter)
+
+        if!(emitter, :(cuda_threadidx() < idiv(Touter, 2))) do emitter
+            read_Fsh1!(emitter)
+            sync_threads!(emitter)
+            nothing
+        end
 
         #TODO ... more here ...
 
