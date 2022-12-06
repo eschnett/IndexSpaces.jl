@@ -6,7 +6,7 @@ using CUDASIMDTypes
 using IndexSpaces
 using Random
 
-idiv(i::Integer, j::Integer) = (@assert i % j == 0; i ÷ j)
+idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 shift(x::Number, s) = (@assert s ≥ 1; (x + (1 << (s - 1))) >> s)
 shift(x::Complex, s) = Complex(shift(x.re, s), shift(x.im, s))
 Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
@@ -37,7 +37,7 @@ const setup = full_chord
     const B = 96
     const P = 2
     const F₀ = 16
-    const F = 16 # idiv(84, 2)
+    const F = 16                # idiv(84, 2)
 
     const T1_stride = 128
     const T2_stride = 32
@@ -727,7 +727,7 @@ function make_bb_kernel()
 end
 
 println("[Creating bb kernel...]")
-bb_kernel = make_bb_kernel()
+const bb_kernel = make_bb_kernel()
 println("[Done creating bb kernel]")
 
 @eval function bb(A_memory, E_memory, s_memory, J_memory)
