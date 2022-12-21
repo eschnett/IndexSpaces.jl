@@ -572,9 +572,9 @@ function make_bb_kernel()
                         ),
                     )
 
-                    apply!(emitter, :Jurepos, layout_Jureim_registers, Int32(0))
-                    apply!(emitter, :Jureneg, layout_Jureim_registers, Int32(0))
-                    apply!(emitter, :Juim, layout_Jureim_registers, Int32(0))
+                    apply!(emitter, :Jurepos => layout_Jureim_registers, Int32(0))
+                    apply!(emitter, :Jureneg => layout_Jureim_registers, Int32(0))
+                    apply!(emitter, :Juim => layout_Jureim_registers, Int32(0))
 
                     unrolled_loop!(emitter, Dish(:dish, loopD.offset, loopD.length) => loopD) do emitter
                         select!(emitter, :AselBD, :AselB, Register(:dish, loopD.offset, loopD.length) => loopD)

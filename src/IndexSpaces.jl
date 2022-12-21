@@ -343,13 +343,33 @@ function Base.delete!(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,T
     return normalize!(layout)
 end
 
+function get_value_index(layout::Layout)
+    # We need to look for larger types first
+    for (bits, type, tag, name) in [
+        (5, Int32, IntValueTag, :intvalue),
+        (4, Int16x2, IntValueTag, :intvalue),
+        (3, Int8x4, IntValueTag, :intvalue),
+        (2, Int4x8, IntValueTag, :intvalue),
+        (5, Float32, FloatValueTag, :floatvalue),
+        (4, Float16x2, FloatValueTag, :floatvalue),
+        (4, BFloat16x2, BFloatValueTag, :bfloatvalue),
+    ]
+        value_index = Index{Physics,tag}(name, 1, 1 << bits)
+        if value_index ∈ layout
+            @assert layout[value_index] == SIMD(:simd, 1, 1 << bits)
+            return value_index
+        end
+    end
+    @assert false
+end
+
 function get_value_type(layout::Layout)
     # We need to look for larger types first
     for (bits, type, tag, name) in [
         (5, Int32, IntValueTag, :intvalue),
         (4, Int16x2, IntValueTag, :intvalue),
         (3, Int8x4, IntValueTag, :intvalue),
-        (1, Int4x8, IntValueTag, :intvalue),
+        (2, Int4x8, IntValueTag, :intvalue),
         (5, Float32, FloatValueTag, :floatvalue),
         (4, Float16x2, FloatValueTag, :floatvalue),
         (4, BFloat16x2, BFloatValueTag, :bfloatvalue),
@@ -852,7 +872,7 @@ function unsafe_store4_global!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{
 end
 
 export store!
-function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4)
+function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4, offset::Code=0)
     mem_var, mem_layout = mem
     reg_layout = emitter.environment[reg_var]
 
@@ -861,7 +881,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
-            push!(emitter.statements, :($mem_var[$addr + 0x1] = $reg_name))
+            push!(emitter.statements, :($mem_var[$addr + $offset + 0x1] = $reg_name))
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -894,7 +914,9 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
             addr = memory_index(reg_layout, mem_layout, vals)
             push!(
                 emitter.statements,
-                :(IndexSpaces.unsafe_store4_global!($mem_var, $addr + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name))),
+                :(IndexSpaces.unsafe_store4_global!(
+                    $mem_var, $addr + $offset + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
+                )),
             )
         end
     else
@@ -907,6 +929,52 @@ end
 ################################################################################
 
 # Layout rearrangements
+
+function CUDA.shfl_sync(threadmask::UInt32, val::T, thread::UInt32) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
+    return T(shfl_sync(threadmask, val.val, thread))
+end
+
+cuda_shfl_sync(threadmask, val, thread) = val
+CUDA.@device_override cuda_shfl_sync(threadmask, val, thread) = shfl_sync(threadmask, val, thread % UInt32 + 0x1)
+
+function Base.broadcast!(emitter::Emitter, res::Symbol, var::Symbol, index1_index2::Pair{<:Index{Physics},<:Index{Physics}})
+    index1, index2 = index1_index2
+    var_layout = emitter.environment[var]
+    broadcast!(emitter, res, var, var_layout[index1] => var_layout[index2])
+    return nothing
+end
+
+function Base.broadcast!(emitter::Emitter, res::Symbol, var::Symbol, register_thread::Pair{<:Register,<:Thread})
+    var_layout = emitter.environment[var]
+
+    register, thread = register_thread
+    @assert thread.length == register.length
+
+    thread_phys = inv(var_layout)[thread]
+
+    res_layout = copy(var_layout)
+    delete!(res_layout, thread_phys)
+    res_layout[thread_phys] = register
+    emitter.environment[res] = res_layout
+
+    loop_over_registers(emitter.kernel_setup, var_layout) do state
+        var_name = register_name(var, state)
+        for i in 0:(thread.length - 1)
+            state0 = copy(state)
+            state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(i * register.offset)
+            res0_name = register_name(res, state0)
+            push!(
+                emitter.statements,
+                quote
+                    $res0_name = IndexSpaces.cuda_shfl_sync(0xffffffff, $var_name, $i)
+                end,
+            )
+        end
+        nothing
+    end
+
+    return nothing
+end
 
 function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, index1::Index{Physics}, index2::Index{Physics})
     @assert index1 ≠ index2
@@ -933,9 +1001,6 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     # @assert res ∉ emitter.environment
 
     @assert register.length == 2
-    # @assert ispow2(register.offset)
-    # register_bit = trailing_zeros(register.offset)
-    # @assert register.offset == 1 << register_bit
     register_phys = inv(var_layout)[register]
 
     @assert simd.length == 2
@@ -982,9 +1047,6 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     return nothing
 end
 
-function CUDA.shfl_xor_sync(threadmask::UInt32, val::T, mask::UInt32) where {T<:Union{Float32,Int32}}
-    return reinterpret(T, shfl_xor_sync(threadmask, reinterpret(UInt32, val), mask))
-end
 function CUDA.shfl_xor_sync(threadmask::UInt32, val::T, mask::UInt32) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
     return T(shfl_xor_sync(threadmask, val.val, mask))
 end
@@ -1058,66 +1120,171 @@ function int4x8_to_2int8x4_unshifted_withoffset(a::Int4x8)
 end
 
 export widen!
-function widen!(emitter::Emitter, res::Symbol, var::Symbol, simd_register::Pair{SIMD,Register}; unshifted_withoffset::Bool=false)
+function widen!(
+    emitter::Emitter,
+    res::Symbol,
+    var::Symbol,
+    simd_register::Pair{SIMD,Register};
+    newtype::Union{Nothing,Type}=nothing,
+    unshifted_withoffset::Bool=false,
+)
     simd, register = simd_register
 
     var_layout = emitter.environment[var]
+    var_value = get_value_index(var_layout)::Index{Physics}
+    @assert simd.length == 2
+    @assert ispow2(simd.offset)
 
     # res may or may not already exist
     # @assert res ∉ emitter.environment
 
-    @assert simd.length == 2
-    @assert ispow2(simd.offset)
-    simd_bit = trailing_zeros(simd.offset)
-    @assert simd.offset == 1 << simd_bit
+    # Ensure that the new bits are the lowest non-value bits
+    @assert simd.offset == var_value.length
     simd_phys = inv(var_layout)[simd]
 
-    @assert register.length == 2
-    # @assert ispow2(register.offset)
-    # register_bit = trailing_zeros(register.offset)
-    # @assert register.offset == 1 << register_bit
+    @assert register.length == simd.length
 
     tmp_layout = copy(var_layout)
+    delete!(tmp_layout, var_value)
     delete!(tmp_layout, simd_phys)
 
     res_layout = copy(tmp_layout)
     res_layout[simd_phys] = register
 
-    inv_res_layout = inv(res_layout)
-    value = inv_res_layout[SIMD(:simd, 1, 2)]
-    value_tag = indextag(value)::ValueTag
-    res_layout[Index{Physics,value_tag}(value.name, simd.offset, simd.length)] = simd
+    @assert newtype ≡ nothing || newtype <: Index{Physics}
+    res_tag = newtype ≡ nothing ? indextag(var_value) : indextag(newtype)
+    res_value = Index{Physics,res_tag}(var_value.name, var_value.offset, var_value.length * simd.length)
+
+    res_layout[res_value] = SIMD(:simd, var_value.offset, var_value.length * simd.length)
 
     emitter.environment[res] = res_layout
 
-    inv_res_layout = inv(res_layout)
-    value = inv_res_layout[SIMD(:simd, 1, 2)]
-    value_tag = indextag(value)
-    @assert value_tag isa ValueTag
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+        var_name = register_name(var, state)
+        states = State[]
+        res_names = Symbol[]
+        for i in 0:(register.offset):(register.offset * register.length - 1)
+            state′ = copy(state)
+            state′.dict[register.name] = get(state′.dict, register.name, Int32(0)) + Int32(i)
+            res_name′ = register_name(res, state′)
+            push!(states, state′)
+            push!(res_names, res_name′)
+        end
+        if indextag(var_value) == indextag(res_value) == IntValueTag
+            if var_value.length == 4 && res_value.length == 8
+                if unshifted_withoffset
+                    stmt = :(($(res_names...),) = IndexSpaces.int4x8_to_2int8x4_unshifted_withoffset($var_name))
+                else
+                    stmt = :(($(res_names...),) = convert(NTuple{2,Int8x4}, $var_name))
+                end
+            elseif var_value.length == 8 && res_value.length == 16
+                stmt = :(($(res_names...),) = convert(NTuple{2,Int16x2}, $var_name))
+            elseif var_value.length == 16 && res_value.length == 32
+                stmt = :(($(res_names...),) = convert(NTuple{2,Int32}, $var_name))
+            else
+                @assert false
+            end
+        elseif indextag(var_value) == IntValueTag && indextag(res_value) == FloatValueTag
+            if var_value.length == 8 && res_value.length == 16
+                stmt = :(($(res_names...),) = convert(NTuple{2,Float16x2}, $var_name))
+            elseif var_value.length == 16 && res_value.length == 32
+                stmt = :(($(res_names...),) = convert(NTuple{2,Float32}, $var_name))
+            else
+                @assert false
+            end
+        else
+            # TODO: Implement Float->Float, Float->Int, BFloat
+            @assert false
+        end
+        push!(emitter.statements, stmt)
+    end
+
+    return nothing
+end
+
+export widen2!
+function widen2!(
+    emitter::Emitter,
+    res::Symbol,
+    var::Symbol,
+    simd_register1::Pair{SIMD,Register},
+    simd_register2::Pair{SIMD,Register};
+    newtype::Union{Nothing,Type}=nothing,
+    unshifted_withoffset::Bool=false,
+)
+    simd1, register1 = simd_register1
+    simd2, register2 = simd_register2
+
+    var_layout = emitter.environment[var]
+    var_value = get_value_index(var_layout)::Index{Physics}
+    @assert simd1.length == 2 && simd2.length == 2
+    @assert ispow2(simd1.offset) && ispow2(simd2.offset)
+
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
+
+    # Ensure that the new bits are the lowest non-value bits
+    @assert simd1.offset == var_value.length
+    @assert simd2.offset == var_value.length * simd1.length
+    simd1_phys = inv(var_layout)[simd1]
+    simd2_phys = inv(var_layout)[simd2]
+
+    @assert register1.length == simd1.length
+    @assert register2.length == simd2.length
+
+    tmp_layout = copy(var_layout)
+    delete!(tmp_layout, var_value)
+    delete!(tmp_layout, simd1_phys)
+    delete!(tmp_layout, simd2_phys)
+
+    res_layout = copy(tmp_layout)
+    res_layout[simd1_phys] = register1
+    res_layout[simd2_phys] = register2
+
+    @assert newtype ≡ nothing || newtype <: Index{Physics}
+    res_tag = newtype ≡ nothing ? indextag(var_value) : indextag(newtype)
+    res_value_name = get(
+        Dict(IntValue => :intvalue, FloatValue => :floatvalue, BFloatValue => :bfloatvalue), newtype, var_value.name
+    )
+    res_value = Index{Physics,res_tag}(res_value_name, var_value.offset, var_value.length * simd1.length * simd2.length)
+
+    res_layout[res_value] = SIMD(:simd, var_value.offset, var_value.length * simd1.length * simd2.length)
+
+    emitter.environment[res] = res_layout
 
     loop_over_registers(emitter.kernel_setup, tmp_layout) do state
-        state0 = copy(state)
-        state1 = copy(state)
-        state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
-        state1.dict[register.name] = get(state1.dict, register.name, Int32(0)) + Int32(1 * register.offset)
-        res0_name = register_name(res, state0)
-        res1_name = register_name(res, state1)
         var_name = register_name(var, state)
-        if value_tag == IntValueTag && simd_bit == 2
-            if unshifted_withoffset
-                stmt = :(($res0_name, $res1_name) = IndexSpaces.int4x8_to_2int8x4_unshifted_withoffset($var_name))
-            else
-                stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int8x4}, $var_name))
+        states = State[]
+        res_names = Symbol[]
+        for j in 0:(register2.offset):(register2.offset * register2.length - 1)
+            for i in 0:(register1.offset):(register1.offset * register1.length - 1)
+                state′ = copy(state)
+                state′.dict[register1.name] = get(state′.dict, register1.name, Int32(0)) + Int32(i)
+                state′.dict[register2.name] = get(state′.dict, register2.name, Int32(0)) + Int32(j)
+                res_name′ = register_name(res, state′)
+                push!(states, state′)
+                push!(res_names, res_name′)
             end
-        elseif value_tag == IntValueTag && simd_bit == 3
-            stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int16x2}, $var_name))
-        elseif value_tag == IntValueTag && simd_bit == 4
-            stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Int32}, $var_name))
-        elseif value_tag == FloatValueTag && simd_bit == 4
-            stmt = :(($res0_name, $res1_name) = convert(NTuple{2,Float32}, $var_name))
-        elseif value_tag == BFloatValueTag && simd_bit == 4
-            stmt = :(($res0_name, $res1_name) = convert(NTuple{2,BFloat32}, $var_name))
+        end
+        if indextag(var_value) == indextag(res_value) == IntValueTag
+            if var_value.length == 4 && res_value.length == 16
+                stmt = :(($(res_names...),) = convert(NTuple{4,Int16x2}, $var_name))
+            elseif var_value.length == 8 && res_value.length == 32
+                stmt = :(($(res_names...),) = convert(NTuple{4,Int32}, $var_name))
+            else
+                @assert false
+            end
+        elseif indextag(var_value) == IntValueTag && indextag(res_value) == FloatValueTag
+            if var_value.length == 4 && res_value.length == 16
+                stmt = :(($(res_names...),) = convert(NTuple{4,Float16x2}, $var_name))
+            elseif var_value.length == 8 && res_value.length == 32
+                stmt = :(($(res_names...),) = convert(NTuple{4,Float32}, $var_name))
+            else
+                @show var_value res_value
+                @assert false
+            end
         else
+            # TODO: Implement Float->Int, BFloat
             @assert false
         end
         push!(emitter.statements, stmt)
@@ -1136,9 +1303,6 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     # @assert res ∉ emitter.environment
 
     @assert register.length == 2
-    # @assert ispow2(register.offset)
-    # register_bit = trailing_zeros(register.offset)
-    # @assert register.offset == 1 << register_bit
     register_phys = inv(var_layout)[register]
 
     @assert simd.length == 2
@@ -1597,20 +1761,21 @@ function mma_row_col_m8n8k16_s8!(
 end
 
 export apply!
-function apply!(emitter::Emitter, res::Symbol, res_layout::Layout{Physics,Machine}, code::Code)
+function apply!(emitter::Emitter, res_layout::Pair{Symbol,Layout{Physics,Machine}}, code::Code)
+    res, layout = res_layout
     # res might or might not exist
     # @assert res ∉ emitter.environment
-    emitter.environment[res] = res_layout
+    emitter.environment[res] = layout
 
-    inv_res_layout = inv(res_layout)
-    value = inv_res_layout[SIMD(:simd, 1, 2)]
+    inv_layout = inv(layout)
+    value = inv_layout[SIMD(:simd, 1, 2)]
     value_tag = indextag(value)::ValueTag
     value_bits = 0
-    while Index{Physics,value_tag}(value.name, 1, 1 << (value_bits + 1)) in res_layout
+    while Index{Physics,value_tag}(value.name, 1, 1 << (value_bits + 1)) in layout
         value_bits += 1
     end
 
-    loop_over_registers(emitter.kernel_setup, res_layout) do state
+    loop_over_registers(emitter.kernel_setup, layout) do state
         res_name = register_name(res, state)
         # TODO: Check type
         # TODO: Allow type changes
