@@ -629,7 +629,7 @@ function make_bb_kernel()
 
                     # TODO: Break ties to even?
                     @assert σ ≥ 1
-                    apply!(emitter, :Ju, [:Ju], Ju -> :(($Ju + $(Int32(1 << (σ - 1)))) >> $(UInt32(σ))))
+                    apply!(emitter, :Ju, [:Ju], (Ju,) -> :(($Ju + $(Int32(1 << (σ - 1)))) >> $(UInt32(σ))))
 
                     # Note: `cvs_pack_s16` saturates, so we don't need to clamp
                     # Note: We wouldn't need to clamp anyway since the shift above prevents overflow
@@ -1025,11 +1025,11 @@ if CUDA.functional()
     # end
     # main(; output_kernel=true)
 
-    # # Run test
-    # main(; run_selftest=true)
+    # Run test
+    main(; run_selftest=true)
 
-    # Run benchmark
-    main(; nruns=100)
+    # # Run benchmark
+    # main(; nruns=100)
 
     # # Regular run, also for profiling
     # main()

@@ -1336,15 +1336,15 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
         var0_name = register_name(var, state0)
         var1_name = register_name(var, state1)
         if value_tag == IntValueTag && simd_bit == 2
-            stmt = :($res_name = convert(Int4x8, ($var0_name, $var1_name)))
+            stmt = :($res_name = Int4x8(($var0_name, $var1_name)))
         elseif value_tag == IntValueTag && simd_bit == 3
-            stmt = :($res_name = convert(Int8x4, ($var0_name, $var1_name)))
+            stmt = :($res_name = Int8x4(($var0_name, $var1_name)))
         elseif value_tag == IntValueTag && simd_bit == 4
-            stmt = :($res_name = convert(Int16x2, ($var0_name, $var1_name)))
+            stmt = :($res_name = Int16x2(($var0_name, $var1_name)))
         elseif value_tag == FloatValueTag && simd_bit == 4
-            stmt = :($res_name = convert(Float16x2, ($var0_name, $var1_name)))
+            stmt = :($res_name = Float16x2(($var0_name, $var1_name)))
         elseif value_tag == BFloatValueTag && simd_bit == 4
-            stmt = :($res_name = convert(BFloat16x2, ($var0_name, $var1_name)))
+            stmt = :($res_name = BFloat16x2(($var0_name, $var1_name)))
         else
             @assert false
         end
@@ -1651,6 +1651,43 @@ CUDA.@device_override function mma_m8n8k16(A::Int8x4, B::Int8x4, C::NTuple{2,Int
     )
 end
 
+mma_m16n8k8(A::NTuple{2,Float16x2}, B::Float16x2, C::NTuple{2,Float16x2}) = C
+CUDA.@device_override function mma_m16n8k8(A::NTuple{2,Float16x2}, B::Float16x2, C::NTuple{2,Float16x2})
+    D = Base.llvmcall(
+        """
+            %res = call {i32, i32} asm sideeffect "mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {\$0, \$1}, {\$2,\$3}, {\$4}, {\$5, \$6};", "=r,=r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
+            %res0 = extractvalue {i32, i32} %res, 0
+            %res1 = extractvalue {i32, i32} %res, 1
+            %val0 = insertvalue [2 x i32] undef, i32 %res0, 0
+            %val = insertvalue [2 x i32] %val0, i32 %res1, 1
+            ret [2 x i32] %val
+        """,
+        NTuple{2,Int32},
+        NTuple{5,Int32},
+        A[1].val % Int32,
+        A[2].val % Int32,
+        B.val % Int32,
+        C[1].val % Int32,
+        C[2].val % Int32,
+    )
+    return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
+end
+
+# __global__ void f(int* pd, const int* pa, const int* pb, const int *pc) {
+#     int a0 = pa[0];
+#     int a1 = pa[1];
+#     int b0 = pb[0];
+#     int c0 = pc[0];
+#     int c1 = pc[1];
+#     int d0, d1;
+#     // asm volatile("mov %0, %1;": "=r"(d0): "r"(c0));
+#     asm volatile("mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {%0, %1}, {%2, %3}, {%4}, {%5, %6};":
+#         "=r"(d0), "=r"(d1): "r"(a0), "r"(a1), "r"(b0), "r"(c0), "r"(c1));
+#     pd[0] = d0;
+#     pd[1] = d1;
+# }
+
+# TODO: combine `mma` functions
 export mma_row_col_m8n8k16_s8!
 function mma_row_col_m8n8k16_s8!(
     emitter::Emitter,
@@ -1742,7 +1779,7 @@ function mma_row_col_m8n8k16_s8!(
     @assert A_col == B_row
 
     tmp_layout = copy(D_layout)
-    delete!(tmp_layout, C_col[1])
+    delete!(tmp_layout, C_col[1]) # delete registers
     loop_over_registers(emitter.kernel_setup, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
@@ -1755,6 +1792,116 @@ function mma_row_col_m8n8k16_s8!(
         D0_name = register_name(D, state0)
         D1_name = register_name(D, state1)
         push!(emitter.statements, :(($D0_name, $D1_name) = IndexSpaces.mma_m8n8k16($A_name, $B_name, ($C0_name, $C1_name))))
+    end
+
+    return nothing
+end
+
+export mma_row_col_m16n8k8_f16!
+function mma_row_col_m16n8k8_f16!(
+    emitter::Emitter,
+    D::Symbol,
+    A_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    B_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    C_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+)
+    # D       = A       * B       + C
+    # D_ij    = A_ik    * B_kj    + C_ij
+    # D_16_8  = A_16_8  * B_8_8   + C_16_8
+    # Float16 = Float16 * Float16 + Float16
+
+    (A, (A_row, A_col)) = A_indices
+    (B, (B_row, B_col)) = B_indices
+    (C, (C_row, C_col)) = C_indices
+
+    A_layout = emitter.environment[A]
+    B_layout = emitter.environment[B]
+    C_layout = emitter.environment[C]
+    # D might or might not be identical to C
+    if D ≠ C
+        @assert D ∉ emitter.environment
+    end
+    D_layout = C_layout
+
+    inv_A_layout = inv(A_layout)
+    inv_B_layout = inv(B_layout)
+    inv_C_layout = inv(C_layout)
+    inv_D_layout = inv(D_layout)
+
+    A_value = inv_A_layout[SIMD(:simd, 1, 2)]
+    A_value_tag = indextag(A_value)::ValueTag
+    A_value_bits = 0
+    while Index{Physics,A_value_tag}(A_value.name, 1, 1 << (A_value_bits + 1)) in A_layout
+        A_value_bits += 1
+    end
+    @assert A_value_bits == 4
+
+    B_value = inv_B_layout[SIMD(:simd, 1, 2)]
+    B_value_tag = indextag(B_value)::ValueTag
+    B_value_bits = 0
+    while Index{Physics,B_value_tag}(B_value.name, 1, 1 << (B_value_bits + 1)) in B_layout
+        B_value_bits += 1
+    end
+    @assert B_value_bits == 4
+
+    C_value = inv_C_layout[SIMD(:simd, 1, 2)]
+    C_value_tag = indextag(C_value)::ValueTag
+    C_value_bits = 0
+    while Index{Physics,C_value_tag}(C_value.name, 1, 1 << (C_value_bits + 1)) in C_layout
+        C_value_bits += 1
+    end
+    @assert C_value_bits == 4
+
+    @assert length(A_col) == 3
+    @assert length(A_row) == 4
+    @assert A_layout[A_col[1]] == SIMD(:simd, 8, 2)
+    @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
+    @assert A_layout[A_col[3]] == Thread(:thread, 2, 2)
+    @assert A_layout[A_row[1]] == Thread(:thread, 4, 2)
+    @assert A_layout[A_row[2]] == Thread(:thread, 8, 2)
+    @assert A_layout[A_row[3]] == Thread(:thread, 16, 2)
+    A_layout[A_row[4]]::Register
+    @assert A_layout[A_row[4]].length == 2
+
+    @assert length(B_row) == 3
+    @assert length(B_col) == 3
+    @assert B_layout[B_row[1]] == SIMD(:simd, 16, 2)
+    @assert B_layout[B_row[2]] == Thread(:thread, 1, 2)
+    @assert B_layout[B_row[3]] == Thread(:thread, 2, 2)
+    @assert B_layout[B_col[1]] == Thread(:thread, 4, 2)
+    @assert B_layout[B_col[2]] == Thread(:thread, 8, 2)
+    @assert B_layout[B_col[3]] == Thread(:thread, 16, 2)
+
+    @assert length(C_row) == 4
+    @assert length(C_col) == 3
+    @assert C_layout[C_col[1]] == SIMD(:simd, 16, 2)
+    @assert C_layout[C_col[2]] == Thread(:thread, 1, 2)
+    @assert C_layout[C_col[3]] == Thread(:thread, 2, 2)
+    @assert C_layout[C_row[1]] == Thread(:thread, 4, 2)
+    @assert C_layout[C_row[2]] == Thread(:thread, 8, 2)
+    @assert C_layout[C_row[3]] == Thread(:thread, 16, 2)
+    C_layout[C_row[4]]::Register
+    @assert C_layout[C_row[4]].length == 2
+
+    # Check that physics indices match
+    @assert C_col == B_col
+    @assert C_row == A_row
+    @assert A_col == B_row
+
+    tmp_layout = copy(D_layout)
+    delete!(tmp_layout, C_row[4]) # delete registers
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+        state0 = copy(state)
+        state1 = copy(state)
+        state0.dict[C_row[4].name] = get(state0.dict, C_row[4].name, 0i32) + Int32(0 * C_row[4].offset)
+        state1.dict[C_row[4].name] = get(state1.dict, C_row[4].name, 0i32) + Int32(1 * C_row[4].offset)
+        A_name = register_name(A, state)
+        B_name = register_name(B, state)
+        C0_name = register_name(C, state0)
+        C1_name = register_name(C, state1)
+        D0_name = register_name(D, state0)
+        D1_name = register_name(D, state1)
+        push!(emitter.statements, :(($D0_name, $D1_name) = IndexSpaces.mma_m16n8k8($A_name, $B_name, ($C0_name, $C1_name))))
     end
 
     return nothing

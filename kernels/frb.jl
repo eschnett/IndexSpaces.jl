@@ -74,12 +74,14 @@ const num_blocks_per_sm = B
 
 # CHORD indices
 
-@enum CHORDTag CplxTag DishTag DishMTag DishNTag FreqTag PolrTag TimeTag
+@enum CHORDTag CplxTag DishTag DishMTag DishNTag BeamPTag BeamQTag FreqTag PolrTag TimeTag
 
 const Cplx = Index{Physics,CplxTag}
 const Dish = Index{Physics,DishTag}
 const DishM = Index{Physics,DishMTag}
 const DishN = Index{Physics,DishNTag}
+const BeamP = Index{Physics,BeamPTag}
+const BeamQ = Index{Physics,BeamQTag}
 const Freq = Index{Physics,FreqTag}
 const Polr = Index{Physics,PolrTag}
 const Time = Index{Physics,TimeTag}
@@ -108,7 +110,7 @@ const layout_W_memory = Layout(
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
         Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
         # TODO: Improve layout
-        # TODO: Only store DishN(1..N), zero DishN(N..Npad) while loading
+        # TODO: Only store DishN(1..N); zero DishN(N..Npad) while loading
         DishM(:dishM, 1, M) => Memory(:memory, 1, M),
         DishN(:dishN, 1, Npad) => Memory(:memory, M, Npad),
         Freq(:freq, 1, F) => Memory(:memory, M * Npad, F),
@@ -285,6 +287,38 @@ function do_first_fft!(emitter)
         newtype=FloatValue,
     )
     apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
+
+    # G_mq = Γ¹_qn WE_mn
+    # C_ij = A_ik  B_kj
+
+    # r = idiv(Npad, 8)
+    # n = idiv(Npad, 4) * c + d
+    # q = 8 * u + v
+    # Γ¹ = exp(π * im * c * v / 4)
+    # Γ² = exp(π * im * d * v / Npad)
+    layout_Γ¹_registers = Layout(
+        Dict(
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Cplx(:cplx_in, 1, C) => SIMD(:simd, 16, 2), # mma k0
+            DishN(:dishN, idiv(Npad, 4), 4) => Thread(:thread, 1, 4), # mma k1, k2
+            BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8), # mma i0, i1, i2
+            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2), # mma i3
+        ),
+    )
+    apply!(emitter, :Γ¹ => layout_Γ¹_registers, :(Float16x2(1, 2)))
+
+    mma_beamQs = [BeamQ(:beamQ, 1, 2), BeamQ(:beamQ, 2, 2), BeamQ(:beamQ, 4, 2), Cplx(:cplx, 1, 2)]
+    mma_dishNs = [Cplx(:cplx_in, 1, 2), DishN(:dishN, 1, 2), DishN(:dishN, 2, 2)]
+    #TODO mma_dishMs = [DishM(:dishM, 1, 2
+    mma_row_col_m16n8k8_f16!(
+        emitter, :G, :Γ¹ => (mma_beamQs, mma_dishNs), :WE => (mma_dishNs, mma_dishMs), :G0 => (mma_dishMs, mma_beamQs)
+    )
+
+    # Z = Γ¹ X
+    # W = Γ² Z
+    # Y = Γ³ W
+
+    # :G, :WE
 
     return nothing
 end

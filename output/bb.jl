@@ -1,5 +1,5 @@
-@inbounds begin #= /home/eschnett/src/jl/IndexSpaces/kernels/bb.jl:713 =#
-    s = s_memory[(((((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 192 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 96) + 0x01]
+@inbounds begin #= /home/eschnett/src/jl/IndexSpaces/kernels/bb.jl:719 =#
+    s = s_memory[((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4) % 96 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 96) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 192) + 0x01]
     s = s - 3
     (A_beam0_cplx0_dish0, A_beam0_cplx1_dish0, A_beam0_cplx0_dish4, A_beam0_cplx1_dish4) = IndexSpaces.unsafe_load4_global(
         A_memory,
@@ -10,18 +10,18 @@
                         (
                             (
                                 (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                        (
+                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam8_cplx0_dish0, A_beam8_cplx1_dish0, A_beam8_cplx0_dish4, A_beam8_cplx1_dish4) = IndexSpaces.unsafe_load4_global(
@@ -33,18 +33,20 @@
                         (
                             (
                                 (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
-                        (8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) +
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                        (
+                            (
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                            ) + 8
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam0_cplx0_dish8, A_beam0_cplx1_dish8, A_beam0_cplx0_dish12, A_beam0_cplx1_dish12) = IndexSpaces.unsafe_load4_global(
@@ -55,19 +57,21 @@
                     (
                         (
                             (
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 64) +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                ) + 64
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                        (
+                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam8_cplx0_dish8, A_beam8_cplx1_dish8, A_beam8_cplx0_dish12, A_beam8_cplx1_dish12) = IndexSpaces.unsafe_load4_global(
@@ -78,19 +82,23 @@
                     (
                         (
                             (
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 64) +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                ) + 64
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
-                        (8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) +
-                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                        (
+                            (
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                            ) + 8
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam0_cplx0_dish16, A_beam0_cplx1_dish16, A_beam0_cplx0_dish20, A_beam0_cplx1_dish20) = IndexSpaces.unsafe_load4_global(
@@ -102,20 +110,20 @@
                         (
                             (
                                 (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
                         (
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                        ) + 1
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                            (
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                            ) + 1
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam8_cplx0_dish16, A_beam8_cplx1_dish16, A_beam8_cplx0_dish20, A_beam8_cplx1_dish20) = IndexSpaces.unsafe_load4_global(
@@ -127,20 +135,22 @@
                         (
                             (
                                 (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
                         (
-                            (8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) +
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                        ) + 1
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                            (
+                                (
+                                    ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                    ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                                ) + 1
+                            ) + 8
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam0_cplx0_dish24, A_beam0_cplx1_dish24, A_beam0_cplx0_dish28, A_beam0_cplx1_dish28) = IndexSpaces.unsafe_load4_global(
@@ -151,21 +161,23 @@
                     (
                         (
                             (
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 64) +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                ) + 64
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
                         (
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                        ) + 1
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                            (
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                            ) + 1
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam8_cplx0_dish24, A_beam8_cplx1_dish24, A_beam8_cplx0_dish28, A_beam8_cplx1_dish28) = IndexSpaces.unsafe_load4_global(
@@ -176,21 +188,25 @@
                     (
                         (
                             (
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 64) +
-                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
-                            ) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                (
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 32
+                                ) + 64
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 4) * 8
                         ) ÷ 2
-                    ) % 256 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
-                ) +
-                (
+                    ) % 256 +
                     (
                         (
-                            (8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) +
-                            ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
-                        ) + 1
-                    ) % 96
-                ) * 256
-            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+                            (
+                                (
+                                    ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16 +
+                                    ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) * 2
+                                ) + 1
+                            ) + 8
+                        ) % 96
+                    ) * 256
+                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 24576
+            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 49152
         ) + 1i32,
     )
     (A_beam0_cplx0_dish0, A_beam0_cplx1_dish0) = (
@@ -745,24 +761,25 @@
                     (
                         (
                             (
-                                (
-                                    (
-                                        (
-                                            (
-                                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 +
-                                                ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32
-                                            ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
-                                        ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4
-                                    ) % 32768
-                                ) * 4096 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 2048 +
                                 (
                                     (
                                         (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
                                         (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16
                                     ) ÷ 4
                                 ) % 128
-                            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 128
-                        ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 2048
+                            ) +
+                            (
+                                (
+                                    (
+                                        (
+                                            ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32 +
+                                            (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                                        ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
+                                    ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4
+                                ) % 32768
+                            ) * 4096
+                        ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 128
                     ) + 1i32,
                 )
                 (E_dish0_time16, E_dish4_time16, E_dish8_time16, E_dish12_time16) = IndexSpaces.unsafe_load4_global(
@@ -770,41 +787,42 @@
                     (
                         (
                             (
-                                (
-                                    (
-                                        (
-                                            (
-                                                (16 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) +
-                                                ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32
-                                            ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
-                                        ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4
-                                    ) % 32768
-                                ) * 4096 +
+                                ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 2048 +
                                 (
                                     (
                                         (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 +
                                         (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16
                                     ) ÷ 4
                                 ) % 128
-                            ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 128
-                        ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 2048
+                            ) +
+                            (
+                                (
+                                    (
+                                        (
+                                            (16 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) +
+                                            (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                                        ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
+                                    ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4
+                                ) % 32768
+                            ) * 4096
+                        ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 128
                     ) + 1i32,
                 )
-                E_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0x01] =
+                E_shared[(((((((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish0_time0
-                E_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 4) ÷ 4) % 128) + 0x01] =
+                E_shared[(((((((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 4) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish4_time0
-                E_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 8) ÷ 4) % 128) + 0x01] =
+                E_shared[(((((((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 8) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish8_time0
-                E_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 12) ÷ 4) % 128) + 0x01] =
+                E_shared[(((((((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 12) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish12_time0
-                E_shared[((((((16 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0x01] =
+                E_shared[((((((16 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish0_time16
-                E_shared[((((((16 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 4) ÷ 4) % 128) + 0x01] =
+                E_shared[((((((16 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 4) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish4_time16
-                E_shared[((((((16 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 8) ÷ 4) % 128) + 0x01] =
+                E_shared[((((((16 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 8) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish8_time16
-                E_shared[((((((16 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + 12) ÷ 4) % 128) + 0x01] =
+                E_shared[((((((16 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 4) * 4) % 32) * 129 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128 + 12) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) ÷ 4) % 128) + 0 + 0x01] =
                     E_dish12_time16
             end
             IndexSpaces.cuda_sync_threads()
@@ -1443,11 +1461,11 @@
                     Ju_cplx1_time0 = (Ju_cplx1_time0 + 4) >> 0x00000003
                     Ju_cplx0_time1 = (Ju_cplx0_time1 + 4) >> 0x00000003
                     Ju_cplx1_time1 = (Ju_cplx1_time1 + 4) >> 0x00000003
-                    Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
-                    Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                    Ju_shared[((((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200) + ((((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 96) + 0x01] =
+                    Ju_time0 = Int16x2((Ju_cplx0_time0, Ju_cplx1_time0))
+                    Ju_time1 = Int16x2((Ju_cplx0_time1, Ju_cplx1_time1))
+                    Ju_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + ((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8) % 96) + ((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0 + 0x01] =
                         Ju_time0
-                    Ju_shared[(((((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + 1) % 32) * 100 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200) + ((((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 96) + 0x01] =
+                    Ju_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + ((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8) % 96) + (((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + 1) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0 + 0x01] =
                         Ju_time1
                 end
                 let
@@ -2084,31 +2102,31 @@
                     Ju_cplx1_time0 = (Ju_cplx1_time0 + 4) >> 0x00000003
                     Ju_cplx0_time1 = (Ju_cplx0_time1 + 4) >> 0x00000003
                     Ju_cplx1_time1 = (Ju_cplx1_time1 + 4) >> 0x00000003
-                    Ju_time0 = convert(Int16x2, (Ju_cplx0_time0, Ju_cplx1_time0))
-                    Ju_time1 = convert(Int16x2, (Ju_cplx0_time1, Ju_cplx1_time1))
-                    Ju_shared[((((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200) + ((((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 96) + 0x01] =
+                    Ju_time0 = Int16x2((Ju_cplx0_time0, Ju_cplx1_time0))
+                    Ju_time1 = Int16x2((Ju_cplx0_time1, Ju_cplx1_time1))
+                    Ju_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + ((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8) % 96) + ((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0 + 0x01] =
                         Ju_time0
-                    Ju_shared[(((((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) + 1) % 32) * 100 + ((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200) + ((((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 96) + 0x01] =
+                    Ju_shared[((((((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 4) * 128) ÷ 128) % 4) * 3200 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 4) % 6) * 16) + ((IndexSpaces.assert_inrange(B, 0, 8, 16) ÷ 8) % 2) * 8) % 96) + (((((((IndexSpaces.assert_inrange(T3, 0, 8, 32) ÷ 8) % 4) * 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + 1) + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0 + 0x01] =
                         Ju_time1
                 end
             end
             IndexSpaces.cuda_sync_threads()
-            Ju_dish0_time0 = Ju_shared[((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish128_time0 = Ju_shared[(((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 3200) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish256_time0 = Ju_shared[(((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 6400) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish384_time0 = Ju_shared[(((((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 9600) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish0_time8 = Ju_shared[(((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish128_time8 = Ju_shared[((((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 3200) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish256_time8 = Ju_shared[((((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 6400) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish384_time8 = Ju_shared[((((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 9600) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish0_time16 = Ju_shared[(((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish128_time16 = Ju_shared[((((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 3200) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish256_time16 = Ju_shared[((((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 6400) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish384_time16 = Ju_shared[((((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 9600) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish0_time24 = Ju_shared[(((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish128_time24 = Ju_shared[((((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 3200) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish256_time24 = Ju_shared[((((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 6400) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
-            Ju_dish384_time24 = Ju_shared[((((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100 + 9600) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + 0x01]
+            Ju_dish0_time0 = Ju_shared[(((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish128_time0 = Ju_shared[((3200 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish256_time0 = Ju_shared[((6400 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish384_time0 = Ju_shared[((9600 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8 + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish0_time8 = Ju_shared[(((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96 + ((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish128_time8 = Ju_shared[((3200 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish256_time8 = Ju_shared[((6400 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish384_time8 = Ju_shared[((9600 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((8 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish0_time16 = Ju_shared[(((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96 + ((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish128_time16 = Ju_shared[((3200 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish256_time16 = Ju_shared[((6400 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish384_time16 = Ju_shared[((9600 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((16 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish0_time24 = Ju_shared[(((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96 + ((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish128_time24 = Ju_shared[((3200 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish256_time24 = Ju_shared[((6400 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
+            Ju_dish384_time24 = Ju_shared[((9600 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 + (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4) % 96) + ((((24 + IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) + ((IndexSpaces.assert_inrange(T2, 0, 32, 128) ÷ 32) % 4) * 32) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128) % 32) * 100) + 0x01]
             (Ju_cplx0_dish0_time0, Ju_cplx1_dish0_time0) = convert(NTuple{2,Int32}, Ju_dish0_time0)
             (Ju_cplx0_dish128_time0, Ju_cplx1_dish128_time0) = convert(NTuple{2,Int32}, Ju_dish128_time0)
             (Ju_cplx0_dish256_time0, Ju_cplx1_dish256_time0) = convert(NTuple{2,Int32}, Ju_dish256_time0)
@@ -2359,23 +2377,25 @@
                     (
                         (
                             (
-                                (
-                                    (
-                                        ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2) * 32 +
-                                        (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 16
-                                    ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 2) * 64
-                                ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
-                            ) ÷ 4
-                        ) % 8192 + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 16384
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 +
+                                (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                            ) % 96
+                        ) * 262144 + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 8192
                     ) +
                     (
                         (
-                            (IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 4 +
-                            (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
-                        ) % 96
-                    ) * 262144
-                ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) % 2) % 2) * 8192
-            ) + 0x01,
+                            (
+                                (
+                                    (IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 16 +
+                                    ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2) * 32
+                                ) + ((IndexSpaces.assert_inrange(T1, 0, 128, 32768) ÷ 128) % 256) * 128
+                            ) + ((IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 2) * 64
+                        ) ÷ 4
+                    ) % 8192
+                ) + (((IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0, 32) ÷ 2) % 16) % 16) * 16384
+            ) +
+            0 +
+            0x01,
             (Jper_time0, Jper_time32, Jper_time64, Jper_time96),
         )
     end
