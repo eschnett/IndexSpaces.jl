@@ -12,7 +12,7 @@ shift(x::Complex, s) = Complex(shift(x.re, s), shift(x.im, s))
 Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
 Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
 
-@enum CHORDTag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag
+@enum CHORDTag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag ThreadTag WarpTag BlockTag
 
 const Cplx = Index{Physics,CplxTag}
 const Beam = Index{Physics,BeamTag}
@@ -308,6 +308,17 @@ function make_bb_kernel()
         ),
     )
 
+    # info layout
+
+    layout_info_memory = Layout(
+        Dict(
+            int32value => SIMD(:simd, 1, 32),
+            Index{Physics,ThreadTag}(:thread, 1, num_threads) => Memory(:memory, 1, num_threads),
+            Index{Physics,WarpTag}(:warp, 1, num_warps) => Memory(:memory, num_threads, num_warps),
+            Index{Physics,BlockTag}(:block, 1, num_blocks) => Memory(:memory, num_threads * num_warps, num_blocks),
+        ),
+    )
+
     # Shared memory layouts
 
     # E-matrix layout
@@ -474,12 +485,33 @@ function make_bb_kernel()
         ),
     )
 
+    # info layout
+
+    layout_info_registers = Layout(
+        Dict(
+            int32value => SIMD(:simd, 1, 32),
+            Index{Physics,ThreadTag}(:thread, 1, num_threads) => Thread(:thread, 1, num_threads),
+            Index{Physics,WarpTag}(:warp, 1, num_warps) => Warp(:warp, 1, num_warps),
+            Index{Physics,BlockTag}(:block, 1, num_blocks) => Block(:block, 1, num_blocks),
+        ),
+    )
+
     # Generate code
 
     emitter = Emitter(kernel_setup)
 
+    apply!(emitter, :info => layout_info_registers, 1i32)
+    store!(emitter, :info_memory => layout_info_memory, :info)
+
     load!(emitter, :s => layout_s_registers, :s_memory => layout_s_global)
     apply!(emitter, :s, [:s], (s,) -> :($s - $σ))
+
+    if!(emitter, :(!(0 < s < 32))) do emitter
+        apply!(emitter, :info => layout_info_registers, 2i32)
+        store!(emitter, :info_memory => layout_info_memory, :info)
+        trap!(emitter)
+        nothing
+    end
 
     if D == 512
         layout_A0_registers = Layout(
@@ -714,6 +746,9 @@ function make_bb_kernel()
         nothing
     end
 
+    apply!(emitter, :info => layout_info_registers, 0i32)
+    store!(emitter, :info_memory => layout_info_memory, :info)
+
     stmts = clean_code(
         quote
             @inbounds begin
@@ -730,7 +765,7 @@ println("[Creating bb kernel...]")
 const bb_kernel = make_bb_kernel()
 println("[Done creating bb kernel]")
 
-@eval function bb(A_memory, E_memory, s_memory, J_memory)
+@eval function bb(A_memory, E_memory, s_memory, J_memory, info_memory)
     E_shared = @cuDynamicSharedMem($E_shared_type, $E_shared_length, $(sizeof(UInt32) * E_shared_offset))
     Ju_shared = @cuDynamicSharedMem($Ju_shared_type, $Ju_shared_length, $(sizeof(UInt32) * Ju_shared_offset))
     $bb_kernel
@@ -755,7 +790,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm bb(
-        CUDA.zeros(Int8x4, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Int4x8, 0)
+        CUDA.zeros(Int8x4, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
@@ -823,6 +858,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
               indices: [C, T, P, F, B]
               shape: [$C, $T, $P, $F, $B]
               strides: [1, $C, $(C*T), $(C*T*P), $(C*T*P*F)]
+            - name: "info"
+              intent: out
+              type: Int32
+              indices: [thread, warp]
+              shapes: [$num_threads, $num_warps]
+              strides: [1, $num_threads]
         ...
         """,
             )
@@ -836,12 +877,14 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     s_memory = Array{Int32}(undef, B * P * F)
     J_wanted = Array{Int4x8}(undef, idiv(T, 4) * P * F * B)
+    info_wanted = Array{Int32}(undef, num_threads * num_warps)
 
     println("Setting up input data...")
     map!(i -> zero(Int8x4), A_memory, A_memory)
     map!(i -> zero(Int4x8), E_memory, E_memory)
     map!(i -> Int32(σ + 1), s_memory, s_memory)
     map!(i -> zero(Int4x8), J_wanted, J_wanted)
+    map!(i -> zero(Int32), info_wanted, info_wanted)
     # map!(i -> rand(Int8x4), A_memory, A_memory)
     # map!(i -> rand(Int4x8), E_memory, E_memory)
     # map!(i -> rand(Int32(1):Int32(10)), s_memory, s_memory)
@@ -936,15 +979,25 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_cuda = CuArray(E_memory)
     s_cuda = CuArray(s_memory)
     J_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(T, 4) * P * F * B)
+    info_cuda = CUDA.fill(-1i32, num_threads * num_warps)
 
     println("Running kernel...")
-    kernel(A_cuda, E_cuda, s_cuda, J_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    kernel(A_cuda, E_cuda, s_cuda, J_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
     synchronize()
 
     if nruns > 0
         stats = @timed begin
             for run in 1:nruns
-                kernel(A_cuda, E_cuda, s_cuda, J_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+                kernel(
+                    A_cuda,
+                    E_cuda,
+                    s_cuda,
+                    J_cuda,
+                    info_cuda;
+                    threads=(num_threads, num_warps),
+                    blocks=num_blocks,
+                    shmem=shmem_bytes,
+                )
             end
             synchronize()
         end
@@ -986,6 +1039,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
     println("Copying data back from GPU to CPU...")
     J_memory = Array(J_cuda)
+    info_memory = Array(info_cuda)
+    @assert all(info_memory .== 0)
 
     if run_selftest
         println("Checking results...")

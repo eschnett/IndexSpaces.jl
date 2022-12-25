@@ -488,11 +488,12 @@ function loop_over_registers(f, kernel_setup::KernelSetup, layout::Layout{Physic
     return nothing
 end
 
-function assert_inrange(x, start, stop)
+# TODO: use `LLVM.assume`
+function assume_inrange(x, start, stop)
     start ≤ x < stop || IndexSpaces.unreachable()
     return x
 end
-function assert_inrange(x, start, step, stop)
+function assume_inrange(x, start, step, stop)
     start ≤ x < stop && x % step == start || IndexSpaces.unreachable()
     return x
 end
@@ -507,16 +508,16 @@ CUDA.@device_override cuda_blockidx() = blockIdx().x - 1i32
 indexvalue(::State, ::SIMD) = @assert false # needs to be handled by the caller
 indexvalue(state::State, register::Register) = state.dict[register.name]::Code
 function indexvalue(state::State, ::Thread)
-    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_threadidx(), 0i32, $(Int32(state.kernel_setup.num_threads))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0i32, $(Int32(state.kernel_setup.num_threads))))::Code
 end
 function indexvalue(state::State, ::Warp)
-    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_warpidx(), 0i32, $(Int32(state.kernel_setup.num_warps))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0i32, $(Int32(state.kernel_setup.num_warps))))::Code
 end
 function indexvalue(state::State, ::Block)
-    return :(IndexSpaces.assert_inrange(IndexSpaces.cuda_blockidx(), 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
 end
 function indexvalue(::State, loop::Loop)
-    return :(IndexSpaces.assert_inrange($(loop.name), 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
+    return :(IndexSpaces.assume_inrange($(loop.name), 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
 end
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
@@ -614,6 +615,12 @@ Emitter(kernel_setup::KernelSetup) = Emitter(kernel_setup, Environment(), Enviro
 ################################################################################
 
 # Control flow
+
+export trap!
+function trap!(emitter::Emitter)
+    push!(emitter.statements, :(IndexSpaces.cuda_trap()))
+    return nothing
+end
 
 export block!
 function block!(body!, emitter::Emitter)
@@ -732,6 +739,9 @@ end
 ################################################################################
 
 # Thread synchronization
+
+cuda_trap() = nothing
+CUDA.@device_override cuda_trap() = Base.llvmcall("trap;", Tuple{}, Tuple{})
 
 cuda_sync_threads() = nothing
 CUDA.@device_override cuda_sync_threads() = sync_threads()
