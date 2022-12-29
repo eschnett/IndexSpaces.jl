@@ -119,7 +119,7 @@ Base.in(x::Index, y::Index) = false
 Base.in(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag} = x.name == y.name && Range(x) ∈ Range(y)
 
 function Base.isdisjoint(x::Range, y::Range)
-    (y.length == 1 || y.length == 1) && return true
+    (x.length == 1 || y.length == 1) && return true
 
     xbeg = x.offset
     xend = x.offset * x.length
@@ -128,9 +128,7 @@ function Base.isdisjoint(x::Range, y::Range)
     return yend ≤ xbeg || xend ≤ ybeg
 end
 Base.isdisjoint(x::Index, y::Index) = true
-function Base.isdisjoint(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag}
-    return x.name ≠ y.name || isdisjoint(Range(x), Range(y))
-end
+Base.isdisjoint(x::Index{Typ,Tag}, y::Index{Typ,Tag}) where {Typ,Tag} = x.name ≠ y.name || isdisjoint(Range(x), Range(y))
 
 function pairwise_disjoint(indices::AbstractVector{<:Index})
     # TODO: Don't use n^2 algorithm
@@ -1664,9 +1662,6 @@ end
 
 mma_m16n8k8(A::NTuple{2,Float16x2}, B::Float16x2, C::NTuple{2,Float16x2}) = C
 CUDA.@device_override function mma_m16n8k8(A::NTuple{2,Float16x2}, B::Float16x2, C::NTuple{2,Float16x2})
-    # %res = call {i32, i32} asm sideeffect "mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {\$0, \$1}, {\$2, \$3}, {\$4}, {\$5, \$6};", "=r,=r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
-    # %res = call {i32, i32} asm "{ .reg .b32 r0, r1, r2, r3, r4, r5, r6; mov.b32 r2, \$2; mov.b32 r3, \$3; mov.b32 r4, \$4; mov.b32 r5, \$5; mov.b32 r6, \$6; mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {r0, r1}, {r2, r3}, {r4}, {r5, r6}; mov.s32 \$0, r0; mov.s32 \$1, r1; }", "=r,=r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
-    # %res = call {i32, i32} asm sideeffect "mov.s32 \$0, \$5; mov.s32 \$1, \$6;", "=r,=r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
     D = Base.llvmcall(
         """
             %res = call {i32, i32} asm sideeffect "mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {\$0, \$1}, {\$2, \$3}, {\$4}, {\$5, \$6};", "=r,=r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
@@ -1687,19 +1682,30 @@ CUDA.@device_override function mma_m16n8k8(A::NTuple{2,Float16x2}, B::Float16x2,
     return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
 end
 
-# __global__ void f(int* pd, const int* pa, const int* pb, const int *pc) {
-#     int a0 = pa[0];
-#     int a1 = pa[1];
-#     int b0 = pb[0];
-#     int c0 = pc[0];
-#     int c1 = pc[1];
-#     int d0, d1;
-#     // asm volatile("mov %0, %1;": "=r"(d0): "r"(c0));
-#     asm volatile("mma.sync.aligned.m16n8k8.row.col.f16.f16.f16.f16 {%0, %1}, {%2, %3}, {%4}, {%5, %6};":
-#         "=r"(d0), "=r"(d1): "r"(a0), "r"(a1), "r"(b0), "r"(c0), "r"(c1));
-#     pd[0] = d0;
-#     pd[1] = d1;
-# }
+mma_m16n8k16(A::NTuple{4,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}) = C
+CUDA.@device_override function mma_m16n8k16(A::NTuple{4,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2})
+    D = Base.llvmcall(
+        """
+            %res = call {i32, i32} asm sideeffect "mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {\$0, \$1}, {\$2, \$3, \$4, \$5}, {\$6, \$7}, {\$8, \$9};", "=r,=r,r,r,r,r,r,r,r,r"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4, i32 %5, i32 %6, i32 %7)
+            %res0 = extractvalue {i32, i32} %res, 0
+            %res1 = extractvalue {i32, i32} %res, 1
+            %val0 = insertvalue [2 x i32] undef, i32 %res0, 0
+            %val = insertvalue [2 x i32] %val0, i32 %res1, 1
+            ret [2 x i32] %val
+        """,
+        NTuple{2,Int32},
+        NTuple{8,Int32},
+        A[1].val % Int32,
+        A[2].val % Int32,
+        A[3].val % Int32,
+        A[4].val % Int32,
+        B[1].val % Int32,
+        B[2].val % Int32,
+        C[1].val % Int32,
+        C[2].val % Int32,
+    )
+    return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
+end
 
 # TODO: combine `mma` functions
 export mma_row_col_m8n8k16_s8!
@@ -1727,6 +1733,7 @@ function mma_row_col_m8n8k16_s8!(
         @assert D ∉ emitter.environment
     end
     D_layout = C_layout
+    emitter.environment[D] = D_layout
 
     inv_A_layout = inv(A_layout)
     inv_B_layout = inv(B_layout)
@@ -1836,6 +1843,7 @@ function mma_row_col_m16n8k8_f16!(
         @assert D ∉ emitter.environment
     end
     D_layout = C_layout
+    emitter.environment[D] = D_layout
 
     inv_A_layout = inv(A_layout)
     inv_B_layout = inv(B_layout)
@@ -1917,8 +1925,8 @@ function mma_row_col_m16n8k8_f16!(
         Dstate = filter_state(state, D_layout)
         Astate0 = copy(Astate)
         Astate1 = copy(Astate)
-        Astate0.dict[C_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
-        Astate1.dict[C_row[4].name] = get(Astate1.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
+        Astate0.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
+        Astate1.dict[A_row[4].name] = get(Astate1.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
         Cstate0 = copy(Cstate)
         Cstate1 = copy(Cstate)
         Cstate0.dict[C_row[4].name] = get(Cstate0.dict, C_row[4].name, 0i32) + Int32(0 * C_row[4].offset)
@@ -1934,6 +1942,160 @@ function mma_row_col_m16n8k8_f16!(
         push!(
             emitter.statements,
             :(($D0_name, $D1_name) = IndexSpaces.mma_m16n8k8(($A0_name, $A1_name), $B_name, ($C0_name, $C1_name))),
+        )
+    end
+
+    return nothing
+end
+
+export mma_row_col_m16n8k16_f16!
+function mma_row_col_m16n8k16_f16!(
+    emitter::Emitter,
+    D::Symbol,
+    A_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    B_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    C_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+)
+    # D       = A       * B       + C
+    # D_ij    = A_ik    * B_kj    + C_ij
+    # D_16_8  = A_16_16 * B_16_8   + C_16_8
+    # Float16 = Float16 * Float16 + Float16
+
+    (A, (A_row, A_col)) = A_indices
+    (B, (B_row, B_col)) = B_indices
+    (C, (C_row, C_col)) = C_indices
+
+    A_layout = emitter.environment[A]
+    B_layout = emitter.environment[B]
+    C_layout = emitter.environment[C]
+    # D might or might not be identical to C
+    if D ≠ C
+        @assert D ∉ emitter.environment
+    end
+    D_layout = C_layout
+    emitter.environment[D] = D_layout
+
+    inv_A_layout = inv(A_layout)
+    inv_B_layout = inv(B_layout)
+    inv_C_layout = inv(C_layout)
+    inv_D_layout = inv(D_layout)
+
+    A_value = inv_A_layout[SIMD(:simd, 1, 2)]
+    A_value_tag = indextag(A_value)::ValueTag
+    A_value_bits = 0
+    while Index{Physics,A_value_tag}(A_value.name, 1, 1 << (A_value_bits + 1)) in A_layout
+        A_value_bits += 1
+    end
+    @assert A_value_bits == 4
+
+    B_value = inv_B_layout[SIMD(:simd, 1, 2)]
+    B_value_tag = indextag(B_value)::ValueTag
+    B_value_bits = 0
+    while Index{Physics,B_value_tag}(B_value.name, 1, 1 << (B_value_bits + 1)) in B_layout
+        B_value_bits += 1
+    end
+    @assert B_value_bits == 4
+
+    C_value = inv_C_layout[SIMD(:simd, 1, 2)]
+    C_value_tag = indextag(C_value)::ValueTag
+    C_value_bits = 0
+    while Index{Physics,C_value_tag}(C_value.name, 1, 1 << (C_value_bits + 1)) in C_layout
+        C_value_bits += 1
+    end
+    @assert C_value_bits == 4
+
+    @assert length(A_col) == 4
+    @assert length(A_row) == 4
+    @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
+    @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
+    @assert A_layout[A_col[3]] == Thread(:thread, 2, 2)
+    A_layout[A_col[4]]::Register
+    @assert A_layout[A_col[4]].length == 2
+    @assert A_layout[A_row[1]] == Thread(:thread, 4, 2)
+    @assert A_layout[A_row[2]] == Thread(:thread, 8, 2)
+    @assert A_layout[A_row[3]] == Thread(:thread, 16, 2)
+    A_layout[A_row[4]]::Register
+    @assert A_layout[A_row[4]].length == 2
+
+    @assert length(B_row) == 4
+    @assert length(B_col) == 3
+    @assert B_layout[B_row[1]] == SIMD(:simd, 16, 2)
+    @assert B_layout[B_row[2]] == Thread(:thread, 1, 2)
+    @assert B_layout[B_row[3]] == Thread(:thread, 2, 2)
+    B_layout[B_row[4]]::Register
+    @assert B_layout[B_row[4]].length == 2
+    @assert B_layout[B_col[1]] == Thread(:thread, 4, 2)
+    @assert B_layout[B_col[2]] == Thread(:thread, 8, 2)
+    @assert B_layout[B_col[3]] == Thread(:thread, 16, 2)
+
+    @assert length(C_row) == 4
+    @assert length(C_col) == 3
+    @assert C_layout[C_col[1]] == SIMD(:simd, 16, 2)
+    @assert C_layout[C_col[2]] == Thread(:thread, 1, 2)
+    @assert C_layout[C_col[3]] == Thread(:thread, 2, 2)
+    @assert C_layout[C_row[1]] == Thread(:thread, 4, 2)
+    @assert C_layout[C_row[2]] == Thread(:thread, 8, 2)
+    @assert C_layout[C_row[3]] == Thread(:thread, 16, 2)
+    C_layout[C_row[4]]::Register
+    @assert C_layout[C_row[4]].length == 2
+
+    # Check that physics indices match
+    @assert C_col == B_col
+    @assert C_row == A_row
+    @assert A_col == B_row
+
+    # Keep only those state symbols that are in the layout
+    function filter_state(state::State, layout::Layout)
+        names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
+        return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
+    end
+
+    tmp_layout = copy(D_layout)
+    delete!(tmp_layout, C_row[4]) # delete registers
+    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+        Astate = filter_state(state, A_layout)
+        Bstate = filter_state(state, B_layout)
+        Cstate = filter_state(state, C_layout)
+        Dstate = filter_state(state, D_layout)
+        Astate0 = copy(Astate)
+        Astate1 = copy(Astate)
+        Astate2 = copy(Astate)
+        Astate3 = copy(Astate)
+        # A is stored column-major in registers
+        Astate0.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
+        Astate0.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
+        Astate1.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
+        Astate1.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
+        Astate2.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
+        Astate2.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
+        Astate3.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
+        Astate3.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
+        Bstate0 = copy(Bstate)
+        Bstate1 = copy(Bstate)
+        Bstate0.dict[B_row[4].name] = get(Bstate0.dict, B_row[4].name, 0i32) + Int32(0 * B_row[4].offset)
+        Bstate1.dict[B_row[4].name] = get(Bstate1.dict, B_row[4].name, 0i32) + Int32(1 * B_row[4].offset)
+        Cstate0 = copy(Cstate)
+        Cstate1 = copy(Cstate)
+        Cstate0.dict[C_row[4].name] = get(Cstate0.dict, C_row[4].name, 0i32) + Int32(0 * C_row[4].offset)
+        Cstate1.dict[C_row[4].name] = get(Cstate1.dict, C_row[4].name, 0i32) + Int32(1 * C_row[4].offset)
+
+        A0_name = register_name(A, Astate0)
+        A1_name = register_name(A, Astate1)
+        A2_name = register_name(A, Astate2)
+        A3_name = register_name(A, Astate3)
+        B0_name = register_name(B, Bstate0)
+        B1_name = register_name(B, Bstate1)
+        C0_name = register_name(C, Cstate0)
+        C1_name = register_name(C, Cstate1)
+        D0_name = register_name(D, Cstate0)
+        D1_name = register_name(D, Cstate1)
+        push!(
+            emitter.statements,
+            :(
+                ($D0_name, $D1_name) = IndexSpaces.mma_m16n8k16(
+                    ($A0_name, $A1_name, $A2_name, $A3_name), ($B0_name, $B1_name), ($C0_name, $C1_name)
+                )
+            ),
         )
     end
 
