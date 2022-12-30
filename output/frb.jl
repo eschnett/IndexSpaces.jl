@@ -1,7 +1,51 @@
-@inbounds begin #= /home/eschnett/src/jl/IndexSpaces/kernels/frb.jl:951 =#
+@inbounds begin #= /home/eschnett/src/jl/IndexSpaces/kernels/frb.jl:999 =#
     info = 1
     info_memory[(((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 24) * 32) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 256) % 256) % 256) * 768) + 0 + 0x01] =
         info
+    (Γ¹_re_re, Γ¹_re_im, Γ¹_im_re, Γ¹_im_im) = let
+        c = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % (4i32)
+        v = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ (4i32)
+        Γ¹ = cispi((c * v) / 4.0f0)
+        (+(Γ¹.re), -(Γ¹.im), +(Γ¹.im), +(Γ¹.re))
+    end
+    Γ¹_re = Float16x2(Γ¹_re_im, Γ¹_re_re)
+    Γ¹_im = Float16x2(Γ¹_im_im, Γ¹_im_re)
+    Γ¹_cplx0 = Γ¹_im
+    Γ¹_cplx1 = Γ¹_re
+    Γ² = (
+        (Γ²_d0_re, Γ²_d0_im, Γ²_d1_re, Γ²_d1_im) = let
+            d0 = (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % (4i32)) * (2i32) + 0i32
+            d1 = (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % (4i32)) * (2i32) + 1i32
+            v = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ (4i32)
+            Γ²_d0 = cispi((d0 * v) / 24.0f0)
+            Γ²_d1 = cispi((d1 * v) / 24.0f0)
+            (Γ²_d0.re, Γ²_d0.im, Γ²_d1.re, Γ²_d1.im)
+        end
+    )
+    Γ²_re = Float16x2(Γ²_d0_re, Γ²_d1_re)
+    Γ²_im = Float16x2(Γ²_d0_im, Γ²_d1_im)
+    Γ²_cplx0 = Γ²_im
+    Γ²_cplx1 = Γ²_re
+    (Γ³_d0_re_re, Γ³_d0_re_im, Γ³_d0_im_re, Γ³_d0_im_im, Γ³_d1_re_re, Γ³_d1_re_im, Γ³_d1_im_re, Γ³_d1_im_im) = let
+        d0 = (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % (4i32)) * (2i32) + 0i32
+        d1 = (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % (4i32)) * (2i32) + 1i32
+        u = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ (4i32)
+        Γ³_d0 = cispi(((8i32) * d0 * u) / 24.0f0)
+        Γ³_d1 = cispi(((8i32) * d1 * u) / 24.0f0)
+        (+(Γ³_d0.re), -(Γ³_d0.im), +(Γ³_d0.im), +(Γ³_d0.re), +(Γ³_d1.re), -(Γ³_d1.im), +(Γ³_d1.im), +(Γ³_d1.re))
+    end
+    Γ³_re_re = Float16x2(Γ³_d0_re_re, Γ³_d1_re_re)
+    Γ³_re_im = Float16x2(Γ³_d0_re_im, Γ³_d1_re_im)
+    Γ³_im_re = Float16x2(Γ³_d0_im_re, Γ³_d1_im_re)
+    Γ³_im_im = Float16x2(Γ³_d0_im_im, Γ³_d1_im_im)
+    Γ³_re_cplx_in0 = Γ³_re_im
+    Γ³_re_cplx_in1 = Γ³_re_re
+    Γ³_im_cplx_in0 = Γ³_im_im
+    Γ³_im_cplx_in1 = Γ³_im_re
+    Γ³_cplx0_cplx_in0 = Γ³_im_cplx_in0
+    Γ³_cplx1_cplx_in0 = Γ³_re_cplx_in0
+    Γ³_cplx0_cplx_in1 = Γ³_im_cplx_in1
+    Γ³_cplx1_cplx_in1 = Γ³_re_cplx_in1
     S = S_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 24) * 24 + IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 512 + 0x01]
     W_polr0 = zero(Float16x2)
     W_polr1 = zero(Float16x2)
@@ -1857,14 +1901,6 @@
                 WE_polr1_time2 = complex_mul(W_polr1, E_polr1_time2)
                 WE_polr0_time3 = complex_mul(W_polr0, E_polr0_time3)
                 WE_polr1_time3 = complex_mul(W_polr1, E_polr1_time3)
-                Γ¹_cplx0 = Float16x2(1, 2)
-                Γ¹_cplx1 = Float16x2(1, 2)
-                Γ²_cplx0 = Float16x2(3, 4)
-                Γ²_cplx1 = Float16x2(3, 4)
-                Γ³_cplx0_cplx_in0 = Float16x2(3, 4)
-                Γ³_cplx1_cplx_in0 = Float16x2(3, 4)
-                Γ³_cplx0_cplx_in1 = Float16x2(3, 4)
-                Γ³_cplx1_cplx_in1 = Float16x2(3, 4)
                 X_polr0_time0 = WE_polr0_time0
                 X_polr1_time0 = WE_polr1_time0
                 X_polr0_time1 = WE_polr0_time1

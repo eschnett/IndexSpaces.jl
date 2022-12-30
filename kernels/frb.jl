@@ -256,8 +256,6 @@ const layout_info_registers = Layout(
     ),
 )
 
-# TODO ... more here ...
-
 # Machine indices
 
 # const simd = SIMD(:simd, 1, num_simd_bits)
@@ -438,46 +436,6 @@ function do_first_fft!(emitter)
     #     j => c
     #     k => ds
 
-    # (39)
-    layout_Γ¹_registers = Layout(
-        Dict(
-            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-            Cplx(:cplx_in, 1, C) => SIMD(:simd, 16, 2), # mma j0
-            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2), # mma i3
-            # DishN(:dishN, idiv(N, 4), 4) => Thread(:thread, 1, 4), # mma j1, j2
-            DishNhi(:dishNhi, 1, 4) => Thread(:thread, 1, 4), # mma j1, j2
-            BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8), # mma i0, i1, i2
-        ),
-    )
-    apply!(emitter, :Γ¹ => layout_Γ¹_registers, :(Float16x2(1, 2))) # TODO
-
-    # (41)
-    @assert trailing_zeros(Npad) == 5
-    layout_Γ²_registers = Layout(
-        Dict(
-            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
-            DishNlo(:dishNlo, 1, 2) => SIMD(:simd, 16, 2),
-            DishNlo(:dishNlo, 2, 4) => Thread(:thread, 1, 4),
-            BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8),
-        ),
-    )
-    apply!(emitter, :Γ² => layout_Γ²_registers, :(Float16x2(3, 4))) # TODO
-
-    # (45) - (47)
-    @assert trailing_zeros(Npad) == 5
-    layout_Γ³_registers = Layout(
-        Dict(
-            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-            Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2),
-            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
-            DishNlo(:dishNlo, 1, 2) => SIMD(:simd, 16, 2),
-            DishNlo(:dishNlo, 2, 4) => Thread(:thread, 1, 4),
-            BeamQ(:beamQ, 8, 8) => Thread(:thread, 4, 8),
-        ),
-    )
-    apply!(emitter, :Γ³ => layout_Γ³_registers, :(Float16x2(3, 4))) # TODO
-
     apply!(emitter, :X, [:WE], (WE,) -> :($WE))
 
     # First step
@@ -536,7 +494,6 @@ function do_first_fft!(emitter)
     # Section 3 `W` is called `V` here
     split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
     split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
-    # TODO: Use `muladd` explicitly? (Also elsewhere?)
     apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
     apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
     merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
@@ -774,9 +731,7 @@ function do_second_fft!(emitter)
     apply!(emitter, :Ẽ, [:Y], (Y,) -> :($Y))
 
     split!(emitter, [:Ẽim, :Ẽre], :Ẽ, Cplx(:cplx, 1, C))
-    # apply!(emitter, :Ẽ2, [:Ẽre, :Ẽim], (Ẽre, Ẽim) -> :($Ẽre * $Ẽre + $Ẽim * $Ẽim))
 
-    # apply!(emitter, :I, [:I, :Ẽ2], (I, Ẽ2) -> :($I + $Ẽ2); ignore=[Time(:time, 1, T)])
     apply!(
         emitter,
         :I,
@@ -795,6 +750,99 @@ function make_frb_kernel()
 
     apply!(emitter, :info => layout_info_registers, 1i32)
     store!(emitter, :info_memory => layout_info_memory, :info)
+
+    # Section 3.3
+    let
+        # (39)
+        layout_Γ¹_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                Cplx(:cplx_in, 1, C) => SIMD(:simd, 16, 2),
+                # Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+                DishNhi(:dishNhi, 1, 4) => Thread(:thread, 1, 4),
+                BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8),
+            ),
+        )
+        push!(
+            emitter.statements,
+            quote
+                (Γ¹_re_re, Γ¹_re_im, Γ¹_im_re, Γ¹_im_im) = let
+                    # Γ¹ = exp(π * im * c * v / 4)   (28)
+                    c = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32
+                    v = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) ÷ 4i32
+                    Γ¹ = cispi(c * v / 4.0f0)
+                    (+Γ¹.re, -Γ¹.im, +Γ¹.im, +Γ¹.re)
+                end
+            end,
+        )
+        apply!(emitter, :Γ¹_re => layout_Γ¹_registers, :(Float16x2(Γ¹_re_im, Γ¹_re_re)))
+        apply!(emitter, :Γ¹_im => layout_Γ¹_registers, :(Float16x2(Γ¹_im_im, Γ¹_im_re)))
+        merge!(emitter, :Γ¹, [:Γ¹_im, :Γ¹_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+
+        # (41)
+        @assert trailing_zeros(Npad) == 5
+        layout_Γ²_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                # Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+                DishNlo(:dishNlo, 1, 2) => SIMD(:simd, 16, 2),
+                DishNlo(:dishNlo, 2, 4) => Thread(:thread, 1, 4),
+                BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8),
+            ),
+        )
+        apply!(
+            emitter,
+            :Γ² => layout_Γ²_registers,
+            quote
+                (Γ²_d0_re, Γ²_d0_im, Γ²_d1_re, Γ²_d1_im) = let
+                    # Γ² = exp(π * im * d * v / N)   (29)
+                    d0 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 0i32
+                    d1 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 1i32
+                    v = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) ÷ 4i32
+                    Γ²_d0 = cispi(d0 * v / $(Float32(N)))
+                    Γ²_d1 = cispi(d1 * v / $(Float32(N)))
+                    (Γ²_d0.re, Γ²_d0.im, Γ²_d1.re, Γ²_d1.im)
+                end
+            end,
+        )
+        apply!(emitter, :Γ²_re => layout_Γ²_registers, :(Float16x2(Γ²_d0_re, Γ²_d1_re)))
+        apply!(emitter, :Γ²_im => layout_Γ²_registers, :(Float16x2(Γ²_d0_im, Γ²_d1_im)))
+        merge!(emitter, :Γ², [:Γ²_im, :Γ²_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+
+        # (45) - (47)
+        @assert trailing_zeros(Npad) == 5
+        layout_Γ³_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                # Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2),
+                # Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+                DishNlo(:dishNlo, 1, 2) => SIMD(:simd, 16, 2),
+                DishNlo(:dishNlo, 2, 4) => Thread(:thread, 1, 4),
+                BeamQ(:beamQ, 8, 8) => Thread(:thread, 4, 8),
+            ),
+        )
+        push!(
+            emitter.statements,
+            quote
+                (Γ³_d0_re_re, Γ³_d0_re_im, Γ³_d0_im_re, Γ³_d0_im_im, Γ³_d1_re_re, Γ³_d1_re_im, Γ³_d1_im_re, Γ³_d1_im_im) = let
+                    # Γ³ = exp(8π * im * d * u / N)   (30)
+                    d0 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 0i32
+                    d1 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 1i32
+                    u = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) ÷ 4i32
+                    Γ³_d0 = cispi(8i32 * d0 * u / $(Float32(N)))
+                    Γ³_d1 = cispi(8i32 * d1 * u / $(Float32(N)))
+                    (+Γ³_d0.re, -Γ³_d0.im, +Γ³_d0.im, +Γ³_d0.re, +Γ³_d1.re, -Γ³_d1.im, +Γ³_d1.im, +Γ³_d1.re)
+                end
+            end,
+        )
+        apply!(emitter, :Γ³_re_re => layout_Γ³_registers, :(Float16x2(Γ³_d0_re_re, Γ³_d1_re_re)))
+        apply!(emitter, :Γ³_re_im => layout_Γ³_registers, :(Float16x2(Γ³_d0_re_im, Γ³_d1_re_im)))
+        apply!(emitter, :Γ³_im_re => layout_Γ³_registers, :(Float16x2(Γ³_d0_im_re, Γ³_d1_im_re)))
+        apply!(emitter, :Γ³_im_im => layout_Γ³_registers, :(Float16x2(Γ³_d0_im_im, Γ³_d1_im_im)))
+        merge!(emitter, :Γ³_re, [:Γ³_re_im, :Γ³_re_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+        merge!(emitter, :Γ³_im, [:Γ³_im_im, :Γ³_im_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+        merge!(emitter, :Γ³, [:Γ³_im, :Γ³_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, 2))
+    end
 
     let
         @assert (M * N) % W == 0    # eqn. (98)
