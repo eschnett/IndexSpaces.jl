@@ -82,7 +82,9 @@ const num_blocks_per_sm = B
 @enum CHORDTag begin
     CplxTag
     DishTag
-    DishMTag
+    # DishMTag
+    DishMloTag
+    DishMhiTag
     # DishNTag
     DishNloTag
     DishNhiTag
@@ -91,6 +93,7 @@ const num_blocks_per_sm = B
     FreqTag
     PolrTag
     TimeTag
+    DSTimeTag
     ThreadTag
     WarpTag
     BlockTag
@@ -98,7 +101,9 @@ end
 
 const Cplx = Index{Physics,CplxTag}
 const Dish = Index{Physics,DishTag}
-const DishM = Index{Physics,DishMTag}
+# const DishM = Index{Physics,DishMTag}
+const DishMlo = Index{Physics,DishMloTag}
+const DishMhi = Index{Physics,DishMhiTag}
 # const DishN = Index{Physics,DishNTag}
 const DishNlo = Index{Physics,DishNloTag}
 const DishNhi = Index{Physics,DishNhiTag}
@@ -107,6 +112,7 @@ const BeamQ = Index{Physics,BeamQTag}
 const Freq = Index{Physics,FreqTag}
 const Polr = Index{Physics,PolrTag}
 const Time = Index{Physics,TimeTag}
+const DSTime = Index{Physics,DSTimeTag}
 
 # const int4value = IntValue(:intvalue, 1, 4)
 # const float16value = FloatValue(:floatvalue, 1, 16)
@@ -132,12 +138,30 @@ const layout_W_memory = Layout(
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
         Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
         # TODO: Improve layout
-        DishM(:dishM, 1, M) => Memory(:memory, 1, M),
+        # DishM(:dishM, 1, M) => Memory(:memory, 1, M),
+        DishMlo(:dishMlo, 1, idiv(M, 4)) => Memory(:memory, 1, idiv(M, 4)),
+        DishMhi(:dishMhi, idiv(M, 4), 4) => Memory(:memory, idiv(M, 4), 4),
         # DishN(:dishN, 1, N) => Memory(:memory, M, N),
         DishNlo(:dishNlo, 1, idiv(N, 4)) => Memory(:memory, M, idiv(N, 4)),
         DishNhi(:dishNhi, 1, 4) => Memory(:memory, M * idiv(N, 4), 4),
         Freq(:freq, 1, F) => Memory(:memory, M * N, F),
         Polr(:polr, 1, P) => Memory(:memory, M * N * F, P),
+    ),
+)
+
+# I layout
+
+# TODO: Use M, N instead of Mpad, Npad
+@assert Mpad == Npad == 32
+const layout_I_memory = Layout(
+    Dict(
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
+        BeamP(:beamP, 2, 32) => Memory(:memory, 1, 32),
+        BeamQ(:beamQ, 1, 64) => Memory(:memory, 32, 64),
+        Freq(:freq, 1, F) => Memory(:memory, 32 * 64, F),
+        Polr(:polr, 1, P) => Memory(:memory, 32 * 64 * F, P),
+        DSTime(:dstime, 1, T ÷ Tds) => Memory(:memory, 32 * 64 * F * P, T ÷ Tds),
     ),
 )
 
@@ -184,7 +208,9 @@ const layout_Fsh2_shared = Layout(
     Dict(
         IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
         Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
-        DishM(:dishM, 1, M) => Shared(:shared, 33, M),
+        # DishM(:dishM, 1, M) => Shared(:shared, 33, M),
+        DishMlo(:dishMlo, 1, idiv(M, 4)) => Shared(:shared, 33, idiv(M, 4)),
+        DishMhi(:dishMhi, idiv(M, 4), 4) => Shared(:shared, 33 * idiv(M, 4), 4),
         # DishN(:dishN, 1, N) => Shared(:shared, ΣF2, N),
         DishNlo(:dishNlo, 1, idiv(N, 4)) => Shared(:shared, ΣF2, idiv(N, 4)),
         DishNhi(:dishNhi, 1, 4) => Shared(:shared, ΣF2 * idiv(N, 4), 4),
@@ -202,7 +228,9 @@ const layout_Gsh_shared = Layout(
     Dict(
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
         Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
-        DishM(:dishM, 1, M) => Shared(:shared, 1, M),
+        # DishM(:dishM, 1, M) => Shared(:shared, 1, M),
+        DishMlo(:dishMlo, 1, idiv(M, 4)) => Shared(:shared, 1, idiv(M, 4)),
+        DishMhi(:dishMhi, idiv(M, 4), 4) => Shared(:shared, idiv(M, 4), 4),
         BeamQ(:beamQ, 1, 2) => Shared(:shared, ΣG0, 2),
         BeamQ(:beamQ, 2, 2) => Shared(:shared, ΣG1 * 16, 2),
         BeamQ(:beamQ, 4, 2) => Shared(:shared, ΣG1 * 8, 2),
@@ -320,13 +348,19 @@ function read_Fsh2!(emitter)
     νn = max(0, ν - 3)
     @assert νm + νn == 2
     @assert 2 * (1 << νn) == idiv(Npad, 4)
+    # DishM
+    @assert idiv(M, 4) ≤ Mw
     layout_Freg2_registers = Layout(
         Dict(
             IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
             Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
-            DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
-            DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
-            DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+            # DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+            # DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
+            # DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+            DishMlo(:dishMlo, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+            DishMlo(:dishMlo, Mt, idiv(M, 4)) => Warp(:warp, 1, idiv(M, 4)),
+            DishMhi(:dishMhi, Mt * idiv(M, 4), idiv(Mw, idiv(M, 4))) => Warp(:warp, idiv(M, 4), idiv(Mw, idiv(M, 4))),
+            DishMhi(:dishMhi, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishMhi, Mt * Mw, Mr),
             DishNlo(:dishNlo, 1, 2) => Thread(:thread, 4, 2),
             # Threads idiv(N,8) .. idiv(Npad,8) are padding
             DishNlo(:dishNlo, 2, idiv(Npad, 8)) => Thread(:thread, 8 * (1 << νm), idiv(Npad, 8)),
@@ -340,27 +374,31 @@ function read_Fsh2!(emitter)
         ),
     )
     # This loads garbage for nlo ≥ idiv(N, 4)
-    apply!(emitter, :E => layout_Freg2_registers, :(zero(Int4x8)))
+    apply!(emitter, :Freg2 => layout_Freg2_registers, :(zero(Int4x8)))
     # TODO: write this as condition for nlo
     if!(emitter, :(0 ≤ IndexSpaces.cuda_threadidx() ÷ $(8 * (1 << νm)) < $(idiv(N, 8)))) do emitter
-        load!(emitter, :E => layout_Freg2_registers, :Fsh2_shared => layout_Fsh2_shared)
+        load!(emitter, :Freg2 => layout_Freg2_registers, :Fsh2_shared => layout_Fsh2_shared)
         nothing
     end
     return nothing
 end
 
 # First FFT (section 4.10)
-function do_fft1!(emitter)
+function do_first_fft!(emitter)
     @assert Tinner % Tw == 0
 
+    # Here we widen all Freg2 values, but we will use only some of them in the `select!` call.
     widen2!(
         emitter,
-        :E,
-        :E,
+        :Freg2,
+        :Freg2,
         SIMD(:simd, 4, 2) => Register(:polr, 1, P),
         SIMD(:simd, 8, 2) => Register(:time, idiv(Touter, 2), 2);
         newtype=FloatValue,
     )
+
+    select!(emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)))
+
     apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
 
     # Chapter 4.10 notation:
@@ -454,9 +492,13 @@ function do_fft1!(emitter)
             Dict(
                 FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
                 Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
-                DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
-                DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
-                DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                # DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                # DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
+                # DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                DishMlo(:dishMlo, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                DishMlo(:dishMlo, Mt, idiv(M, 4)) => Warp(:warp, 1, idiv(M, 4)),
+                DishMhi(:dishMhi, Mt * idiv(M, 4), idiv(Mw, idiv(M, 4))) => Warp(:warp, idiv(M, 4), idiv(Mw, idiv(M, 4))),
+                DishMhi(:dishMhi, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishMhi, Mt * Mw, Mr),
                 DishNlo(:dishNlo, 1, 2) => SIMD(:simd, 16, 2),
                 DishNlo(:dishNlo, 2, 4) => Thread(:thread, 1, 4),
                 BeamQ(:beamQ, 1, 8) => Thread(:thread, 4, 8),
@@ -494,8 +536,9 @@ function do_fft1!(emitter)
     # Section 3 `W` is called `V` here
     split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
     split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
-    apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :($Γ²re * $Zre - $Γ²im * $Zim))
-    apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :($Γ²re * $Zim + $Γ²im * $Zre))
+    # TODO: Use `muladd` explicitly? (Also elsewhere?)
+    apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
+    apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
     merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
 
     # Third step
@@ -510,9 +553,13 @@ function do_fft1!(emitter)
             Dict(
                 FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
                 Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
-                DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
-                DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
-                DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                # DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                # DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
+                # DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                DishMlo(:dishMlo, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                DishMlo(:dishMlo, Mt, idiv(M, 4)) => Warp(:warp, 1, idiv(M, 4)),
+                DishMhi(:dishMhi, Mt * idiv(M, 4), idiv(Mw, idiv(M, 4))) => Warp(:warp, idiv(M, 4), idiv(Mw, idiv(M, 4))),
+                DishMhi(:dishMhi, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishMhi, Mt * Mw, Mr),
                 BeamQ(:beamQ, 1, 2) => SIMD(:simd, 16, 2),
                 BeamQ(:beamQ, 2, 4) => Thread(:thread, 1, 4),
                 BeamQ(:beamQ, 8, 8) => Thread(:thread, 4, 8),
@@ -544,6 +591,199 @@ function do_fft1!(emitter)
     # Write G to shared memory
     permute!(emitter, :G, :G, Register(:cplx, 1, 2), SIMD(:simd, 16, 2))
     store!(emitter, :Gsh_shared => layout_Gsh_shared, :G)
+
+    return nothing
+end
+
+# Second FFT (section 4.11)
+function do_second_fft!(emitter)
+    # Read one G-tile from shared memory
+    layout_G_registers = Layout(
+        Dict(
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
+            DishMlo(:dishMlo, 1, 8) => Thread(:thread, 4, 8),
+            DishMhi(:dishMhi, 1, 4) => Thread(:thread, 1, 4),
+            BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
+            # Is this an efficient warp layout (with reversed warp bits)?
+            # This simplifies shared memory addressing; see `layout_Gsh_shared`.
+            BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
+            BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
+            BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
+            BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
+            BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+            Freq(:freq, 1, F) => Block(:block, 1, F),
+            # Polr(:polr, 1, P) => Loop(:polr, 1, P),
+            Polr(:polr, 1, P) => Register(:polr, 1, P),
+            Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
+            Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+            Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+        ),
+    )
+    # This loads garbage for idiv(M, 4) ≤ mlo ≤ idiv(Mpad, 4)
+    apply!(emitter, :G => layout_G_registers, :(zero(Float16x2)))
+    # TODO: write this as condition for mlo
+    @assert trailing_zeros(Mpad) == 5
+    if!(emitter, :(0 ≤ IndexSpaces.cuda_threadidx() ÷ 4 < $(idiv(M, 4)))) do emitter
+        load!(emitter, :G => layout_G_registers, :Gsh_shared => layout_Gsh_shared)
+        nothing
+    end
+
+    # Chapter 4.11 notation:
+    #     Ẽ_pq = FT G_mq
+    # This is an FT that transforms m to p, with q as spectator index.
+
+    # (39)
+    layout_Γ¹_registers = Layout(
+        Dict(
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Cplx(:cplx_in, 1, C) => SIMD(:simd, 16, 2), # mma j0
+            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2), # mma i3
+            DishMhi(:dishMhi, 1, 4) => Thread(:thread, 1, 4), # mma j1, j2
+            BeamP(:beamP, 1, 8) => Thread(:thread, 4, 8), # mma i0, i1, i2
+        ),
+    )
+    # apply!(emitter, :Γ¹ => layout_Γ¹_registers, :(Float16x2(1, 2))) # TODO
+    emitter.environment[:Γ¹] = layout_Γ¹_registers
+
+    # (41)
+    @assert trailing_zeros(Mpad) == 5
+    layout_Γ²_registers = Layout(
+        Dict(
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+            DishMlo(:dishMlo, 1, 2) => SIMD(:simd, 16, 2),
+            DishMlo(:dishMlo, 2, 4) => Thread(:thread, 1, 4),
+            BeamP(:beamP, 1, 8) => Thread(:thread, 4, 8),
+        ),
+    )
+    # apply!(emitter, :Γ² => layout_Γ²_registers, :(Float16x2(3, 4))) # TODO
+    emitter.environment[:Γ²] = layout_Γ²_registers
+
+    # (45) - (47)
+    @assert trailing_zeros(Mpad) == 5
+    layout_Γ³_registers = Layout(
+        Dict(
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2),
+            Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+            DishMlo(:dishMlo, 1, 2) => SIMD(:simd, 16, 2),
+            DishMlo(:dishMlo, 2, 4) => Thread(:thread, 1, 4),
+            BeamP(:beamP, 8, 8) => Thread(:thread, 4, 8),
+        ),
+    )
+    # apply!(emitter, :Γ³ => layout_Γ³_registers, :(Float16x2(3, 4))) # TODO
+    emitter.environment[:Γ³] = layout_Γ³_registers
+
+    apply!(emitter, :X, [:G], (G,) -> :($G))
+
+    # First step
+    let
+        # (40)
+        layout_Z_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+                DishMlo(:dishMlo, 1, 2) => SIMD(:simd, 16, 2),
+                DishMlo(:dishMlo, 2, 4) => Thread(:thread, 1, 4),
+                BeamP(:beamP, 1, 8) => Thread(:thread, 4, 8),
+                BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
+                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
+                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
+                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
+                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
+                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                Freq(:freq, 1, F) => Block(:block, 1, F),
+                # Polr(:polr, 1, P) => Loop(:polr, 1, P),
+                Polr(:polr, 1, P) => Register(:polr, 1, P),
+                Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+            ),
+        )
+        apply!(emitter, :Z => layout_Z_registers, :(zero(Float16x2)))
+
+        # (38)
+        mma_is = [BeamP(:beamP, 1, 2), BeamP(:beamP, 2, 2), BeamP(:beamP, 4, 2), Cplx(:cplx, 1, 2)]
+        mma_js = [Cplx(:cplx_in, 1, 2), DishMhi(:dishMhi, 1, 2), DishMhi(:dishMhi, 2, 2)]
+        @assert trailing_zeros(Mpad) ≥ 5
+        mma_ks = [DishMlo(:dishMlo, 1, 2), DishMlo(:dishMlo, 2, 2), DishMlo(:dishMlo, 4, 2)]
+        let
+            #TODO: Implement this cleanly, e.g. via a `rename!` function
+            layout = copy(emitter.environment[:X])
+            k = Cplx(:cplx, 1, C)
+            k′ = Cplx(:cplx_in, 1, C)
+            v = layout[k]
+            delete!(layout, k)
+            layout[k′] = v
+            emitter.environment[:X] = layout
+        end
+        mma_row_col_m16n8k8_f16!(emitter, :Z, :Γ¹ => (mma_is, mma_js), :X => (mma_js, mma_ks), :Z => (mma_is, mma_ks))
+    end
+
+    # Second step
+    # Section 3 `W` is called `V` here
+    split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
+    split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
+    apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
+    apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
+    merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
+
+    # Third step
+    let
+        # (44)
+        ν = trailing_zeros(Npad)
+        νm = max(0, 5 - ν)
+        νn = max(0, ν - 3)
+        @assert νm + νn == 2
+        @assert 2 * (1 << νn) == idiv(Npad, 4)
+        layout_Y_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                Cplx(:cplx, 1, C) => Register(:cplx, 1, 2),
+                BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
+                BeamP(:beamP, 2, 4) => Thread(:thread, 1, 4),
+                BeamP(:beamP, 8, 8) => Thread(:thread, 4, 8),
+                BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
+                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
+                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
+                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
+                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
+                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                Freq(:freq, 1, F) => Block(:block, 1, F),
+                # Polr(:polr, 1, P) => Loop(:polr, 1, P),
+                Polr(:polr, 1, P) => Register(:polr, 1, P),
+                Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+            ),
+        )
+        apply!(emitter, :Y => layout_Y_registers, :(zero(Float16x2)))
+
+        # (43)
+        @assert trailing_zeros(Npad) ≥ 5
+        mma_is = [BeamP(:beamP, 8, 2), BeamP(:beamP, 16, 2), BeamP(:beamP, 32, 2), Cplx(:cplx, 1, 2)]
+        mma_js = [DishMlo(:dishMlo, 1, 2), DishMlo(:dishMlo, 2, 2), DishMlo(:dishMlo, 4, 2), Cplx(:cplx_in, 1, 2)]
+        mma_ks = [BeamP(:beamP, 1, 2), BeamP(:beamP, 2, 2), BeamP(:beamP, 4, 2)]
+        #TODO: Implement this cleaner, e.g. via a `rename!` function
+        split!(emitter, [:Vim, :Vre], :V, Cplx(:cplx, 1, 2))
+        merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
+        mma_row_col_m16n8k16_f16!(emitter, :Y, :Γ³ => (mma_is, mma_js), :V => (mma_js, mma_ks), :Y => (mma_is, mma_ks))
+    end
+
+    apply!(emitter, :Ẽ, [:Y], (Y,) -> :($Y))
+
+    split!(emitter, [:Ẽim, :Ẽre], :Ẽ, Cplx(:cplx, 1, C))
+    # apply!(emitter, :Ẽ2, [:Ẽre, :Ẽim], (Ẽre, Ẽim) -> :($Ẽre * $Ẽre + $Ẽim * $Ẽim))
+
+    # apply!(emitter, :I, [:I, :Ẽ2], (I, Ẽ2) -> :($I + $Ẽ2); ignore=[Time(:time, 1, T)])
+    apply!(
+        emitter,
+        :I,
+        [:I, :Ẽre, :Ẽim],
+        (I, Ẽre, Ẽim) -> :(muladd($Ẽre, $Ẽre, muladd($Ẽim, $Ẽim, $I)));
+        ignore=[Time(:time, 1, T)],
+    )
 
     return nothing
 end
@@ -582,9 +822,13 @@ function make_frb_kernel()
             Dict(
                 FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
                 Cplx(:cplx, 1, C) => SIMD(:simd, 16, 2),
-                DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
-                DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
-                DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                # DishM(:dishM, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                # DishM(:dishM, Mt, Mw) => Warp(:warp, 1, Mw),
+                # DishM(:dishM, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishM, Mt * Mw, Mr),
+                DishMlo(:dishMlo, 1, 1 << νm) => Thread(:thread, 8, 1 << νm),
+                DishMlo(:dishMlo, Mt, idiv(M, 4)) => Warp(:warp, 1, idiv(M, 4)),
+                DishMhi(:dishMhi, Mt * idiv(M, 4), idiv(Mw, idiv(M, 4))) => Warp(:warp, idiv(M, 4), idiv(Mw, idiv(M, 4))),
+                DishMhi(:dishMhi, Mt * Mw, idiv(M, Mt * Mw)) => Register(:dishMhi, Mt * Mw, Mr),
                 DishNlo(:dishNlo, 1, 2) => Thread(:thread, 4, 2),
                 DishNlo(:dishNlo, 2, idiv(Npad, 8)) => Thread(:thread, 8 * (1 << νm), idiv(Npad, 8)),
                 DishNhi(:dishNhi, 1, 4) => Thread(:thread, 1, 4),
@@ -592,13 +836,36 @@ function make_frb_kernel()
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
             ),
         )
-        # This loads garbage for nlo ≥ idiv(N, 4)
+        # This loads garbage for idiv(N, 4) ≤ nlo ≤ idiv(Npad, 4)
         apply!(emitter, :W => layout_W_registers, :(zero(Float16x2)))
         # TODO: write this as condition for nlo
         if!(emitter, :(0 ≤ IndexSpaces.cuda_threadidx() ÷ $(8 * (1 << νm)) < $(idiv(N, 8)))) do emitter
             load!(emitter, :W => layout_W_registers, :W_memory => layout_W_memory)
             nothing
         end
+    end
+
+    let
+        # Section 4.11, eqn. (128)
+        layout_I_registers = Layout(
+            Dict(
+                FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
+                BeamP(:beamP, 2, 32) => Thread(:thread, 1, 32),
+                BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
+                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
+                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
+                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
+                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
+                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                Freq(:freq, 1, F) => Block(:block, 1, F),
+                Polr(:polr, 1, P) => Register(:polr, 1, P),
+                DSTime(:dstime, 1, T ÷ Tds) => Loop(:dstime, 1, T ÷ Tds),
+            ),
+        )
+        apply!(emitter, :I => layout_I_registers, :(zero(Float16x2)))
+        push!(emitter.statements, :(dstime = $(0i32)))
+        push!(emitter.statements, :(t_running = $(0i32)))
     end
 
     loop!(emitter, Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter))) do emitter
@@ -621,9 +888,8 @@ function make_frb_kernel()
             read_Fsh2!(emitter)
             sync_threads!(emitter)
 
-            unrolled_loop!(
-                emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))
-            ) do emitter
+            # This loop should probably be unrolled for execution speed, but that increases compile time significantly
+            loop!(emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))) do emitter
 
                 # 4.10 First FFT
                 # (111)
@@ -640,26 +906,31 @@ function make_frb_kernel()
                 #     end
                 #     nothing
                 # end
-                do_fft1!(emitter)
+                do_first_fft!(emitter)
                 sync_threads!(emitter)
 
-                #TODO loop!(emitter, Time(:time, 1, Tinner) => Loop(:t, 1, Tinner)) do emitter
-                #TODO 
-                #TODO     #TODO # 4.11 Second FFT
-                #TODO     #TODO loop!(emitter, Polr(:polr,1,P) => Loop(:polr,1,P)) do emitter
-                #TODO     #TODO     # do_second_fft!(emitter)
-                #TODO     #TODO     nothing
-                #TODO     #TODO end
-                #TODO     #TODO 
-                #TODO     #TODO if!(t_running == T_ds) do emitter
-                #TODO     #TODO     write_I_running_to_global_memory!(emitter)
-                #TODO     #TODO 
-                #TODO     #TODO     nothing
-                #TODO     #TODO end
-                #TODO 
-                #TODO     nothing
-                #TODO end
-                #TODO sync_threads!(emitter)
+                loop!(emitter, Time(:time, 1, Tinner) => Loop(:t, 1, Tinner)) do emitter
+
+                    # 4.11 Second FFT
+                    # loop!(emitter, Polr(:polr, 1, P) => Loop(:polr, 1, P)) do emitter
+                    #     do_second_fft!(emitter)
+                    #     nothing
+                    # end
+                    do_second_fft!(emitter)
+
+                    push!(emitter.statements, :(t_running += $(1i32)))
+                    if!(emitter, :(t_running == $(Tds))) do emitter
+                        store!(emitter, :I_memory => layout_I_memory, :I)
+                        apply!(emitter, :I, [:I], (I,) -> :(zero(Float16x2)))
+                        push!(emitter.statements, :(t_running = $(0i32)))
+                        push!(emitter.statements, :(dstime += $(1i32)))
+
+                        nothing
+                    end
+
+                    nothing
+                end
+                sync_threads!(emitter)
 
                 nothing
             end
@@ -691,7 +962,7 @@ println("[Creating frb kernel...]")
 const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
-@eval function frb(E_memory, S_memory, W_memory, info_memory)
+@eval function frb(E_memory, S_memory, W_memory, I_memory, info_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     Fsh1_shared = reinterpret(Int4x8, shmem)
     Fsh2_shared = reinterpret(Int4x8, shmem)
@@ -709,7 +980,7 @@ function main()
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm frb(
-        CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
+        CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
     return nothing

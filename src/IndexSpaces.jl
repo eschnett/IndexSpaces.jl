@@ -226,12 +226,21 @@ function Base.inv(layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return Layout(Dict{Index{Typ2},Index{Typ1}}(v => k for (k, v) in layout.dict))
 end
 
+Base.isempty(layout::Layout) = isempty(layout.dict)
+
 function Base.in(key::Index{Typ1}, layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     key ∈ keys(layout.dict) && return true
     for (k, v) in layout.dict
         key ∈ k && return true
     end
     return false
+end
+
+function Base.union(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
+    # TODO: Ensure values are different
+    @assert !any(k1 in keys(layout2.dict) for k1 in keys(layout1.dict))
+    @assert !any(k2 in keys(layout1.dict) for k2 in keys(layout2.dict))
+    return Layout{Typ1,Typ2}(Dict(layout1.dict ∪ layout2.dict))
 end
 
 function Base.getindex(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,Typ2}
@@ -2127,16 +2136,26 @@ function apply!(emitter::Emitter, res_layout::Pair{Symbol,Layout{Physics,Machine
     return nothing
 end
 
-function apply!(emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, code)
+function apply!(
+    emitter::Emitter, res::Symbol, vars::AbstractVector{Symbol}, code; ignore::AbstractVector{<:Index{Physics}}=Index{Physics}[]
+)
     @assert !isempty(vars)
     var_layouts = [emitter.environment[var] for var in vars]
     var_layout = var_layouts[1]
     # We allow the second and following layouts to be "smaller" than the first
     # @assert all(vl == var_layout for vl in var_layouts)
-    if !all(vl ∈ var_layout for vl in var_layouts)
-        @show var_layout var_layouts
+    for vl in var_layouts
+        if !isempty(ignore)
+            vl = copy(vl)
+            for i in ignore
+                delete!(vl, i)
+            end
+        end
+        if !(vl ∈ var_layout)
+            @show vl var_layout
+        end
+        @assert vl ∈ var_layout
     end
-    @assert all(vl ∈ var_layout for vl in var_layouts)
 
     # res might or might not exist
     # @assert res ∉ emitter.environment
