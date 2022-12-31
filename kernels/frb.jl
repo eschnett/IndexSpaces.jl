@@ -157,11 +157,11 @@ const layout_I_memory = Layout(
     Dict(
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
         BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
-        BeamP(:beamP, 2, 32) => Memory(:memory, 1, 32),
-        BeamQ(:beamQ, 1, 64) => Memory(:memory, 32, 64),
-        Freq(:freq, 1, F) => Memory(:memory, 32 * 64, F),
-        Polr(:polr, 1, P) => Memory(:memory, 32 * 64 * F, P),
-        DSTime(:dstime, 1, T ÷ Tds) => Memory(:memory, 32 * 64 * F * P, T ÷ Tds),
+        BeamP(:beamP, 2, M) => Memory(:memory, 1, M),
+        BeamQ(:beamQ, 1, 2 * N) => Memory(:memory, M, 2 * N),
+        Freq(:freq, 1, F) => Memory(:memory, M * 2 * N, F),
+        Polr(:polr, 1, P) => Memory(:memory, M * 2 * N * F, P),
+        DSTime(:dstime, 1, T ÷ Tds) => Memory(:memory, M * 2 * N * F * P, T ÷ Tds),
     ),
 )
 
@@ -564,11 +564,12 @@ function do_second_fft!(emitter)
             BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
             # Is this an efficient warp layout (with reversed warp bits)?
             # This simplifies shared memory addressing; see `layout_Gsh_shared`.
-            BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
-            BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
-            BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
-            BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
-            BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+            # BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
+            # BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
+            # BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
+            # BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
+            # BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+            BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
             Freq(:freq, 1, F) => Block(:block, 1, F),
             # Polr(:polr, 1, P) => Loop(:polr, 1, P),
             Polr(:polr, 1, P) => Register(:polr, 1, P),
@@ -645,11 +646,7 @@ function do_second_fft!(emitter)
                 DishMlo(:dishMlo, 2, 4) => Thread(:thread, 1, 4),
                 BeamP(:beamP, 1, 8) => Thread(:thread, 4, 8),
                 BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
-                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
-                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
-                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
-                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
-                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
@@ -702,11 +699,7 @@ function do_second_fft!(emitter)
                 BeamP(:beamP, 2, 4) => Thread(:thread, 1, 4),
                 BeamP(:beamP, 8, 8) => Thread(:thread, 4, 8),
                 BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
-                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
-                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
-                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
-                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
-                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
@@ -901,11 +894,7 @@ function make_frb_kernel()
                 BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
                 BeamP(:beamP, 2, 32) => Thread(:thread, 1, 32),
                 BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
-                BeamQ(:beamQ, 2, 2) => Warp(:warp, 16, 2),
-                BeamQ(:beamQ, 4, 2) => Warp(:warp, 8, 2),
-                BeamQ(:beamQ, 8, 2) => Warp(:warp, 4, 2),
-                BeamQ(:beamQ, 16, 2) => Warp(:warp, 2, 2),
-                BeamQ(:beamQ, 32, 2) => Warp(:warp, 1, 2),
+                BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
                 DSTime(:dstime, 1, T ÷ Tds) => Loop(:dstime, 1, T ÷ Tds),
@@ -968,7 +957,18 @@ function make_frb_kernel()
 
                     push!(emitter.statements, :(t_running += $(1i32)))
                     if!(emitter, :(t_running == $(Tds))) do emitter
-                        store!(emitter, :I_memory => layout_I_memory, :I)
+                        if!(
+                            emitter, :(
+                                let
+                                    p = 2i32 * IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                                    q = 2i32 * IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
+                                    0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
+                                end
+                            )
+                        ) do emitter
+                            store!(emitter, :I_memory => layout_I_memory, :I)
+                            nothing
+                        end
                         apply!(emitter, :I, [:I], (I,) -> :(zero(Float16x2)))
                         push!(emitter.statements, :(t_running = $(0i32)))
                         push!(emitter.statements, :(dstime += $(1i32)))
