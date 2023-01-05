@@ -6,6 +6,13 @@ using CUDASIMDTypes
 using IndexSpaces
 # using Random
 
+if CUDA.functional()
+    println("[Choosing CUDA device...]")
+    CUDA.device!(0)
+    println(name(device()))
+    @assert name(device()) == "NVIDIA A40"
+end
+
 idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # shift(x::Number, s) = (@assert s ≥ 1; (x + (1 << (s - 1))) >> s)
 # shift(x::Complex, s) = Complex(shift(x.re, s), shift(x.im, s))
@@ -397,7 +404,7 @@ function do_first_fft!(emitter)
 
     select!(emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)))
 
-    apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
+    apply!(emitter, :WE, [:E, :W], (E, W) -> :(swapped_complex_mul($W, $E)))
 
     # Chapter 4.10 notation:
     #     G_mq = FT WE_mn
@@ -1010,7 +1017,7 @@ println("[Creating frb kernel...]")
 const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
-@eval function frb(E_memory, S_memory, W_memory, I_memory, info_memory)
+@eval function frb(S_memory, W_memory, E_memory, I_memory, info_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     Fsh1_shared = reinterpret(Int4x8, shmem)
     Fsh2_shared = reinterpret(Int4x8, shmem)
@@ -1019,7 +1026,10 @@ println("[Done creating frb kernel]")
     return nothing
 end
 
-function main()
+function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftest::Bool=false, nruns::Int=0)
+    println("CHORD 8-bit FRB beamformer")
+
+    println("Compiling kernel...")
     num_threads = kernel_setup.num_threads
     num_warps = kernel_setup.num_warps
     num_blocks = kernel_setup.num_blocks
@@ -1028,30 +1038,147 @@ function main()
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm frb(
-        CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
+        CUDA.zeros(Int32, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
+
+    if compile_only
+        return nothing
+    end
+
+    if output_kernel
+        open("output/frb.jl", "w") do fh
+            println(fh, frb_kernel)
+        end
+        ptx = read("output/frb.ptx", String)
+        ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
+        open("output/frb.ptx", "w") do fh
+            write(fh, ptx)
+        end
+        kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
+        open("output/frb.yaml", "w") do fh
+            print(
+                fh,
+                """
+        --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
+        kernel-description:
+          name: "frb"
+          description: "FRB beamformer"
+          design-parameters:
+            beam-layout: [$(2*M), $(2*N)]
+            dish-layout: [$M, $N]
+            number-of-complex-components: $C
+            number-of-dishes: D
+            number-of-frequencies: $F
+            number-of-polarizations: $P
+            number-of-timesamples: $T
+            sampling-time: $sampling_time
+          compile-parameters:
+            minthreads: $(num_threads * num_warps)
+            blocks_per_sm: $num_blocks_per_sm
+          call-parameters:
+            threads: [$num_threads, $num_warps]
+            blocks: [$num_blocks]
+            shmem_bytes: $shmem_bytes
+          kernel-name: "$kernel_name"
+          kernel-arguments:
+            - name: "S"
+              intent: in
+              type: Int32
+              indices: [D]
+              shape: [$D]
+              strides: [1]
+            - name: "W"
+              intent: in
+              type: Float16
+              indices: [C, M, N, F, P]
+              shape: [$C, $M, $N, $F, $P]
+              strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*F), $(C*M*N*F*P)]
+            - name: "E"
+              intent: in
+              type: Int4
+              indices: [C, D, F, P, T]
+              shape: [$C, $D, $F, $P, $T]
+              strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+            - name: "I"
+              intent: out
+              type: Float16
+              indices: [beamP, beamQ, F, P, Tds]
+              shape: [$(2*M), $(2*N), $F, $P, $(T÷Tds)]
+              strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F), $(2*M*2*N*F*P)]
+            - name: "info"
+              intent: out
+              type: Int32
+              indices: [thread, warp]
+              shapes: [$num_threads, $num_warps]
+              strides: [1, $num_threads]
+        ...
+        """,
+            )
+        end
+    end
+
+    println("Allocating input data...")
+
+    # TODO: determine types and sizes automatically
+    S_memory = Array{Int32}(undef, D)
+    W_memory = Array{Float16x2}(undef, M * N * F * P)
+    E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
+    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * (T ÷ Tds))
+    info_wanted = Array{Int32}(undef, num_threads * num_warps)
+
+    println("Setting up input data...")
+    map!(i -> zero(Int32), S_memory, S_memory)
+    map!(i -> zero(Float16x2), W_memory, W_memory)
+    map!(i -> zero(Int4x8), E_memory, E_memory)
+    map!(i -> zero(Float16x2), I_wanted, I_wanted)
+    map!(i -> zero(Int32), info_wanted, info_wanted)
+
+    input = :random
+    if input ≡ :zero
+        # do nothing
+    end
+
+    println("Copying data from CPU to GPU...")
+    S_cuda = CuArray(S_memory)
+    W_cuda = CuArray(W_memory)
+    E_cuda = CuArray(E_memory)
+    I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
+    info_cuda = CUDA.fill(-1i32, length(info_wanted))
+
+    println("Running kernel...")
+    kernel(S_cuda, W_cuda, E_cuda, I_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    synchronize()
+
+    println("Copying data back from GPU to CPU...")
+    I_memory = Array(I_cuda)
+    info_memory = Array(info_cuda)
+    @assert all(info_memory .== 0)
+
+    println("Done.")
     return nothing
 end
 
-println("Writing \"output/frb.jl\"...")
-open("output/frb.jl", "w") do fh
-    println(fh, frb_kernel)
-end
 if CUDA.functional()
-    println("Writing \"output/frb.ptx\"...")
-    open("output/frb.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main()
-        end
-    end
-    println("Writing \"output/frb.sass\"...")
-    open("output/frb.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main()
-        end
-    end
-end
-println("Done.")
+    # # Output kernel
+    # open("output/bb.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true)
+    #     end
+    # end
+    # open("output/bb.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(; compile_only=true)
+    #     end
+    # end
+    # main(; output_kernel=true)
 
-# main()
+    # # Run test
+    # main(; run_selftest=true)
+
+    # # Run benchmark
+    # main(; nruns=100)
+
+    # Regular run, also for profiling
+    main()
+end

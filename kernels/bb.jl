@@ -6,6 +6,13 @@ using CUDASIMDTypes
 using IndexSpaces
 using Random
 
+if CUDA.functional()
+    println("[Choosing CUDA device...]")
+    CUDA.device!(0)
+    println(name(device()))
+    @assert name(device()) == "NVIDIA A40"
+end
+
 idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 shift(x::Number, s) = (@assert s ≥ 1; (x + (1 << (s - 1))) >> s)
 shift(x::Complex, s) = Complex(shift(x.re, s), shift(x.im, s))
