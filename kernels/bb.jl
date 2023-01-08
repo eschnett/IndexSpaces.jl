@@ -869,8 +869,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
               intent: out
               type: Int32
               indices: [thread, warp]
-              shapes: [$num_threads, $num_warps]
-              strides: [1, $num_threads]
+              shapes: [$num_threads, $num_warps, $num_blocks]
+              strides: [1, $num_threads, $(num_threads*num_warps)]
         ...
         """,
             )
@@ -884,7 +884,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     s_memory = Array{Int32}(undef, B * P * F)
     J_wanted = Array{Int4x8}(undef, idiv(T, 4) * P * F * B)
-    info_wanted = Array{Int32}(undef, num_threads * num_warps)
+    info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     println("Setting up input data...")
     map!(i -> zero(Int8x4), A_memory, A_memory)
@@ -986,7 +986,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_cuda = CuArray(E_memory)
     s_cuda = CuArray(s_memory)
     J_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(T, 4) * P * F * B)
-    info_cuda = CUDA.fill(-1i32, num_threads * num_warps)
+    info_cuda = CUDA.fill(-1i32, num_threads * num_warps * num_blocks)
 
     println("Running kernel...")
     kernel(A_cuda, E_cuda, s_cuda, J_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
@@ -1074,21 +1074,21 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # open("output/bb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # open("output/bb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true)
-    #     end
-    # end
-    # main(; output_kernel=true)
+    # Output kernel
+    open("output/bb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    open("output/bb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
+    main(; output_kernel=true)
 
-    # Run test
-    main(; run_selftest=true)
+    # # Run test
+    # main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
