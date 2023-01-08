@@ -5,6 +5,7 @@ using CUDA
 using CUDASIMDTypes
 using IndexSpaces
 using Random
+using StaticArrays
 
 if CUDA.functional()
     println("[Choosing CUDA device...]")
@@ -155,6 +156,10 @@ function calc_S(m::Integer, n::Integer)
     @assert 0 ≤ S < N * ΣF2
     return S
 end
+# let
+#     all_S = [calc_S(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
+#     @assert allunique(all_S)
+# end
 
 const layout_W_memory = Layout(
     Dict(
@@ -1033,11 +1038,26 @@ println("[Creating frb kernel...]")
 const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
-@eval function frb(S_memory, W_memory, E_memory, I_memory, info_memory)
-    shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
-    Fsh1_shared = reinterpret(Int4x8, shmem)
-    Fsh2_shared = reinterpret(Int4x8, shmem)
-    Gsh_shared = reinterpret(Float16x2, shmem)
+@eval function frb(S_memory, W_memory, E_memory, I_memory, info_memory, Fsh1_memory, Fsh2_memory, Gsh_memory)
+    # shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
+    # Fsh1_shared = reinterpret(Int4x8, shmem)
+    # Fsh2_shared = reinterpret(Int4x8, shmem)
+    # Gsh_shared = reinterpret(Float16x2, shmem)
+    Fsh1_shared = let
+        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+        block_offset = $(idiv(Fsh1_shmem_bytes, 4))
+        @view Fsh1_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    end
+    Fsh2_shared = let
+        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+        block_offset = $(idiv(Fsh2_shmem_bytes, 4))
+        @view Fsh2_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    end
+    Gsh_shared = let
+        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+        block_offset = $(idiv(Gsh_shmem_bytes, 4))
+        @view Gsh_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    end
     $frb_kernel
     return nothing
 end
@@ -1054,7 +1074,14 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm frb(
-        CUDA.zeros(Int32, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
+        CUDA.zeros(Int32, 0),
+        CUDA.zeros(Float16x2, 0),
+        CUDA.zeros(Int4x8, 0),
+        CUDA.zeros(Float16x2, 0),
+        CUDA.zeros(Int32, 0),
+        CUDA.zeros(Int4x8, 0),
+        CUDA.zeros(Int4x8, 0),
+        CUDA.zeros(Float16x2, 0),
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
@@ -1084,7 +1111,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             beam-layout: [$(2*M), $(2*N)]
             dish-layout: [$M, $N]
             number-of-complex-components: $C
-            number-of-dishes: D
+            number-of-dishes: $D
             number-of-frequencies: $F
             number-of-polarizations: $P
             number-of-timesamples: $T
@@ -1125,9 +1152,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             - name: "info"
               intent: out
               type: Int32
-              indices: [thread, warp]
-              shapes: [$num_threads, $num_warps]
-              strides: [1, $num_threads]
+              indices: [thread, warp, block]
+              shapes: [$num_threads, $num_warps, $num_blocks]
+              strides: [1, $num_threads, $(num_threads*num_warps)]
         ...
         """,
             )
@@ -1141,7 +1168,10 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * (T ÷ Tds))
-    info_wanted = Array{Int32}(undef, num_threads * num_warps)
+    info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
+    Fsh1_memory = Array{Int4x8}(undef, idiv(Fsh1_shmem_bytes, 4) * num_blocks)
+    Fsh2_memory = Array{Int4x8}(undef, idiv(Fsh2_shmem_bytes, 4) * num_blocks)
+    Gsh_memory = Array{Float16x2}(undef, idiv(Gsh_shmem_bytes, 4) * num_blocks)
 
     println("Setting up input data...")
     map!(i -> zero(Int32), S_memory, S_memory)
@@ -1150,9 +1180,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     map!(i -> zero(Float16x2), I_wanted, I_wanted)
     map!(i -> zero(Int32), info_wanted, info_wanted)
 
-    all_S = [calc_S(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-    @assert allunique(all_S)
-
+    println("Setting up input data...")
     input = :random
     if input ≡ :zero
         # do nothing
@@ -1170,26 +1198,22 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             r = sqrt(rand(Float32))
             α = rand(Float32)
             c = r * cispi(2 * α)
-            return Float16x2(imag(c), real(c))
+            return c
         end
-        W_memory .= [uniform_in_disk() for w in W_memory]
+        c2t(c::Complex) = (imag(c), real(c))
+        t2c(t::NTuple{2}) = Complex(t[2], t[1])
+        # W_memory .= [Float16x2(c2t(uniform_in_disk())...) for i in eachindex(W_memory)]
+        W_memory .= [Float16x2(0, 1) for i in eachindex(W_memory)]
 
         dish = 0
         freq = 0
         polr = 0
         time = 0
-        value = (0, 1)
-        value8 = Int4x8(
-            ifelse(dish % 4 == 0, value[1], 0),
-            ifelse(dish % 4 == 0, value[2], 0),
-            ifelse(dish % 4 == 1, value[1], 0),
-            ifelse(dish % 4 == 1, value[2], 0),
-            ifelse(dish % 4 == 2, value[1], 0),
-            ifelse(dish % 4 == 2, value[2], 0),
-            ifelse(dish % 4 == 3, value[1], 0),
-            ifelse(dish % 4 == 4, value[2], 0),
-        )
-        E_memory[dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time + 1] = value8
+        value = 1 + 0im
+        value8 = zero(SVector{8,Int8})
+        value8 = setindex(value8, 1, dish % 4 + 0 + 1, imag(value))
+        value8 = setindex(value8, 1, dish % 4 + 1 + 1, real(value))
+        E_memory[dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time + 1] = Int4x8(value8...)
     end
 
     println("Copying data from CPU to GPU...")
@@ -1198,9 +1222,24 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_cuda = CuArray(E_memory)
     I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
+    Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Fsh1_memory))
+    Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Fsh2_memory))
+    Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), length(Gsh_memory))
 
     println("Running kernel...")
-    kernel(S_cuda, W_cuda, E_cuda, I_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    kernel(
+        S_cuda,
+        W_cuda,
+        E_cuda,
+        I_cuda,
+        info_cuda,
+        Fsh1_cuda,
+        Fsh2_cuda,
+        Gsh_cuda;
+        threads=(num_threads, num_warps),
+        blocks=num_blocks,
+        shmem=shmem_bytes,
+    )
     synchronize()
 
     println("Copying data back from GPU to CPU...")
@@ -1208,7 +1247,15 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     info_memory = Array(info_cuda)
     @assert all(info_memory .== 0)
 
+    println("Checking results...")
+    did_test_I_memory = falses(length(I_memory))
     for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+        if beamp % 2 == 0
+            @assert !did_test_I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1]
+            did_test_I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1] =
+                true
+        end
+
         value2 = convert(
             NTuple{2,Float32},
             I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1],
@@ -1218,6 +1265,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
         end
     end
+    @assert all(did_test_I_memory)
 
     println("Done.")
     return nothing
