@@ -4,7 +4,7 @@
 using CUDA
 using CUDASIMDTypes
 using IndexSpaces
-# using Random
+using Random
 
 if CUDA.functional()
     println("[Choosing CUDA device...]")
@@ -139,6 +139,22 @@ const layout_E_memory = Layout(
 )
 
 const layout_S_memory = Layout(Dict(IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32), Dish(:dish, 1, D) => Memory(:memory, 1, D)))
+
+function calc_S(m::Integer, n::Integer)
+    @assert 0 ≤ m < M
+    mlo = m % idiv(M, 4)
+    mhi = m ÷ idiv(M, 4)
+    @assert 0 ≤ mlo < idiv(M, 4)
+    @assert 0 ≤ mhi < 4
+    @assert 0 ≤ n < N
+    nlo = n % idiv(N, 4)
+    nhi = n ÷ idiv(N, 4)
+    @assert 0 ≤ nlo < idiv(N, 4)
+    @assert 0 ≤ nhi < 4
+    S = 33 * mlo + 33 * idiv(M, 4) * mhi + ΣF2 * nlo + ΣF2 * idiv(N, 4) * nhi
+    @assert 0 ≤ S < N * ΣF2
+    return S
+end
 
 const layout_W_memory = Layout(
     Dict(
@@ -1027,7 +1043,7 @@ println("[Done creating frb kernel]")
 end
 
 function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftest::Bool=false, nruns::Int=0)
-    println("CHORD 8-bit FRB beamformer")
+    println("CHORD FRB beamformer")
 
     println("Compiling kernel...")
     num_threads = kernel_setup.num_threads
@@ -1134,9 +1150,46 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     map!(i -> zero(Float16x2), I_wanted, I_wanted)
     map!(i -> zero(Int32), info_wanted, info_wanted)
 
+    all_S = [calc_S(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
+    @assert allunique(all_S)
+
     input = :random
     if input ≡ :zero
         # do nothing
+    elseif input ≡ :zero
+        Random.seed!(0)
+
+        # Choose dish grid
+        grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
+        dish_grid = grid[randperm(length(grid))[1:D]]
+        S_memory .= calc_S.(dish_grid)
+
+        # Generate a uniform complex number in the unit disk. See
+        # <https://stats.stackexchange.com/questions/481543/generating-random-points-uniformly-on-a-disk>.
+        function uniform_in_disk()
+            r = sqrt(rand(Float32))
+            α = rand(Float32)
+            c = r * cispi(2 * α)
+            return Float16x2(imag(c), real(c))
+        end
+        W_memory .= [uniform_in_disk() for w in W_memory]
+
+        dish = 0
+        freq = 0
+        polr = 0
+        time = 0
+        value = (0, 1)
+        value8 = Int4x8(
+            ifelse(dish % 4 == 0, value[1], 0),
+            ifelse(dish % 4 == 0, value[2], 0),
+            ifelse(dish % 4 == 1, value[1], 0),
+            ifelse(dish % 4 == 1, value[2], 0),
+            ifelse(dish % 4 == 2, value[1], 0),
+            ifelse(dish % 4 == 2, value[2], 0),
+            ifelse(dish % 4 == 3, value[1], 0),
+            ifelse(dish % 4 == 4, value[2], 0),
+        )
+        E_memory[dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time + 1] = value8
     end
 
     println("Copying data from CPU to GPU...")
@@ -1154,6 +1207,17 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     I_memory = Array(I_cuda)
     info_memory = Array(info_cuda)
     @assert all(info_memory .== 0)
+
+    for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+        value2 = convert(
+            NTuple{2,Float32},
+            I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1],
+        )
+        value = value2[beamp % 2 + 1]
+        if value ≠ 0
+            println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
+        end
+    end
 
     println("Done.")
     return nothing
@@ -1173,12 +1237,12 @@ if CUDA.functional()
     # end
     # main(; output_kernel=true)
 
-    # # Run test
-    # main(; run_selftest=true)
+    # Run test
+    main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
 
-    # Regular run, also for profiling
-    main()
+    # # Regular run, also for profiling
+    # main()
 end

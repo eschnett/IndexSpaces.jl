@@ -6,8 +6,9 @@ version = "0.1.0"
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CUDASIMDTypes = "ba1ee33b-8807-41fd-9812-6d5f2ce04139"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
-julia = "1.6"
 CUDA = "3.12.0"
 CUDASIMDTypes = "1.3.2"
+julia = "1.6"
