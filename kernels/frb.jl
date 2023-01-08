@@ -27,17 +27,17 @@ idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # Full CHORD
 const sampling_time = 27.3
 const C = 2
-const T = 2064
+const T = 48 #TODO 2064
 const D = 512
 const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 256
+const F = 1 #TODO 256
 
 const Touter = 48
 const Tinner = 4
-const Tds = 40                  # downsampling factor
+const Tds = 1 #TODO 40                  # downsampling factor
 
 const W = 24                    # number of warps
 const B = 1                     # number of blocks per SM
@@ -71,7 +71,7 @@ const RF2 = Mr * Tr
 
 # Shared memory bytes
 
-const Fsh1_shmem_bytes = idiv(D * ΣF1, 4)
+const Fsh1_shmem_bytes = 4 * idiv(D * ΣF1, 8)
 const Fsh2_shmem_bytes = 4 * N * ΣF2
 const Gsh_shmem_bytes = 4 * ΣG0 * 2
 
@@ -80,7 +80,7 @@ const Gsh_shmem_bytes = 4 * ΣG0 * 2
 const num_simd_bits = 32
 const num_threads = 32
 const num_warps = W
-const num_blocks = F # ???
+const num_blocks = F
 const num_blocks_per_sm = B
 
 # TODO ... more here ...
@@ -152,7 +152,8 @@ function calc_S(m::Integer, n::Integer)
     nhi = n ÷ idiv(N, 4)
     @assert 0 ≤ nlo < idiv(N, 4)
     @assert 0 ≤ nhi < 4
-    S = 33 * mlo + 33 * idiv(M, 4) * mhi + ΣF2 * nlo + ΣF2 * idiv(N, 4) * nhi
+    # S = 33 * mlo + 33 * idiv(M, 4) * mhi + ΣF2 * nlo + ΣF2 * idiv(N, 4) * nhi
+    S = 33 * m + ΣF2 * n
     @assert 0 ≤ S < N * ΣF2
     return S
 end
@@ -1169,9 +1170,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * (T ÷ Tds))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
-    Fsh1_memory = Array{Int4x8}(undef, idiv(Fsh1_shmem_bytes, 4) * num_blocks)
-    Fsh2_memory = Array{Int4x8}(undef, idiv(Fsh2_shmem_bytes, 4) * num_blocks)
-    Gsh_memory = Array{Float16x2}(undef, idiv(Gsh_shmem_bytes, 4) * num_blocks)
+    # Fsh1_memory = Array{Int4x8}(undef, idiv(Fsh1_shmem_bytes, 4) * num_blocks)
+    # Fsh2_memory = Array{Int4x8}(undef, idiv(Fsh2_shmem_bytes, 4) * num_blocks)
+    # Gsh_memory = Array{Float16x2}(undef, idiv(Gsh_shmem_bytes, 4) * num_blocks)
 
     println("Setting up input data...")
     map!(i -> zero(Int32), S_memory, S_memory)
@@ -1184,13 +1185,14 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     input = :random
     if input ≡ :zero
         # do nothing
-    elseif input ≡ :zero
+    elseif input ≡ :random
         Random.seed!(0)
 
         # Choose dish grid
         grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-        dish_grid = grid[randperm(length(grid))[1:D]]
-        S_memory .= calc_S.(dish_grid)
+        # dish_grid = grid[randperm(length(grid))[1:D]]
+        dish_grid = grid[1:D]
+        S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
 
         # Generate a uniform complex number in the unit disk. See
         # <https://stats.stackexchange.com/questions/481543/generating-random-points-uniformly-on-a-disk>.
@@ -1211,8 +1213,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         time = 0
         value = 1 + 0im
         value8 = zero(SVector{8,Int8})
-        value8 = setindex(value8, 1, dish % 4 + 0 + 1, imag(value))
-        value8 = setindex(value8, 1, dish % 4 + 1 + 1, real(value))
+        value8 = setindex(value8, imag(value), dish % 4 + 0 + 1)
+        value8 = setindex(value8, real(value), dish % 4 + 1 + 1)
         E_memory[dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time + 1] = Int4x8(value8...)
     end
 
@@ -1222,9 +1224,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     E_cuda = CuArray(E_memory)
     I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
-    Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Fsh1_memory))
-    Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Fsh2_memory))
-    Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), length(Gsh_memory))
+    Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(Fsh1_shmem_bytes, 4) * num_blocks)
+    Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(Fsh2_shmem_bytes, 4) * num_blocks)
+    Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), idiv(Gsh_shmem_bytes, 4) * num_blocks)
 
     println("Running kernel...")
     kernel(
@@ -1246,20 +1248,63 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     I_memory = Array(I_cuda)
     info_memory = Array(info_cuda)
     @assert all(info_memory .== 0)
+    Fsh1_memory = Array(Fsh1_cuda)
+    Fsh2_memory = Array(Fsh2_cuda)
+    Gsh_memory = Array(Gsh_cuda)
 
     println("Checking results...")
+
+    did_test_Fsh1_memory = falses(length(Fsh1_memory))
+    for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
+        idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
+        if polr == 0 && time ÷ idiv(Touter, 2) == 0
+            @assert !did_test_Fsh1_memory[idx + 1]
+            did_test_Fsh1_memory[idx + 1] = true
+        end
+        value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
+        value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+        value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+        value = Complex(value_re, value_im)
+        if value ≠ 0
+            S = S_memory[dish + 1]
+            m = S ÷ 33 % M
+            n = S ÷ ΣF2 % N
+            println("    dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value m=$m n=$n S=$S")
+        end
+    end
+    # There is padding
+    # @assert all(did_test_Fsh1_memory)
+
+    did_test_Fsh2_memory = falses(length(Fsh2_memory))
+    for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
+        dishMlo = dishM % idiv(M, 4)
+        dishMhi = dishM ÷ idiv(M, 4)
+        dishNlo = dishN % idiv(N, 4)
+        dishNhi = dishN ÷ idiv(N, 4)
+        idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
+        if polr == 0 && time ÷ idiv(Touter, 2) == 0
+            @assert !did_test_Fsh2_memory[idx + 1]
+            did_test_Fsh2_memory[idx + 1] = true
+        end
+        value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
+        value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+        value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+        value = Complex(value_re, value_im)
+        if value ≠ 0
+            println("    dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
+        end
+    end
+    # There is padding
+    # @assert all(did_test_Fsh2_memory)
+
     did_test_I_memory = falses(length(I_memory))
     for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
         if beamp % 2 == 0
-            @assert !did_test_I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1]
-            did_test_I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1] =
-                true
+            @assert !did_test_I_memory[idx + 1]
+            did_test_I_memory[idx + 1] = true
         end
-
-        value2 = convert(
-            NTuple{2,Float32},
-            I_memory[beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime + 1],
-        )
+        value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
         value = value2[beamp % 2 + 1]
         if value ≠ 0
             println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
