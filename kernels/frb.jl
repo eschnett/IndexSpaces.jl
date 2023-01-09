@@ -827,6 +827,7 @@ function make_frb_kernel()
 
         # (41)
         @assert trailing_zeros(Npad) == 5
+        N4 = Int32(idiv(N, 4))
         layout_Γ²_registers = Layout(
             Dict(
                 FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
@@ -845,8 +846,8 @@ function make_frb_kernel()
                     d0 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 0i32
                     d1 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 1i32
                     v = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) ÷ 4i32
-                    Γ²_d0 = cispi(d0 * v / $(Float32(N)))
-                    Γ²_d1 = cispi(d1 * v / $(Float32(N)))
+                    Γ²_d0 = d0 < $N4 ? cispi(d0 * v / $(Float32(N))) : Complex(0.0f0)
+                    Γ²_d1 = d1 < $N4 ? cispi(d1 * v / $(Float32(N))) : Complex(0.0f0)
                     (Γ²_d0.re, Γ²_d0.im, Γ²_d1.re, Γ²_d1.im)
                 end
             end,
@@ -875,8 +876,8 @@ function make_frb_kernel()
                     d0 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 0i32
                     d1 = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) % 4i32 * 2i32 + 1i32
                     u = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) ÷ 4i32
-                    Γ³_d0 = cispi(8i32 * d0 * u / $(Float32(N)))
-                    Γ³_d1 = cispi(8i32 * d1 * u / $(Float32(N)))
+                    Γ³_d0 = d0 < $N4 && u < $N4 ? cispi(8i32 * d0 * u / $(Float32(N))) : Complex(0.0f0)
+                    Γ³_d1 = d1 < $N4 && u < $N4 ? cispi(8i32 * d1 * u / $(Float32(N))) : Complex(0.0f0)
                     (+Γ³_d0.re, -Γ³_d0.im, +Γ³_d0.im, +Γ³_d0.re, +Γ³_d1.re, -Γ³_d1.im, +Γ³_d1.im, +Γ³_d1.re)
                 end
             end,
@@ -1058,6 +1059,7 @@ function make_frb_kernel()
 
     stmts = clean_code(
         quote
+            # TODO: ftz, fmad, prec-div (?) prec-sqrt (?)
             #TODO @inbounds
             begin
                 $(emitter.init_statements...)
@@ -1250,11 +1252,25 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         freq = 0
         polr = 0
         time = 0
-        value = 1 + 0im
-        value8 = zero(SVector{8,Int8})
-        value8 = setindex(value8, imag(value), dish % 4 + 0 + 1)
-        value8 = setindex(value8, real(value), dish % 4 + 1 + 1)
-        E_memory[dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time + 1] = Int4x8(value8...)
+        Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
+        Evalue = 1 + 0im
+        Evalue8 = zero(SVector{8,Int8})
+        Evalue8 = setindex(Evalue8, imag(Evalue), dish % 4 + 0 + 1)
+        Evalue8 = setindex(Evalue8, real(Evalue), dish % 4 + 1 + 1)
+        E_memory[Eidx + 1] = Int4x8(Evalue8...)
+
+        @assert Tds == 1
+        dstime = time
+        for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
+            dishm, dishn = dish_grid[dish + 1]
+            # Eqn. (4)
+            Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Evalue
+            Ivalue = abs2(Ẽvalue)
+            Ivalue2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
+            Ivalue2 = setindex(Ivalue2, Ivalue, beamp % 2 + 1)
+            I_wanted[Iidx + 1] = Float16x2(Ivalue2...)
+        end
     end
 
     println("Copying data from CPU to GPU...")
@@ -1346,10 +1362,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             @assert !did_test_I_memory[idx + 1]
             did_test_I_memory[idx + 1] = true
         end
-        value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
-        value = value2[beamp % 2 + 1]
-        if value ≠ 0
-            println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
+        have_value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
+        want_value2 = convert(NTuple{2,Float32}, I_wanted[idx + 1])
+        have_value = have_value2[beamp % 2 + 1]
+        want_value = want_value2[beamp % 2 + 1]
+        if have_value ≠ want_value
+            println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$have_value I₀=$want_value")
         end
     end
     @assert all(did_test_I_memory)
