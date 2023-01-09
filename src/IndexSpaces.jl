@@ -5,8 +5,8 @@ using CUDASIMDTypes
 
 ################################################################################
 
-@inline unreachable() = Core.Intrinsics.llvmcall("unreachable;", Nothing, Tuple{})
-# @inline unreachable() = @assert false
+# @inline unreachable() = Core.Intrinsics.llvmcall("unreachable;", Nothing, Tuple{})
+@inline unreachable() = @assert false
 # @inline unreachable() = nothing
 
 ################################################################################

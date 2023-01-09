@@ -143,15 +143,15 @@ const layout_S_memory = Layout(Dict(IntValue(:intvalue, 1, 32) => SIMD(:simd, 1,
 
 function calc_S(m::Integer, n::Integer)
     @assert 0 ≤ m < M
-    mlo = m % idiv(M, 4)
-    mhi = m ÷ idiv(M, 4)
-    @assert 0 ≤ mlo < idiv(M, 4)
-    @assert 0 ≤ mhi < 4
     @assert 0 ≤ n < N
-    nlo = n % idiv(N, 4)
-    nhi = n ÷ idiv(N, 4)
-    @assert 0 ≤ nlo < idiv(N, 4)
-    @assert 0 ≤ nhi < 4
+    # mlo = m % idiv(M, 4)
+    # mhi = m ÷ idiv(M, 4)
+    # @assert 0 ≤ mlo < idiv(M, 4)
+    # @assert 0 ≤ mhi < 4
+    # nlo = n % idiv(N, 4)
+    # nhi = n ÷ idiv(N, 4)
+    # @assert 0 ≤ nlo < idiv(N, 4)
+    # @assert 0 ≤ nhi < 4
     # S = 33 * mlo + 33 * idiv(M, 4) * mhi + ΣF2 * nlo + ΣF2 * idiv(N, 4) * nhi
     S = 33 * m + ΣF2 * n
     @assert 0 ≤ S < N * ΣF2
@@ -354,13 +354,20 @@ end
 
 # Writing shared memory (Fsh2) from registers (Freg1) (section 4.8)
 function write_Fsh2!(emitter)
+    # TODO: Skip writing dishes > D?
+    # TODO: Skip writing garbage (threadidx ≥ idiv(Touter, 2))?
+    # TODO: Set unused gridded dishes to 0?
     broadcast!(emitter, :sd, :S, Register(:sd, 1, idiv(M * N, W)) => Thread(:thread, 1, idiv(M * N, W)))
-    for i in 0:(RF1 - 1)
-        store!(emitter, :Fsh2_shared => layout_Fsh2_gridding_shared, :Freg1; offset=Symbol(:sd_sd, "$i"))
-    end
-    apply!(emitter, :Freg1_zero, [:Freg1], (Freg1,) -> :(zero($Freg1)))
-    for i in RF1:(idiv(M * N, W) - 1)
-        store!(emitter, :Fsh2_shared => layout_Fsh2_gridding_shared, :Freg1_zero; offset=Symbol(:sd_sd, "$i"))
+    for i in 0:(idiv(M * N, W) - 1)
+        layout = copy(emitter.environment[:Freg1])
+        delete!(layout, Dish(:dish, W, RF1))
+        emitter.environment[:Freg1′] = layout
+        if i < RF1
+            push!(emitter.statements, :(Freg1′ = $(Symbol(:Freg1_dish, string(W * i)))))
+        else
+            push!(emitter.statements, :(Freg1′ = zero(Int4x8)))
+        end
+        store!(emitter, :Fsh2_shared => layout_Fsh2_gridding_shared, :Freg1′; offset=Symbol(:sd_sd, "$i"))
     end
 
     return nothing
@@ -1066,6 +1073,12 @@ end
 function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftest::Bool=false, nruns::Int=0)
     println("CHORD FRB beamformer")
 
+    if output_kernel
+        open("output/frb.jl", "w") do fh
+            println(fh, frb_kernel)
+        end
+    end
+
     println("Compiling kernel...")
     num_threads = kernel_setup.num_threads
     num_warps = kernel_setup.num_warps
@@ -1091,9 +1104,6 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     end
 
     if output_kernel
-        open("output/frb.jl", "w") do fh
-            println(fh, frb_kernel)
-        end
         ptx = read("output/frb.ptx", String)
         ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
         open("output/frb.ptx", "w") do fh
@@ -1317,21 +1327,21 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # open("output/bb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # open("output/bb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true)
-    #     end
-    # end
-    # main(; output_kernel=true)
+    # Output kernel
+    main(; output_kernel=true)
+    open("output/frb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    open("output/frb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
 
-    # Run test
-    main(; run_selftest=true)
+    # # Run test
+    # main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
