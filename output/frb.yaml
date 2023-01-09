@@ -18,18 +18,18 @@ kernel-description:
     threads: [32, 24]
     blocks: [1]
     shmem_bytes: 76896
-  kernel-name: "_Z15julia_frb_1037313CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_IS0_Li1ELi1EES_IS2_Li1ELi1EES_IS2_Li1ELi1EES_IS1_Li1ELi1EE"
+  kernel-name: "_Z15julia_frb_1038813CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_IS0_Li1ELi1EES_IS2_Li1ELi1EES_IS2_Li1ELi1EES_IS1_Li1ELi1EE"
   kernel-arguments:
     - name: "S"
       intent: in
       type: Int32
       indices: [D]
-      shape: [512]
+      shape: [576]
       strides: [1]
     - name: "W"
       intent: in
       type: Float16
-      indices: [C, M, N, F, P]
+      indices: [C, dishM, dishN, F, P]
       shape: [2, 24, 24, 1, 2]
       strides: [1, 2, 48, 1152, 1152, 2304]
     - name: "E"

@@ -365,11 +365,25 @@ function write_Fsh2!(emitter)
         layout = copy(emitter.environment[:Freg1])
         delete!(layout, Dish(:dish, W, RF1))
         emitter.environment[:Freg1′] = layout
-        if i < RF1
-            push!(emitter.statements, :(Freg1′ = $(Symbol(:Freg1_dish, string(W * i)))))
+        real_dish_value = Symbol(:Freg1_dish, string(W * i))
+        zero_dish_value = zero(Int4x8)
+        if i < D ÷ W
+            # This is a real dish for all warps
+            dish_value = real_dish_value
+        elseif i < (D + W - 1) ÷ W
+            # This is a real dish for some warps, and a dummy dish for other warps
+            is_real_dish = quote
+                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
+                dish = warp + $(Int32(W)) * $(Int32(i))
+                dish < $(Int32(D))
+            end
+            dish_value = :($is_real_dish ? $real_dish_value : $zero_dish_value)
         else
-            push!(emitter.statements, :(Freg1′ = zero(Int4x8)))
+            # This is a dummy dish for all warps
+            dish_value = zero_dish_value
         end
+        push!(emitter.statements, :(Freg1′ = $dish_value))
+        # push!(emitter.statements, :(@assert $(Symbol(:sd_sd, "$i")) ≠ 999999999i32))
         store!(emitter, :Fsh2_shared => layout_Fsh2_gridding_shared, :Freg1′; offset=Symbol(:sd_sd, "$i"))
     end
 
@@ -887,7 +901,16 @@ function make_frb_kernel()
             ),
         )
         # This loads garbage for idiv(M * N, W) ≤ thread < 32
-        load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
+        # load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
+        apply!(emitter, :S => layout_S_registers, 999999999i32)
+        @assert idiv(M * N, W) == 24
+        @assert num_threads == 32
+        if!(
+            emitter, :(IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads) < $(Int32(idiv(M * N, W))))
+        ) do emitter
+            load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
+            nothing
+        end
     end
 
     let
@@ -1144,12 +1167,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
               intent: in
               type: Int32
               indices: [D]
-              shape: [$D]
+              shape: [$(M*N)]
               strides: [1]
             - name: "W"
               intent: in
               type: Float16
-              indices: [C, M, N, F, P]
+              indices: [C, dishM, dishN, F, P]
               shape: [$C, $M, $N, $F, $P]
               strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*F), $(C*M*N*F*P)]
             - name: "E"
@@ -1270,6 +1293,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
     println("Checking results...")
 
+    println("    Fsh1:")
     did_test_Fsh1_memory = falses(length(Fsh1_memory))
     for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
         idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
@@ -1285,12 +1309,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             S = S_memory[dish + 1]
             m = S ÷ 33 % M
             n = S ÷ ΣF2 % N
-            println("    dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value m=$m n=$n S=$S")
+            println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
         end
     end
     # There is padding
     # @assert all(did_test_Fsh1_memory)
 
+    println("    Fsh2:")
     did_test_Fsh2_memory = falses(length(Fsh2_memory))
     for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
         dishMlo = dishM % idiv(M, 4)
@@ -1307,12 +1332,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
         value = Complex(value_re, value_im)
         if value ≠ 0
-            println("    dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
+            println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
         end
     end
     # There is padding
     # @assert all(did_test_Fsh2_memory)
 
+    #TODO println("    I:")
     #TODO did_test_I_memory = falses(length(I_memory))
     #TODO for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
     #TODO     idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
@@ -1323,7 +1349,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     #TODO     value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
     #TODO     value = value2[beamp % 2 + 1]
     #TODO     if value ≠ 0
-    #TODO         println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
+    #TODO         println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
     #TODO     end
     #TODO end
     #TODO @assert all(did_test_I_memory)
