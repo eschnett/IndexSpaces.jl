@@ -1338,21 +1338,21 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     # There is padding
     # @assert all(did_test_Fsh2_memory)
 
-    #TODO println("    I:")
-    #TODO did_test_I_memory = falses(length(I_memory))
-    #TODO for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-    #TODO     idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
-    #TODO     if beamp % 2 == 0
-    #TODO         @assert !did_test_I_memory[idx + 1]
-    #TODO         did_test_I_memory[idx + 1] = true
-    #TODO     end
-    #TODO     value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
-    #TODO     value = value2[beamp % 2 + 1]
-    #TODO     if value ≠ 0
-    #TODO         println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
-    #TODO     end
-    #TODO end
-    #TODO @assert all(did_test_I_memory)
+    println("    I:")
+    did_test_I_memory = falses(length(I_memory))
+    for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
+        if beamp % 2 == 0
+            @assert !did_test_I_memory[idx + 1]
+            did_test_I_memory[idx + 1] = true
+        end
+        value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
+        value = value2[beamp % 2 + 1]
+        if value ≠ 0
+            println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
+        end
+    end
+    @assert all(did_test_I_memory)
 
     println("Done.")
     return nothing
