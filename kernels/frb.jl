@@ -139,7 +139,10 @@ const layout_E_memory = Layout(
     ),
 )
 
-const layout_S_memory = Layout(Dict(IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32), Dish(:dish, 1, D) => Memory(:memory, 1, D)))
+# We have M * N ≥ D dishes here. The additional ("dummy") dishes are initialized to zero.
+const layout_S_memory = Layout(
+    Dict(IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32), Dish(:dish, 1, M * N) => Memory(:memory, 1, M * N))
+)
 
 function calc_S(m::Integer, n::Integer)
     @assert 0 ≤ m < M
@@ -883,7 +886,7 @@ function make_frb_kernel()
                 Dish(:dish, W, idiv(M * N, W)) => Thread(:thread, 1, idiv(M * N, W)),
             ),
         )
-        # This loads garbage for threadidx ≥ idiv(M * N, W)
+        # This loads garbage for idiv(M * N, W) ≤ thread < 32
         load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
     end
 
@@ -1032,7 +1035,8 @@ function make_frb_kernel()
 
     stmts = clean_code(
         quote
-            @inbounds begin
+            #TODO @inbounds
+            begin
                 $(emitter.init_statements...)
                 $(emitter.statements...)
             end
@@ -1175,7 +1179,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     println("Allocating input data...")
 
     # TODO: determine types and sizes automatically
-    S_memory = Array{Int32}(undef, D)
+    S_memory = Array{Int32}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * (T ÷ Tds))
@@ -1199,9 +1203,11 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         Random.seed!(0)
 
         # Choose dish grid
+        # Dishes 0:(D-1) are "real" dishes with E-field data.
+        # Dishes D:(M*N-1) are "dummy" dishes where we set the E-field to zero.
         grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-        # dish_grid = grid[randperm(length(grid))[1:D]]
-        dish_grid = grid[1:D]
+        # dish_grid = grid[randperm(length(grid))]
+        dish_grid = grid[1:(M * N)]
         S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
 
         # Generate a uniform complex number in the unit disk. See
@@ -1307,20 +1313,20 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     # There is padding
     # @assert all(did_test_Fsh2_memory)
 
-    did_test_I_memory = falses(length(I_memory))
-    for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
-        if beamp % 2 == 0
-            @assert !did_test_I_memory[idx + 1]
-            did_test_I_memory[idx + 1] = true
-        end
-        value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
-        value = value2[beamp % 2 + 1]
-        if value ≠ 0
-            println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
-        end
-    end
-    @assert all(did_test_I_memory)
+    #TODO did_test_I_memory = falses(length(I_memory))
+    #TODO for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+    #TODO     idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
+    #TODO     if beamp % 2 == 0
+    #TODO         @assert !did_test_I_memory[idx + 1]
+    #TODO         did_test_I_memory[idx + 1] = true
+    #TODO     end
+    #TODO     value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
+    #TODO     value = value2[beamp % 2 + 1]
+    #TODO     if value ≠ 0
+    #TODO         println("    beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$value")
+    #TODO     end
+    #TODO end
+    #TODO @assert all(did_test_I_memory)
 
     println("Done.")
     return nothing

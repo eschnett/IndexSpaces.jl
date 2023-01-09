@@ -1,4 +1,4 @@
-@inbounds begin #= /home/eschnett/src/jl/IndexSpaces/kernels/frb.jl:1035 =#
+begin
     info = 1
     info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 24) * 32) + 0 + 0x01] =
         info
@@ -46,7 +46,7 @@
     Γ³_cplx1_cplx_in0 = Γ³_re_cplx_in0
     Γ³_cplx0_cplx_in1 = Γ³_im_cplx_in1
     Γ³_cplx1_cplx_in1 = Γ³_re_cplx_in1
-    S = S_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 24) * 24 + IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 512 + 0x01]
+    S = S_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 24) * 24 + IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 576 + 0x01]
     W_polr0 = zero(Float16x2)
     W_polr1 = zero(Float16x2)
     if 0 ≤ IndexSpaces.cuda_threadidx() ÷ 8 < 3
