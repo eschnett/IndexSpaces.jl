@@ -785,6 +785,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         println("J[t,p,f,b] = s[b,p,f] Σ[d] A[d,b,p,f] E[d,p,f,t]")
     end
 
+    if output_kernel
+        open("output/bb.jl", "w") do fh
+            println(fh, bb_kernel)
+        end
+    end
+
     if !compile_only
         println("Compiling kernel...")
     end
@@ -806,9 +812,6 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     end
 
     if output_kernel
-        open("output/bb.jl", "w") do fh
-            println(fh, bb_kernel)
-        end
         ptx = read("output/bb.ptx", String)
         ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
         open("output/bb.ptx", "w") do fh
@@ -1075,6 +1078,7 @@ end
 
 if CUDA.functional()
     # # Output kernel
+    # main(; output_kernel=true)
     # open("output/bb.ptx", "w") do fh
     #     redirect_stdout(fh) do
     #         @device_code_ptx main(; compile_only=true)
@@ -1085,7 +1089,6 @@ if CUDA.functional()
     #         @device_code_sass main(; compile_only=true)
     #     end
     # end
-    # main(; output_kernel=true)
 
     # Run test
     main(; run_selftest=true)
