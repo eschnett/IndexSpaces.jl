@@ -5,6 +5,7 @@ kernel-description:
   design-parameters:
     beam-layout: [48, 48]
     dish-layout: [24, 24]
+    downsampling-factor: 1
     number-of-complex-components: 2
     number-of-dishes: 512
     number-of-frequencies: 1
@@ -18,7 +19,7 @@ kernel-description:
     threads: [32, 24]
     blocks: [1]
     shmem_bytes: 76896
-  kernel-name: "_Z15julia_frb_1042913CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_IS0_Li1ELi1EES_IS2_Li1ELi1EES_IS2_Li1ELi1EES_IS1_Li1ELi1EE"
+  kernel-name: "_Z15julia_frb_1040913CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_IS0_Li1ELi1EES_IS2_Li1ELi1EES_IS2_Li1ELi1EES_IS1_Li1ELi1EE"
   kernel-arguments:
     - name: "S"
       intent: in
