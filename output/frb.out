@@ -12,105 +12,57 @@ Running kernel...
 Copying data back from GPU to CPU...
 Checking results...
     Fsh1:
-        dish=432 freq=0 polr=0 time=47 Fsh1=1 + 0im (m,n)=(4,18) S=14418
+        dish=0 freq=0 polr=0 time=47 Fsh1=1 + 0im (m,n)=(0,0) S=0
     Fsh2:
-        dishM=0 dishN=18 freq=0 polr=0 time=47 Fsh2=1 + 0im
+        dishM=0 dishN=0 freq=0 polr=0 time=47 Fsh2=1 + 0im
     Gsh:
         dishM=0 beamQ=0 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=1 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=2 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=3 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=4 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=5 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=6 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=7 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=1 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=2 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=3 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=4 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=5 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=6 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=7 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
         dishM=0 beamQ=8 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=9 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=10 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=11 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=12 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=13 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=14 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=15 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=9 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=10 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=11 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=12 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=13 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=14 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=15 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
         dishM=0 beamQ=16 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=17 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=18 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=19 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=20 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=21 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=22 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=23 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=17 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=18 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=19 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=20 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=21 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=22 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=23 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
         dishM=0 beamQ=24 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=25 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=26 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=27 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=28 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=29 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=30 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=31 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=25 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=26 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=27 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=28 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=29 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=30 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=31 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
         dishM=0 beamQ=32 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=33 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=34 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=35 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=36 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=37 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=38 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=39 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=33 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=34 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=35 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=36 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=37 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=38 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=39 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
         dishM=0 beamQ=40 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
-        dishM=0 beamQ=41 freq=0 polr=0 time=3 Gsh=Float16(-0.707) + Float16(0.707)im
-        dishM=0 beamQ=42 freq=0 polr=0 time=3 Gsh=Float16(0.0) - Float16(1.0)im
-        dishM=0 beamQ=43 freq=0 polr=0 time=3 Gsh=Float16(0.707) + Float16(0.707)im
-        dishM=0 beamQ=44 freq=0 polr=0 time=3 Gsh=Float16(-1.0) + Float16(0.0)im
-        dishM=0 beamQ=45 freq=0 polr=0 time=3 Gsh=Float16(0.707) - Float16(0.707)im
-        dishM=0 beamQ=46 freq=0 polr=0 time=3 Gsh=Float16(0.0) + Float16(1.0)im
-        dishM=0 beamQ=47 freq=0 polr=0 time=3 Gsh=Float16(-0.707) - Float16(0.707)im
+        dishM=0 beamQ=41 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=42 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=43 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=44 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=45 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=46 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
+        dishM=0 beamQ=47 freq=0 polr=0 time=3 Gsh=Float16(1.0) + Float16(0.0)im
     I:
-        beamp=0 beamq=0 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=1 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=2 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=3 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=4 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=5 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=6 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=7 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=8 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=9 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=10 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=11 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=12 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=13 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=14 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=15 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=16 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=17 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=18 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=19 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=20 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=21 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=22 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=23 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=24 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=25 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=26 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=27 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=28 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=29 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=30 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=31 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=32 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=33 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=34 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=35 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=36 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=37 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=38 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=39 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=40 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=41 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=42 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=43 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=44 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=45 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=46 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
-        beamp=0 beamq=47 freq=0 polr=0 dstime=47 I=1.0 I₀=0.0
 Done.

@@ -11,10 +11,13 @@ using CUDASIMDTypes
 
 ################################################################################
 
-export i8, i16, i32, i64, u8, u16, u32, u64
+export i8, i16, i32, i64, u8, u16, u32, u64, f16, f32, f64
 struct IntLiteral{I<:Integer} <: Integer end
 Base.convert(::Type{I}, ::IntLiteral{J}) where {I<:Integer,J<:Integer} = convert(I, J(1))
 Base.promote_rule(::Type{<:Integer}, ::Type{IntLiteral{I}}) where {I<:Integer} = I
+struct FloatLiteral{F<:AbstractFloat} <: AbstractFloat end
+Base.convert(::Type{F}, ::FloatLiteral{G}) where {F<:AbstractFloat,G<:AbstractFloat} = convert(F, G(1))
+Base.promote_rule(::Type{<:AbstractFloat}, ::Type{FloatLiteral{F}}) where {F<:AbstractFloat} = F
 const i8 = IntLiteral{Int8}()
 const i16 = IntLiteral{Int16}()
 const i32 = IntLiteral{Int32}()
@@ -23,6 +26,9 @@ const u8 = IntLiteral{UInt8}()
 const u16 = IntLiteral{UInt16}()
 const u32 = IntLiteral{UInt32}()
 const u64 = IntLiteral{UInt64}()
+const f16 = FloatLiteral{Float16}()
+const f32 = FloatLiteral{Float32}()
+const f64 = FloatLiteral{Float64}()
 
 ################################################################################
 
