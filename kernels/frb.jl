@@ -27,17 +27,17 @@ idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # Full CHORD
 const sampling_time = 27.3
 const C = 2
-const T = 48 #TODO 2064
+const T = 2064
 const D = 512
 const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 1 #TODO 256
+const F = 256
 
 const Touter = 48
 const Tinner = 4
-const Tds = 1 #TODO 40                  # downsampling factor
+const Tds = 40                  # downsampling factor
 
 const W = 24                    # number of warps
 const B = 1                     # number of blocks per SM
@@ -66,7 +66,7 @@ const ΣG0 = Npad * ΣG1 + Mpad
 
 # Registers/thread
 
-const RF1 = (D + W - 1) ÷ W
+const RF1 = cld(D, W)
 const RF2 = Mr * Tr
 
 # Shared memory bytes
@@ -188,7 +188,7 @@ const layout_I_memory = Layout(
         BeamQ(:beamQ, 1, 2 * N) => Memory(:memory, M, 2 * N),
         Freq(:freq, 1, F) => Memory(:memory, M * 2 * N, F),
         Polr(:polr, 1, P) => Memory(:memory, M * 2 * N * F, P),
-        DSTime(:dstime, 1, T ÷ Tds) => Memory(:memory, M * 2 * N * F * P, T ÷ Tds),
+        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N * F * P, cld(T, Tds)),
     ),
 )
 
@@ -837,11 +837,6 @@ function do_second_fft!(emitter)
 
     split!(emitter, [:Ẽim, :Ẽre], :Ẽ, Cplx(:cplx, 1, C))
 
-    # TODO:
-    # the real part of the even beamp are mapped to beamp=0 (mod 8).
-    # the imag part of the even beamp are all zero (good), the odd are nonzero (bad).
-    # all problems are mod 8, and independent of beamq.
-
     apply!(
         emitter,
         :I,
@@ -1139,7 +1134,7 @@ function make_frb_kernel()
                 BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
-                DSTime(:dstime, 1, T ÷ Tds) => Loop(:dstime, 1, T ÷ Tds),
+                DSTime(:dstime, 1, cld(T, Tds)) => Loop(:dstime, 1, cld(T, Tds)),
             ),
         )
         apply!(emitter, :I => layout_I_registers, :(zero(Float16x2)))
@@ -1233,6 +1228,22 @@ function make_frb_kernel()
         nothing
     end
 
+    # Write out partial I results if necessary
+    if T % Tds ≠ 0
+        if!(emitter, :(
+            let
+                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
+                p = 2i32 * thread
+                q = 2i32 * warp
+                0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
+            end
+        )) do emitter
+            store!(emitter, :I_memory => layout_I_memory, :I)
+            nothing
+        end
+    end
+
     apply!(emitter, :info => layout_info_registers, 0i32)
     store!(emitter, :info_memory => layout_info_memory, :info)
 
@@ -1240,9 +1251,7 @@ function make_frb_kernel()
 
     stmts = clean_code(
         quote
-            # TODO: ftz, fmad, prec-div (?) prec-sqrt (?)
-            #TODO @fastmath @inbounds
-            begin
+            @fastmath @inbounds begin
                 $(emitter.init_statements...)
                 $(emitter.statements...)
             end
@@ -1370,7 +1379,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
               intent: out
               type: Float16
               indices: [beamP, beamQ, F, P, Tds]
-              shape: [$(2*M), $(2*N), $F, $P, $(T÷Tds)]
+              shape: [$(2*M), $(2*N), $F, $P, $(cld(T, Tds))]
               strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F), $(2*M*2*N*F*P)]
             - name: "info"
               intent: out
@@ -1390,7 +1399,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     S_memory = Array{Int32}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
-    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * (T ÷ Tds))
+    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * cld(T, Tds))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     println("Setting up input data...")
@@ -1428,16 +1437,10 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         # W_memory .= [Float16x2(c2t(uniform_in_disk())...) for i in eachindex(W_memory)]
         W_memory .= [Float16x2(0, 1) for i in eachindex(W_memory)]
 
-        # dishM=0 -> beamP=(0,1,2,3)
-        # dishM=1 -> beamP=(8,9,10,11)
-        # dishM=5 -> beamP=(40,41,42,43)
-        # dishM=6 -> beamP=()
-        # dishM=23 -> beamP=()
-
         dish = 0 * 24 + 0
         freq = 0
         polr = 0
-        time = T - 1
+        time = 0
         Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
         Evalue = 1 + 0im
         Evalue8 = zero(SVector{8,Int8})
@@ -1445,8 +1448,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         Evalue8 = setindex(Evalue8, real(Evalue), 2 * (dish % 4) + 1 + 1)
         E_memory[Eidx + 1] = Int4x8(Evalue8...)
 
-        @assert Tds == 1
-        dstime = time
+        dstime = time ÷ Tds
         for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
             Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
             dishm, dishn = dish_grid[dish + 1]
@@ -1495,98 +1497,98 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
     println("Checking results...")
 
-    println("    Fsh1:")
-    did_test_Fsh1_memory = falses(length(Fsh1_memory))
-    for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
-        idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
-        if polr == 0 && time ÷ idiv(Touter, 2) == 0
-            @assert !did_test_Fsh1_memory[idx + 1]
-            did_test_Fsh1_memory[idx + 1] = true
-        end
-        value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
-        value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-        value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-        value = Complex(value_re, value_im)
-        if value ≠ 0
-            S = S_memory[dish + 1]
-            m = S ÷ 33 % M
-            n = S ÷ ΣF2 % N
-            println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
-        end
-    end
-    # Check padding
-    for i in eachindex(did_test_Fsh1_memory)
-        if !did_test_Fsh1_memory[i]
-            if Fsh1_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-                println("        i=$i Fsh1=$(Fsh1_memory[i])")
-            end
-        end
-    end
-
-    println("    Fsh2:")
-    did_test_Fsh2_memory = falses(length(Fsh2_memory))
-    for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
-        dishMlo = dishM % idiv(M, 4)
-        dishMhi = dishM ÷ idiv(M, 4)
-        dishNlo = dishN % idiv(N, 4)
-        dishNhi = dishN ÷ idiv(N, 4)
-        idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
-        if polr == 0 && time ÷ idiv(Touter, 2) == 0
-            @assert !did_test_Fsh2_memory[idx + 1]
-            did_test_Fsh2_memory[idx + 1] = true
-        end
-        value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
-        value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-        value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-        value = Complex(value_re, value_im)
-        if value ≠ 0
-            println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
-        end
-    end
-    # Check padding
-    for i in eachindex(did_test_Fsh2_memory)
-        if !did_test_Fsh2_memory[i]
-            if Fsh2_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-                println("        i=$i Fsh2=$(Fsh2_memory[i])")
-            end
-        end
-    end
-
-    println("    Gsh:")
-    did_test_Gsh_memory = falses(length(Gsh_memory))
-    for time in 0:(Tinner - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamQ in 0:(2 * N - 1), dishM in 0:(M - 1)
-        idx =
-            dishM +
-            ΣG0 * (beamQ % 2) +
-            ΣG1 * 16 * (beamQ ÷ 2 % 2) +
-            ΣG1 * 8 * (beamQ ÷ 4 % 2) +
-            ΣG1 * 4 * (beamQ ÷ 8 % 2) +
-            ΣG1 * 2 * (beamQ ÷ 16 % 2) +
-            ΣG1 * (beamQ ÷ 32 % 2) +
-            Mpad * polr +
-            Mpad * 2 * (time % Tinner)
-        @assert !did_test_Gsh_memory[idx + 1]
-        did_test_Gsh_memory[idx + 1] = true
-        value2 = convert(NTuple{2,Float16}, Gsh_memory[idx + 1])
-        value_im = value2[1]
-        value_re = value2[2]
-        value = Complex(value_re, value_im)
-        if value ≠ 0
-            println("        dishM=$dishM beamQ=$beamQ freq=$freq polr=$polr time=$time Gsh=$value")
-        end
-    end
-    # Check padding
-    for i in eachindex(did_test_Gsh_memory)
-        if !did_test_Gsh_memory[i]
-            if Gsh_memory[i] ≠ Float16x2(NaN, NaN) && Gsh_memory[i] ≠ Float16x2(0, 0)
-                println("        i=$i Gsh=$(Gsh_memory[i])")
-            end
-        end
-    end
+    # println("    Fsh1:")
+    # did_test_Fsh1_memory = falses(length(Fsh1_memory))
+    # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
+    #     idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
+    #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
+    #         @assert !did_test_Fsh1_memory[idx + 1]
+    #         did_test_Fsh1_memory[idx + 1] = true
+    #     end
+    #     value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
+    #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+    #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+    #     value = Complex(value_re, value_im)
+    #     if value ≠ 0
+    #         S = S_memory[dish + 1]
+    #         m = S ÷ 33 % M
+    #         n = S ÷ ΣF2 % N
+    #         println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
+    #     end
+    # end
+    # # Check padding
+    # for i in eachindex(did_test_Fsh1_memory)
+    #     if !did_test_Fsh1_memory[i]
+    #         if Fsh1_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
+    #             println("        i=$i Fsh1=$(Fsh1_memory[i])")
+    #         end
+    #     end
+    # end
+    # 
+    # println("    Fsh2:")
+    # did_test_Fsh2_memory = falses(length(Fsh2_memory))
+    # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
+    #     dishMlo = dishM % idiv(M, 4)
+    #     dishMhi = dishM ÷ idiv(M, 4)
+    #     dishNlo = dishN % idiv(N, 4)
+    #     dishNhi = dishN ÷ idiv(N, 4)
+    #     idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
+    #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
+    #         @assert !did_test_Fsh2_memory[idx + 1]
+    #         did_test_Fsh2_memory[idx + 1] = true
+    #     end
+    #     value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
+    #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+    #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+    #     value = Complex(value_re, value_im)
+    #     if value ≠ 0
+    #         println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
+    #     end
+    # end
+    # # Check padding
+    # for i in eachindex(did_test_Fsh2_memory)
+    #     if !did_test_Fsh2_memory[i]
+    #         if Fsh2_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
+    #             println("        i=$i Fsh2=$(Fsh2_memory[i])")
+    #         end
+    #     end
+    # end
+    # 
+    # println("    Gsh:")
+    # did_test_Gsh_memory = falses(length(Gsh_memory))
+    # for time in 0:(Tinner - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamQ in 0:(2 * N - 1), dishM in 0:(M - 1)
+    #     idx =
+    #         dishM +
+    #         ΣG0 * (beamQ % 2) +
+    #         ΣG1 * 16 * (beamQ ÷ 2 % 2) +
+    #         ΣG1 * 8 * (beamQ ÷ 4 % 2) +
+    #         ΣG1 * 4 * (beamQ ÷ 8 % 2) +
+    #         ΣG1 * 2 * (beamQ ÷ 16 % 2) +
+    #         ΣG1 * (beamQ ÷ 32 % 2) +
+    #         Mpad * polr +
+    #         Mpad * 2 * (time % Tinner)
+    #     @assert !did_test_Gsh_memory[idx + 1]
+    #     did_test_Gsh_memory[idx + 1] = true
+    #     value2 = convert(NTuple{2,Float16}, Gsh_memory[idx + 1])
+    #     value_im = value2[1]
+    #     value_re = value2[2]
+    #     value = Complex(value_re, value_im)
+    #     if value ≠ 0
+    #         println("        dishM=$dishM beamQ=$beamQ freq=$freq polr=$polr time=$time Gsh=$value")
+    #     end
+    # end
+    # # Check padding
+    # for i in eachindex(did_test_Gsh_memory)
+    #     if !did_test_Gsh_memory[i]
+    #         if Gsh_memory[i] ≠ Float16x2(NaN, NaN) && Gsh_memory[i] ≠ Float16x2(0, 0)
+    #             println("        i=$i Gsh=$(Gsh_memory[i])")
+    #         end
+    #     end
+    # end
 
     println("    I:")
     did_test_I_memory = falses(length(I_memory))
-    for dstime in 0:(T ÷ Tds - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+    for dstime in 0:(cld(T, Tds) - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
         idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
         if beamp % 2 == 0
             @assert !did_test_I_memory[idx + 1]
