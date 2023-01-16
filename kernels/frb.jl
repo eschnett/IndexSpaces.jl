@@ -33,7 +33,7 @@ const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 256
+const F = 84   # 256
 
 const Touter = 48
 const Tinner = 4
@@ -293,8 +293,40 @@ const layout_info_registers = Layout(
 # const memory = Memory(:memory, 1, 2^32)
 
 const shmem_size = max(Fsh1_shmem_size, Fsh2_shmem_size, Gsh_shmem_size)
+const shmem_bytes = 4 * shmem_size
 
-const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_per_sm, 4 * shmem_size)
+const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_per_sm, shmem_bytes)
+
+# Benchmark results:
+
+# Setup for full CHORD:
+#
+# benchmark-result:
+#   kernel: "frb"
+#   description: "FRB beamformer"
+#   design-parameters:
+#     beam-layout: [48, 48]
+#     dish-layout: [24, 24]
+#     downsampling-factor: 40
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 84
+#     number-of-polarizations: 2
+#     number-of-timesamples: 2064
+#     sampling-time: 27.3
+#   compile-parameters:
+#     minthreads: 768
+#     blocks_per_sm: 1
+#   call-parameters:
+#     threads: [32, 24]
+#     blocks: [84]
+#     shmem_bytes: 76896
+#   result-μsec:
+#     runtime: 3388.0
+#     scaled-runtime: 10325.5
+#     scaled-number-of-frequencies: 256
+#     dataframe-length: 56347.2
+#     dataframe-percent: 18.3
 
 # Generate Code
 
@@ -1163,7 +1195,9 @@ function make_frb_kernel()
             sync_threads!(emitter)
 
             # This loop should probably be unrolled for execution speed, but that increases compile time significantly
-            loop!(emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))) do emitter
+            unrolled_loop!(
+                emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))
+            ) do emitter
 
                 # 4.10 First FFT
                 # (111)
@@ -1183,7 +1217,7 @@ function make_frb_kernel()
                 do_first_fft!(emitter)
                 sync_threads!(emitter)
 
-                loop!(emitter, Time(:time, 1, Tinner) => Loop(:t, 1, Tinner)) do emitter
+                unrolled_loop!(emitter, Time(:time, 1, Tinner) => Loop(:t, 1, Tinner)) do emitter
 
                     # 4.11 Second FFT
                     # loop!(emitter, Polr(:polr, 1, P) => Loop(:polr, 1, P)) do emitter
@@ -1266,25 +1300,25 @@ const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
 @eval function frb(S_memory, W_memory, E_memory, I_memory, info_memory, Fsh1_memory, Fsh2_memory, Gsh_memory)
-    # shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
-    # Fsh1_shared = reinterpret(Int4x8, shmem)
-    # Fsh2_shared = reinterpret(Int4x8, shmem)
-    # Gsh_shared = reinterpret(Float16x2, shmem)
-    Fsh1_shared = let
-        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-        block_offset = $Fsh1_shmem_size
-        @view Fsh1_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    end
-    Fsh2_shared = let
-        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-        block_offset = $Fsh2_shmem_size
-        @view Fsh2_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    end
-    Gsh_shared = let
-        block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-        block_offset = $Gsh_shmem_size
-        @view Gsh_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    end
+    shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
+    Fsh1_shared = reinterpret(Int4x8, shmem)
+    Fsh2_shared = reinterpret(Int4x8, shmem)
+    Gsh_shared = reinterpret(Float16x2, shmem)
+    # Fsh1_shared = let
+    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+    #     block_offset = $Fsh1_shmem_size
+    #     @view Fsh1_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    # end
+    # Fsh2_shared = let
+    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+    #     block_offset = $Fsh2_shmem_size
+    #     @view Fsh2_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    # end
+    # Gsh_shared = let
+    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
+    #     block_offset = $Gsh_shmem_size
+    #     @view Gsh_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
+    # end
     $frb_kernel
     return nothing
 end
@@ -1486,6 +1520,62 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         shmem=shmem_bytes,
     )
     synchronize()
+
+    if nruns > 0
+        stats = @timed begin
+            for run in 1:nruns
+                kernel(
+                    S_cuda,
+                    W_cuda,
+                    E_cuda,
+                    I_cuda,
+                    info_cuda,
+                    Fsh1_cuda,
+                    Fsh2_cuda,
+                    Gsh_cuda;
+                    threads=(num_threads, num_warps),
+                    blocks=num_blocks,
+                    shmem=shmem_bytes,
+                )
+            end
+            synchronize()
+        end
+        # All times in μsec
+        runtime = stats.time / nruns * 1.0e+6
+        num_frequencies_scaled = F₀
+        runtime_scaled = runtime / F * num_frequencies_scaled
+        dataframe_length = T * sampling_time
+        fraction = runtime_scaled / dataframe_length
+        round1(x) = round(x; digits=1)
+        println("""
+        benchmark-result:
+          kernel: "frb"
+          description: "FRB beamformer"
+          design-parameters:
+            beam-layout: [$(2*M), $(2*N)]
+            dish-layout: [$M, $N]
+            downsampling-factor: $Tds
+            number-of-complex-components: $C
+            number-of-dishes: $D
+            number-of-frequencies: $F
+            number-of-polarizations: $P
+            number-of-timesamples: $T
+            sampling-time: $sampling_time
+          compile-parameters:
+            minthreads: $(num_threads * num_warps)
+            blocks_per_sm: $num_blocks_per_sm
+          call-parameters:
+            threads: [$num_threads, $num_warps]
+            blocks: [$num_blocks]
+            shmem_bytes: $shmem_bytes
+          result-μsec:
+            runtime: $(round1(runtime))
+            scaled-runtime: $(round1(runtime_scaled))
+            scaled-number-of-frequencies: $num_frequencies_scaled
+            dataframe-length: $(round1(dataframe_length))
+            dataframe-percent: $(round1(fraction * 100))
+        """)
+    end
 
     println("Copying data back from GPU to CPU...")
     I_memory = Array(I_cuda)
