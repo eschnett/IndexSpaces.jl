@@ -267,7 +267,7 @@ const layout_Gsh_shared = Layout(
         Freq(:freq, 1, F) => Block(:block, 1, F),
         Polr(:polr, 1, P) => Shared(:shared, Mpad, 2),
         Time(:time, 1, Tinner) => Shared(:shared, Mpad * 2, Tinner),
-        Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+        Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
         Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
     ),
 )
@@ -479,7 +479,18 @@ function do_first_fft!(emitter)
         newtype=FloatValue,
     )
 
-    select!(emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)))
+    select!(
+        emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner))
+    )
+
+    widen2!(
+        emitter,
+        :E,
+        :E,
+        SIMD(:simd, 4, 2) => Register(:polr, 1, P),
+        SIMD(:simd, 8, 2) => Register(:time, idiv(Touter, 2), 2);
+        newtype=FloatValue,
+    )
 
     apply!(emitter, :WE, [:E, :W], (E, W) -> :(swapped_complex_mul($W, $E)))
 
@@ -550,7 +561,7 @@ function do_first_fft!(emitter)
                 # Time(:time, Tw, idiv(Touter, 2 * Tw)) => Register(:time, Tw, Tr),
                 # Time(:time, idiv(Touter, 2), 2) => Register(:time, idiv(Touter, 2), 2),
                 Time(:time, Tw, idiv(Tinner, Tw)) => Register(:time, Tw, idiv(Tinner, Tw)),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -610,7 +621,7 @@ function do_first_fft!(emitter)
                 # Time(:time, Tw, idiv(Touter, 2 * Tw)) => Register(:time, Tw, Tr),
                 # Time(:time, idiv(Touter, 2), 2) => Register(:time, idiv(Touter, 2), 2),
                 Time(:time, Tw, idiv(Tinner, Tw)) => Register(:time, Tw, idiv(Tinner, Tw)),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -669,8 +680,8 @@ function do_second_fft!(emitter)
             Freq(:freq, 1, F) => Block(:block, 1, F),
             # Polr(:polr, 1, P) => Loop(:polr, 1, P),
             Polr(:polr, 1, P) => Register(:polr, 1, P),
-            Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
-            Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+            Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
+            Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
             Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
         ),
     )
@@ -794,8 +805,8 @@ function do_second_fft!(emitter)
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
-                Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -847,8 +858,8 @@ function do_second_fft!(emitter)
                 Freq(:freq, 1, F) => Block(:block, 1, F),
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
-                Time(:time, 1, Tinner) => Loop(:t, 1, Tinner),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -1196,7 +1207,7 @@ function make_frb_kernel()
 
             # This loop should probably be unrolled for execution speed, but that increases compile time significantly
             unrolled_loop!(
-                emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))
+                emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner))
             ) do emitter
 
                 # 4.10 First FFT
@@ -1217,7 +1228,7 @@ function make_frb_kernel()
                 do_first_fft!(emitter)
                 sync_threads!(emitter)
 
-                unrolled_loop!(emitter, Time(:time, 1, Tinner) => Loop(:t, 1, Tinner)) do emitter
+                unrolled_loop!(emitter, Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner)) do emitter
 
                     # 4.11 Second FFT
                     # loop!(emitter, Polr(:polr, 1, P) => Loop(:polr, 1, P)) do emitter
@@ -1227,26 +1238,29 @@ function make_frb_kernel()
                     do_second_fft!(emitter)
 
                     push!(emitter.statements, :(t_running += $(1i32)))
-                    if!(emitter, :(t_running == $(Int32(Tds)))) do emitter
-                        if!(
-                            emitter, :(
-                                let
-                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
-                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
-                                    p = 2i32 * thread
-                                    q = 2i32 * warp
-                                    0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
-                                end
-                            )
-                        ) do emitter
-                            store!(emitter, :I_memory => layout_I_memory, :I)
+                    # TODO: Skip this write-back for some of the `t` and `t_inner` iterations, depending on `% T_ds`
+                    if true
+                        if!(emitter, :(t_running == $(Int32(Tds)))) do emitter
+                            if!(
+                                emitter, :(
+                                    let
+                                        thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                                        warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
+                                        p = 2i32 * thread
+                                        q = 2i32 * warp
+                                        0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
+                                    end
+                                )
+                            ) do emitter
+                                store!(emitter, :I_memory => layout_I_memory, :I)
+                                nothing
+                            end
+                            apply!(emitter, :I, [:I], (I,) -> :(zero(Float16x2)))
+                            push!(emitter.statements, :(t_running = $(0i32)))
+                            push!(emitter.statements, :(dstime += $(1i32)))
+
                             nothing
                         end
-                        apply!(emitter, :I, [:I], (I,) -> :(zero(Float16x2)))
-                        push!(emitter.statements, :(t_running = $(0i32)))
-                        push!(emitter.statements, :(dstime += $(1i32)))
-
-                        nothing
                     end
 
                     nothing
@@ -1443,7 +1457,6 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     map!(i -> zero(Float16x2), I_wanted, I_wanted)
     map!(i -> zero(Int32), info_wanted, info_wanted)
 
-    println("Setting up input data...")
     input = :random
     if input ≡ :zero
         # do nothing

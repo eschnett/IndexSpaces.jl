@@ -37,8 +37,8 @@ export IndexType, Physics, Machine
 
 const IndexTag = Any
 
-export MachineIndexTag, SIMDTag, ThreadTag, WarpTag, BlockTag, SharedTag, MemoryTag, LoopTag, RegisterTag
-@enum MachineIndexTag SIMDTag ThreadTag WarpTag BlockTag SharedTag MemoryTag LoopTag RegisterTag
+export MachineIndexTag, SIMDTag, ThreadTag, WarpTag, BlockTag, SharedTag, MemoryTag, LoopTag, UnrolledLoopTag, RegisterTag
+@enum MachineIndexTag SIMDTag ThreadTag WarpTag BlockTag SharedTag MemoryTag LoopTag UnrolledLoopTag RegisterTag
 
 export ValueTag, IntValueTag, FloatValueTag, BFloatValueTag
 @enum ValueTag IntValueTag FloatValueTag BFloatValueTag
@@ -73,7 +73,7 @@ indextag(index::Index) = indextag(typeof(index))
 Base.:(==)(i::Index, j::Index) = make_tuple(i) == make_tuple(j)
 Base.isless(i::Index, j::Index) = isless(make_tuple(i), make_tuple(j))
 
-export SIMD, Thread, Warp, Block, Shared, Memory, Loop, Register
+export SIMD, Thread, Warp, Block, Shared, Memory, Loop, UnrolledLoop, Register
 const SIMD = Index{Machine,SIMDTag}
 const Thread = Index{Machine,ThreadTag}
 const Warp = Index{Machine,WarpTag}
@@ -81,6 +81,7 @@ const Block = Index{Machine,BlockTag}
 const Shared = Index{Machine,SharedTag}
 const Memory = Index{Machine,MemoryTag}
 const Loop = Index{Machine,LoopTag}
+const UnrolledLoop = Index{Machine,UnrolledLoopTag}
 const Register = Index{Machine,RegisterTag}
 
 export IntValue, FloatValue, BFloatValue
@@ -276,6 +277,7 @@ function Base.getindex(layout::Layout{Typ1,Typ2}, key::Index{Typ1}) where {Typ1,
             return val
         end
     end
+    @show layout key
     throw(KeyError(key))
 end
 
@@ -469,8 +471,43 @@ function evaluate_partially(expr::Expr)
     return Expr(head, args...)
 end
 
+################################################################################
+
+# Code generation
+
+export Environment
+struct Environment
+    # Types, so to say
+    dict::Dict{Symbol,Layout{Physics,Machine}}
+    # Values, mainly from unrolled loops
+    values::Dict{Symbol,Int32}
+end
+Environment() = Environment(Dict{Symbol,Layout{Physics,Machine}}(), Dict{Symbol,Int32}())
+
+# TODO: Implement a nice interface to access values
+Base.copy(env::Environment) = Environment(copy(env.dict), copy(env.values))
+Base.getindex(env::Environment, var::Symbol) = env.dict[var]
+Base.in(var::Symbol, env::Environment) = var ∈ keys(env.dict)
+Base.iterate(env::Environment, state...) = iterate(env.dict, state...)
+Base.setindex!(env::Environment, layout::Layout{Physics,Machine}, var::Symbol) = env.dict[var] = layout
+
+export Emitter
+struct Emitter
+    kernel_setup::KernelSetup
+    environment::Environment
+    output_environment::Environment
+    init_statements::Vector{Code}
+    statements::Vector{Code}
+end
+Emitter(kernel_setup::KernelSetup) = Emitter(kernel_setup, Environment(), Environment(), Code[], Code[])
+
+################################################################################
+
+# Registers
+
 struct State
     kernel_setup::KernelSetup
+    # Register values
     dict::Dict{Symbol,Int32}
 end
 State(kernel_setup::KernelSetup) = State(kernel_setup, Dict{Symbol,Int32}())
@@ -480,7 +517,9 @@ function register_name(name::Symbol, state::State)
     return Symbol(join([name; [string(r) * string(state.dict[r]) for r in sort!(collect(keys(state.dict)))]], "_"))
 end
 
-function loop_over_registers(f, kernel_setup::KernelSetup, layout::Layout{Physics,Machine})
+function loop_over_registers(f, emitter::Emitter, layout::Layout{Physics,Machine})
+    # state = State(emitter.kernel_setup, emitter.environment.values)
+    state = State(emitter.kernel_setup)
     registers = sort!(filter!(mach -> mach isa Register, collect(values(layout.dict))))
     function go(state::State, n::Int)
         if n == 0
@@ -497,7 +536,7 @@ function loop_over_registers(f, kernel_setup::KernelSetup, layout::Layout{Physic
             end
         end
     end
-    go(State(kernel_setup), length(registers))
+    go(state, length(registers))
     return nothing
 end
 
@@ -532,6 +571,8 @@ end
 function indexvalue(::State, loop::Loop)
     return :(IndexSpaces.assume_inrange($(loop.name), 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
 end
+# indexvalue(state::State, unrolled_loop::UnrolledLoop) = state.dict[unrolled_loop.name]::Int32
+indexvalue(::State, unrolled_loop::UnrolledLoop) = unrolled_loop.name::Code
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
@@ -580,7 +621,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     for (phys, mach) in mem_layout.dict
         mach isa SIMD && continue
         # Ensure that we are mapping to memory
-        is_shared && mach::Union{Block,Shared,Loop}
+        is_shared && mach::Union{Block,Shared,Loop,UnrolledLoop}
         is_memory && mach::Memory
         # Only memory addresses contribute
         !(mach isa Union{Shared,Memory}) && continue
@@ -598,32 +639,6 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     end
     return evaluate_partially(addr)::Code
 end
-
-################################################################################
-
-# Code generation
-
-export Environment
-struct Environment
-    dict::Dict{Symbol,Layout{Physics,Machine}}
-end
-Environment() = Environment(Dict{Symbol,Layout{Physics,Machine}}())
-
-Base.copy(env::Environment) = Environment(copy(env.dict))
-Base.getindex(env::Environment, var::Symbol) = env.dict[var]
-Base.in(var::Symbol, env::Environment) = var ∈ keys(env.dict)
-Base.iterate(env::Environment, state...) = iterate(env.dict, state...)
-Base.setindex!(env::Environment, layout::Layout{Physics,Machine}, var::Symbol) = env.dict[var] = layout
-
-export Emitter
-struct Emitter
-    kernel_setup::KernelSetup
-    environment::Environment
-    output_environment::Environment
-    init_statements::Vector{Code}
-    statements::Vector{Code}
-end
-Emitter(kernel_setup::KernelSetup) = Emitter(kernel_setup, Environment(), Environment(), Code[], Code[])
 
 ################################################################################
 
@@ -714,32 +729,61 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
 end
 
 export unrolled_loop!
-function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
-    index, loop = layout
 
-    environment′ = copy(emitter.environment)
-    environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
+# function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
+#     index, loop = layout
+# 
+#     environment′ = copy(emitter.environment)
+#     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
+# 
+#     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
+#     body!(emitter′)
+# 
+#     for (k, v) in emitter′.output_environment
+#         @assert k ∉ keys(emitter.environment)
+#         emitter.environment[k] = v
+#     end
+# 
+#     push!(
+#         emitter.statements,
+#         quote
+#             $(emitter′.init_statements...)
+#         end,
+#     )
+#     for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
+#         push!(
+#             emitter.statements,
+#             quote
+#                 let
+#                     $(loop.name) = $i
+#                     $(emitter′.statements...)
+#                 end
+#             end,
+#         )
+#     end
+# 
+#     return nothing
+# end
 
-    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
-    body!(emitter′)
+function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},UnrolledLoop})
+    index, unrolled_loop = layout
 
-    for (k, v) in emitter′.output_environment
-        @assert k ∉ keys(emitter.environment)
-        emitter.environment[k] = v
-    end
+    for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
+        environment′ = copy(emitter.environment)
+        environment′[index.name] = Layout{Physics,Machine}(Dict(index => unrolled_loop))
+        @assert unrolled_loop.name ∉ keys(environment′.values)
+        environment′.values[unrolled_loop.name] = i
+        emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
 
-    push!(
-        emitter.statements,
-        quote
-            $(emitter′.init_statements...)
-        end,
-    )
-    for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
+        body!(emitter′)
+
+        @assert isempty(emitter′.init_statements)
+        @assert isempty(emitter′.output_environment)
         push!(
             emitter.statements,
             quote
                 let
-                    $(loop.name) = $i
+                    $(unrolled_loop.name) = $i
                     $(emitter′.statements...)
                 end
             end,
@@ -811,7 +855,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
     emitter.environment[reg_var] = reg_layout
 
     if align == 4
-        loop_over_registers(emitter.kernel_setup, reg_layout) do state
+        loop_over_registers(emitter, reg_layout) do state
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
@@ -827,7 +871,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
-        loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+        loop_over_registers(emitter, tmp_layout) do state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
@@ -901,7 +945,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
     reg_layout = emitter.environment[reg_var]
 
     if align == 4
-        loop_over_registers(emitter.kernel_setup, reg_layout) do state
+        loop_over_registers(emitter, reg_layout) do state
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
@@ -917,7 +961,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
-        loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+        loop_over_registers(emitter, tmp_layout) do state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
@@ -981,7 +1025,7 @@ function Base.broadcast!(emitter::Emitter, res::Symbol, var::Symbol, register_th
     res_layout[thread_phys] = register
     emitter.environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, var_layout) do state
+    loop_over_registers(emitter, var_layout) do state
         var_name = register_name(var, state)
         for i in 0:(thread.length - 1)
             state0 = copy(state)
@@ -1056,7 +1100,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
         @assert false
     end
 
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
@@ -1111,7 +1155,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
             is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0x0
         end,
     )
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(0 * register.offset)
@@ -1183,7 +1227,7 @@ function widen!(
 
     emitter.environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         var_name = register_name(var, state)
         states = State[]
         res_names = Symbol[]
@@ -1276,7 +1320,7 @@ function widen2!(
 
     emitter.environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         var_name = register_name(var, state)
         states = State[]
         res_names = Symbol[]
@@ -1351,7 +1395,7 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     # value_tag = indextag(value)
     # @assert value_tag isa ValueTag
 
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[register.name] = get(state0.dict, register.name, 0i32) + Int32(0 * register.offset)
@@ -1451,7 +1495,7 @@ function narrow3!(
     @assert simd2_bit == 3
     @assert simd3_bit == 4
 
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state2 = copy(state)
@@ -1518,7 +1562,7 @@ function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, reg
         emitter.environment[res] = res_layout
     end
 
-    loop_over_registers(emitter.kernel_setup, res_layout) do state
+    loop_over_registers(emitter, res_layout) do state
         for (n, res) in enumerate(ress)
             state′ = copy(state)
             state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
@@ -1557,7 +1601,7 @@ function Base.merge!(
     res_layout[index] = register
     emitter.environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, var_layout) do state
+    loop_over_registers(emitter, var_layout) do state
         for (n, var) in enumerate(vars)
             state′ = copy(state)
             state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
@@ -1571,6 +1615,7 @@ function Base.merge!(
 end
 
 export select!
+
 function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair{Register,Loop})
     register, loop = register_loop
 
@@ -1586,7 +1631,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, res_layout) do state
+    loop_over_registers(emitter, res_layout) do state
         res_name = register_name(res, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
@@ -1611,8 +1656,36 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     return nothing
 end
 
+function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair{Register,UnrolledLoop})
+    register, unrolled_loop = register_loop
+
+    var_layout = emitter.environment[var]
+    phys_register = register.length == 1 ? nothing : inv(var_layout)[register]
+
+    @assert res ∉ emitter.environment
+    res_layout = copy(var_layout)
+    if phys_register ≢ nothing
+        delete!(res_layout, phys_register)
+        res_layout[phys_register] = unrolled_loop
+    end
+    value_type = get_value_type(res_layout)
+    emitter.environment[res] = res_layout
+
+    loop_over_registers(emitter, res_layout) do state
+        res_name = register_name(res, state)
+        state′ = copy(state)
+        if unrolled_loop.length > 1
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
+        end
+        var_name = register_name(var, state′)
+        push!(emitter.statements, :($res_name = $var_name))
+    end
+
+    return nothing
+end
+
 export unselect!
-function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{Loop,Register})
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{<:Union{Loop,UnrolledLoop},Register})
     loop, register = loop_register
 
     var_layout = emitter.environment[var]
@@ -1628,7 +1701,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
     emitter.environment[res] = res_layout
     emitter.output_environment[res] = res_layout
 
-    loop_over_registers(emitter.kernel_setup, var_layout) do state
+    loop_over_registers(emitter, var_layout) do state
         var_name = register_name(var, state)
         for i in 0:(loop.offset):(loop.offset * loop.length - 1)
             state′ = copy(state)
@@ -1816,7 +1889,7 @@ function mma_row_col_m8n8k16_s8!(
 
     tmp_layout = copy(D_layout)
     delete!(tmp_layout, C_col[1]) # delete registers
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
         state0.dict[C_col[1].name] = get(state0.dict, C_col[1].name, 0i32) + Int32(0 * C_col[1].offset)
@@ -1933,7 +2006,7 @@ function mma_row_col_m16n8k8_f16!(
 
     tmp_layout = copy(D_layout)
     delete!(tmp_layout, C_row[4]) # delete registers
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         Astate = filter_state(state, A_layout)
         Bstate = filter_state(state, B_layout)
         Cstate = filter_state(state, C_layout)
@@ -2067,7 +2140,7 @@ function mma_row_col_m16n8k16_f16!(
 
     tmp_layout = copy(D_layout)
     delete!(tmp_layout, C_row[4]) # delete registers
-    loop_over_registers(emitter.kernel_setup, tmp_layout) do state
+    loop_over_registers(emitter, tmp_layout) do state
         Astate = filter_state(state, A_layout)
         Bstate = filter_state(state, B_layout)
         Cstate = filter_state(state, C_layout)
@@ -2132,10 +2205,9 @@ function apply!(emitter::Emitter, res_layout::Pair{Symbol,Layout{Physics,Machine
         value_bits += 1
     end
 
-    loop_over_registers(emitter.kernel_setup, layout) do state
+    loop_over_registers(emitter, layout) do state
         res_name = register_name(res, state)
         # TODO: Check type
-        # TODO: Allow type changes
         push!(emitter.statements, :($res_name = $code))
     end
 
@@ -2182,7 +2254,7 @@ function apply!(
         return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
     end
 
-    loop_over_registers(emitter.kernel_setup, res_layout) do state
+    loop_over_registers(emitter, res_layout) do state
         var_states = [filter_state(state, var_layout) for var_layout in var_layouts]
         res_name = register_name(res, state)
         var_names = [register_name(var, var_state) for (var, var_state) in zip(vars, var_states)]
