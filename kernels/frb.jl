@@ -83,6 +83,66 @@ const num_warps = W
 const num_blocks = F
 const num_blocks_per_sm = B
 
+# Benchmark results:
+
+# Setup for full CHORD:
+#
+# benchmark-result:
+#   kernel: "frb"
+#   description: "FRB beamformer"
+#   design-parameters:
+#     beam-layout: [48, 48]
+#     dish-layout: [24, 24]
+#     downsampling-factor: 40
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 84
+#     number-of-polarizations: 2
+#     number-of-timesamples: 2064
+#     sampling-time: 27.3
+#   compile-parameters:
+#     minthreads: 768
+#     blocks_per_sm: 1
+#   call-parameters:
+#     threads: [32, 24]
+#     blocks: [84]
+#     shmem_bytes: 76896
+#   result-μsec:
+#     runtime: 3388.0
+#     scaled-runtime: 10325.5
+#     scaled-number-of-frequencies: 256
+#     dataframe-length: 56347.2
+#     dataframe-percent: 18.3
+
+# Both loops unrolled (with 30 min compile time):
+#
+# benchmark-result:
+#   kernel: "frb"
+#   description: "FRB beamformer"
+#   design-parameters:
+#     beam-layout: [48, 48]
+#     dish-layout: [24, 24]
+#     downsampling-factor: 40
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 84
+#     number-of-polarizations: 2
+#     number-of-timesamples: 2064
+#     sampling-time: 27.3
+#   compile-parameters:
+#     minthreads: 768
+#     blocks_per_sm: 1
+#   call-parameters:
+#     threads: [32, 24]
+#     blocks: [84]
+#     shmem_bytes: 76896
+#   result-μsec:
+#     runtime: 3323.9
+#     scaled-runtime: 10130.1
+#     scaled-number-of-frequencies: 256
+#     dataframe-length: 56347.2
+#     dataframe-percent: 18.0
+
 # CHORD indices
 
 @enum CHORDTag begin
@@ -267,7 +327,7 @@ const layout_Gsh_shared = Layout(
         Freq(:freq, 1, F) => Block(:block, 1, F),
         Polr(:polr, 1, P) => Shared(:shared, Mpad, 2),
         Time(:time, 1, Tinner) => Shared(:shared, Mpad * 2, Tinner),
-        Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+        Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
         Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
     ),
 )
@@ -296,37 +356,6 @@ const shmem_size = max(Fsh1_shmem_size, Fsh2_shmem_size, Gsh_shmem_size)
 const shmem_bytes = 4 * shmem_size
 
 const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_per_sm, shmem_bytes)
-
-# Benchmark results:
-
-# Setup for full CHORD:
-#
-# benchmark-result:
-#   kernel: "frb"
-#   description: "FRB beamformer"
-#   design-parameters:
-#     beam-layout: [48, 48]
-#     dish-layout: [24, 24]
-#     downsampling-factor: 40
-#     number-of-complex-components: 2
-#     number-of-dishes: 512
-#     number-of-frequencies: 84
-#     number-of-polarizations: 2
-#     number-of-timesamples: 2064
-#     sampling-time: 27.3
-#   compile-parameters:
-#     minthreads: 768
-#     blocks_per_sm: 1
-#   call-parameters:
-#     threads: [32, 24]
-#     blocks: [84]
-#     shmem_bytes: 76896
-#   result-μsec:
-#     runtime: 3388.0
-#     scaled-runtime: 10325.5
-#     scaled-number-of-frequencies: 256
-#     dataframe-length: 56347.2
-#     dataframe-percent: 18.3
 
 # Generate Code
 
@@ -479,18 +508,7 @@ function do_first_fft!(emitter)
         newtype=FloatValue,
     )
 
-    select!(
-        emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner))
-    )
-
-    widen2!(
-        emitter,
-        :E,
-        :E,
-        SIMD(:simd, 4, 2) => Register(:polr, 1, P),
-        SIMD(:simd, 8, 2) => Register(:time, idiv(Touter, 2), 2);
-        newtype=FloatValue,
-    )
+    select!(emitter, :E, :Freg2, Register(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)))
 
     apply!(emitter, :WE, [:E, :W], (E, W) -> :(swapped_complex_mul($W, $E)))
 
@@ -561,7 +579,7 @@ function do_first_fft!(emitter)
                 # Time(:time, Tw, idiv(Touter, 2 * Tw)) => Register(:time, Tw, Tr),
                 # Time(:time, idiv(Touter, 2), 2) => Register(:time, idiv(Touter, 2), 2),
                 Time(:time, Tw, idiv(Tinner, Tw)) => Register(:time, Tw, idiv(Tinner, Tw)),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -621,7 +639,7 @@ function do_first_fft!(emitter)
                 # Time(:time, Tw, idiv(Touter, 2 * Tw)) => Register(:time, Tw, Tr),
                 # Time(:time, idiv(Touter, 2), 2) => Register(:time, idiv(Touter, 2), 2),
                 Time(:time, Tw, idiv(Tinner, Tw)) => Register(:time, Tw, idiv(Tinner, Tw)),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -681,7 +699,7 @@ function do_second_fft!(emitter)
             # Polr(:polr, 1, P) => Loop(:polr, 1, P),
             Polr(:polr, 1, P) => Register(:polr, 1, P),
             Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
-            Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+            Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
             Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
         ),
     )
@@ -806,7 +824,7 @@ function do_second_fft!(emitter)
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
                 Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -859,7 +877,7 @@ function do_second_fft!(emitter)
                 # Polr(:polr, 1, P) => Loop(:polr, 1, P),
                 Polr(:polr, 1, P) => Register(:polr, 1, P),
                 Time(:time, 1, Tinner) => UnrolledLoop(:t, 1, Tinner),
-                Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner)),
+                Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner)),
                 Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
             ),
         )
@@ -1206,9 +1224,7 @@ function make_frb_kernel()
             sync_threads!(emitter)
 
             # This loop should probably be unrolled for execution speed, but that increases compile time significantly
-            unrolled_loop!(
-                emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => UnrolledLoop(:t_inner, Tinner, idiv(Touter, Tinner))
-            ) do emitter
+            loop!(emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))) do emitter
 
                 # 4.10 First FFT
                 # (111)
@@ -1712,24 +1728,24 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # Output kernel
-    main(; output_kernel=true)
-    open("output/frb.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main(; compile_only=true)
-        end
-    end
-    open("output/frb.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main(; compile_only=true)
-        end
-    end
+    # # Output kernel
+    # main(; output_kernel=true)
+    # open("output/frb.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true)
+    #     end
+    # end
+    # open("output/frb.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(; compile_only=true)
+    #     end
+    # end
 
     # # Run test
     # main(; run_selftest=true)
 
-    # # Run benchmark
-    # main(; nruns=100)
+    # Run benchmark
+    main(; nruns=100)
 
     # # Regular run, also for profiling
     # main()
