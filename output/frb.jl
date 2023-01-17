@@ -1,5 +1,5 @@
 @fastmath @inbounds(
-    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/frb.jl:1318 =#
+    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/frb.jl:1355 =#
         info = 1
         info_memory[((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) % 24) * 32 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 768) + 0 + 0x01] =
             info
@@ -551,1307 +551,2069 @@
                     Freg2_time23 = Fsh2_shared[(((((23 + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 24 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) * 33) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 4806) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) * 801) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 198) + 0x01]
                 end
                 IndexSpaces.cuda_sync_threads()
-                for t_inner in 0:4:47
-                    (Freg2_polr0_time0, Freg2_polr1_time0, Freg2_polr0_time24, Freg2_polr1_time24) = convert(
-                        NTuple{4,Float16x2}, Freg2_time0
-                    )
-                    (Freg2_polr0_time1, Freg2_polr1_time1, Freg2_polr0_time25, Freg2_polr1_time25) = convert(
-                        NTuple{4,Float16x2}, Freg2_time1
-                    )
-                    (Freg2_polr0_time2, Freg2_polr1_time2, Freg2_polr0_time26, Freg2_polr1_time26) = convert(
-                        NTuple{4,Float16x2}, Freg2_time2
-                    )
-                    (Freg2_polr0_time3, Freg2_polr1_time3, Freg2_polr0_time27, Freg2_polr1_time27) = convert(
-                        NTuple{4,Float16x2}, Freg2_time3
-                    )
-                    (Freg2_polr0_time4, Freg2_polr1_time4, Freg2_polr0_time28, Freg2_polr1_time28) = convert(
-                        NTuple{4,Float16x2}, Freg2_time4
-                    )
-                    (Freg2_polr0_time5, Freg2_polr1_time5, Freg2_polr0_time29, Freg2_polr1_time29) = convert(
-                        NTuple{4,Float16x2}, Freg2_time5
-                    )
-                    (Freg2_polr0_time6, Freg2_polr1_time6, Freg2_polr0_time30, Freg2_polr1_time30) = convert(
-                        NTuple{4,Float16x2}, Freg2_time6
-                    )
-                    (Freg2_polr0_time7, Freg2_polr1_time7, Freg2_polr0_time31, Freg2_polr1_time31) = convert(
-                        NTuple{4,Float16x2}, Freg2_time7
-                    )
-                    (Freg2_polr0_time8, Freg2_polr1_time8, Freg2_polr0_time32, Freg2_polr1_time32) = convert(
-                        NTuple{4,Float16x2}, Freg2_time8
-                    )
-                    (Freg2_polr0_time9, Freg2_polr1_time9, Freg2_polr0_time33, Freg2_polr1_time33) = convert(
-                        NTuple{4,Float16x2}, Freg2_time9
-                    )
-                    (Freg2_polr0_time10, Freg2_polr1_time10, Freg2_polr0_time34, Freg2_polr1_time34) = convert(
-                        NTuple{4,Float16x2}, Freg2_time10
-                    )
-                    (Freg2_polr0_time11, Freg2_polr1_time11, Freg2_polr0_time35, Freg2_polr1_time35) = convert(
-                        NTuple{4,Float16x2}, Freg2_time11
-                    )
-                    (Freg2_polr0_time12, Freg2_polr1_time12, Freg2_polr0_time36, Freg2_polr1_time36) = convert(
-                        NTuple{4,Float16x2}, Freg2_time12
-                    )
-                    (Freg2_polr0_time13, Freg2_polr1_time13, Freg2_polr0_time37, Freg2_polr1_time37) = convert(
-                        NTuple{4,Float16x2}, Freg2_time13
-                    )
-                    (Freg2_polr0_time14, Freg2_polr1_time14, Freg2_polr0_time38, Freg2_polr1_time38) = convert(
-                        NTuple{4,Float16x2}, Freg2_time14
-                    )
-                    (Freg2_polr0_time15, Freg2_polr1_time15, Freg2_polr0_time39, Freg2_polr1_time39) = convert(
-                        NTuple{4,Float16x2}, Freg2_time15
-                    )
-                    (Freg2_polr0_time16, Freg2_polr1_time16, Freg2_polr0_time40, Freg2_polr1_time40) = convert(
-                        NTuple{4,Float16x2}, Freg2_time16
-                    )
-                    (Freg2_polr0_time17, Freg2_polr1_time17, Freg2_polr0_time41, Freg2_polr1_time41) = convert(
-                        NTuple{4,Float16x2}, Freg2_time17
-                    )
-                    (Freg2_polr0_time18, Freg2_polr1_time18, Freg2_polr0_time42, Freg2_polr1_time42) = convert(
-                        NTuple{4,Float16x2}, Freg2_time18
-                    )
-                    (Freg2_polr0_time19, Freg2_polr1_time19, Freg2_polr0_time43, Freg2_polr1_time43) = convert(
-                        NTuple{4,Float16x2}, Freg2_time19
-                    )
-                    (Freg2_polr0_time20, Freg2_polr1_time20, Freg2_polr0_time44, Freg2_polr1_time44) = convert(
-                        NTuple{4,Float16x2}, Freg2_time20
-                    )
-                    (Freg2_polr0_time21, Freg2_polr1_time21, Freg2_polr0_time45, Freg2_polr1_time45) = convert(
-                        NTuple{4,Float16x2}, Freg2_time21
-                    )
-                    (Freg2_polr0_time22, Freg2_polr1_time22, Freg2_polr0_time46, Freg2_polr1_time46) = convert(
-                        NTuple{4,Float16x2}, Freg2_time22
-                    )
-                    (Freg2_polr0_time23, Freg2_polr1_time23, Freg2_polr0_time47, Freg2_polr1_time47) = convert(
-                        NTuple{4,Float16x2}, Freg2_time23
-                    )
-                    E_polr0_time0 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr0_time0 = Freg2_polr0_time0
-                    end
-                    if t_inner == 4
-                        E_polr0_time0 = Freg2_polr0_time4
-                    end
-                    if t_inner == 8
-                        E_polr0_time0 = Freg2_polr0_time8
-                    end
-                    if t_inner == 12
-                        E_polr0_time0 = Freg2_polr0_time12
-                    end
-                    if t_inner == 16
-                        E_polr0_time0 = Freg2_polr0_time16
-                    end
-                    if t_inner == 20
-                        E_polr0_time0 = Freg2_polr0_time20
-                    end
-                    if t_inner == 24
-                        E_polr0_time0 = Freg2_polr0_time24
-                    end
-                    if t_inner == 28
-                        E_polr0_time0 = Freg2_polr0_time28
-                    end
-                    if t_inner == 32
-                        E_polr0_time0 = Freg2_polr0_time32
-                    end
-                    if t_inner == 36
-                        E_polr0_time0 = Freg2_polr0_time36
-                    end
-                    if t_inner == 40
-                        E_polr0_time0 = Freg2_polr0_time40
-                    end
-                    if t_inner == 44
-                        E_polr0_time0 = Freg2_polr0_time44
-                    end
-                    E_polr1_time0 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr1_time0 = Freg2_polr1_time0
-                    end
-                    if t_inner == 4
-                        E_polr1_time0 = Freg2_polr1_time4
-                    end
-                    if t_inner == 8
-                        E_polr1_time0 = Freg2_polr1_time8
-                    end
-                    if t_inner == 12
-                        E_polr1_time0 = Freg2_polr1_time12
-                    end
-                    if t_inner == 16
-                        E_polr1_time0 = Freg2_polr1_time16
-                    end
-                    if t_inner == 20
-                        E_polr1_time0 = Freg2_polr1_time20
-                    end
-                    if t_inner == 24
-                        E_polr1_time0 = Freg2_polr1_time24
-                    end
-                    if t_inner == 28
-                        E_polr1_time0 = Freg2_polr1_time28
-                    end
-                    if t_inner == 32
-                        E_polr1_time0 = Freg2_polr1_time32
-                    end
-                    if t_inner == 36
-                        E_polr1_time0 = Freg2_polr1_time36
-                    end
-                    if t_inner == 40
-                        E_polr1_time0 = Freg2_polr1_time40
-                    end
-                    if t_inner == 44
-                        E_polr1_time0 = Freg2_polr1_time44
-                    end
-                    E_polr0_time1 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr0_time1 = Freg2_polr0_time1
-                    end
-                    if t_inner == 4
-                        E_polr0_time1 = Freg2_polr0_time5
-                    end
-                    if t_inner == 8
-                        E_polr0_time1 = Freg2_polr0_time9
-                    end
-                    if t_inner == 12
-                        E_polr0_time1 = Freg2_polr0_time13
-                    end
-                    if t_inner == 16
-                        E_polr0_time1 = Freg2_polr0_time17
-                    end
-                    if t_inner == 20
-                        E_polr0_time1 = Freg2_polr0_time21
-                    end
-                    if t_inner == 24
-                        E_polr0_time1 = Freg2_polr0_time25
-                    end
-                    if t_inner == 28
-                        E_polr0_time1 = Freg2_polr0_time29
-                    end
-                    if t_inner == 32
-                        E_polr0_time1 = Freg2_polr0_time33
-                    end
-                    if t_inner == 36
-                        E_polr0_time1 = Freg2_polr0_time37
-                    end
-                    if t_inner == 40
-                        E_polr0_time1 = Freg2_polr0_time41
-                    end
-                    if t_inner == 44
-                        E_polr0_time1 = Freg2_polr0_time45
-                    end
-                    E_polr1_time1 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr1_time1 = Freg2_polr1_time1
-                    end
-                    if t_inner == 4
-                        E_polr1_time1 = Freg2_polr1_time5
-                    end
-                    if t_inner == 8
-                        E_polr1_time1 = Freg2_polr1_time9
-                    end
-                    if t_inner == 12
-                        E_polr1_time1 = Freg2_polr1_time13
-                    end
-                    if t_inner == 16
-                        E_polr1_time1 = Freg2_polr1_time17
-                    end
-                    if t_inner == 20
-                        E_polr1_time1 = Freg2_polr1_time21
-                    end
-                    if t_inner == 24
-                        E_polr1_time1 = Freg2_polr1_time25
-                    end
-                    if t_inner == 28
-                        E_polr1_time1 = Freg2_polr1_time29
-                    end
-                    if t_inner == 32
-                        E_polr1_time1 = Freg2_polr1_time33
-                    end
-                    if t_inner == 36
-                        E_polr1_time1 = Freg2_polr1_time37
-                    end
-                    if t_inner == 40
-                        E_polr1_time1 = Freg2_polr1_time41
-                    end
-                    if t_inner == 44
-                        E_polr1_time1 = Freg2_polr1_time45
-                    end
-                    E_polr0_time2 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr0_time2 = Freg2_polr0_time2
-                    end
-                    if t_inner == 4
-                        E_polr0_time2 = Freg2_polr0_time6
-                    end
-                    if t_inner == 8
-                        E_polr0_time2 = Freg2_polr0_time10
-                    end
-                    if t_inner == 12
-                        E_polr0_time2 = Freg2_polr0_time14
-                    end
-                    if t_inner == 16
-                        E_polr0_time2 = Freg2_polr0_time18
-                    end
-                    if t_inner == 20
-                        E_polr0_time2 = Freg2_polr0_time22
-                    end
-                    if t_inner == 24
-                        E_polr0_time2 = Freg2_polr0_time26
-                    end
-                    if t_inner == 28
-                        E_polr0_time2 = Freg2_polr0_time30
-                    end
-                    if t_inner == 32
-                        E_polr0_time2 = Freg2_polr0_time34
-                    end
-                    if t_inner == 36
-                        E_polr0_time2 = Freg2_polr0_time38
-                    end
-                    if t_inner == 40
-                        E_polr0_time2 = Freg2_polr0_time42
-                    end
-                    if t_inner == 44
-                        E_polr0_time2 = Freg2_polr0_time46
-                    end
-                    E_polr1_time2 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr1_time2 = Freg2_polr1_time2
-                    end
-                    if t_inner == 4
-                        E_polr1_time2 = Freg2_polr1_time6
-                    end
-                    if t_inner == 8
-                        E_polr1_time2 = Freg2_polr1_time10
-                    end
-                    if t_inner == 12
-                        E_polr1_time2 = Freg2_polr1_time14
-                    end
-                    if t_inner == 16
-                        E_polr1_time2 = Freg2_polr1_time18
-                    end
-                    if t_inner == 20
-                        E_polr1_time2 = Freg2_polr1_time22
-                    end
-                    if t_inner == 24
-                        E_polr1_time2 = Freg2_polr1_time26
-                    end
-                    if t_inner == 28
-                        E_polr1_time2 = Freg2_polr1_time30
-                    end
-                    if t_inner == 32
-                        E_polr1_time2 = Freg2_polr1_time34
-                    end
-                    if t_inner == 36
-                        E_polr1_time2 = Freg2_polr1_time38
-                    end
-                    if t_inner == 40
-                        E_polr1_time2 = Freg2_polr1_time42
-                    end
-                    if t_inner == 44
-                        E_polr1_time2 = Freg2_polr1_time46
-                    end
-                    E_polr0_time3 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr0_time3 = Freg2_polr0_time3
-                    end
-                    if t_inner == 4
-                        E_polr0_time3 = Freg2_polr0_time7
-                    end
-                    if t_inner == 8
-                        E_polr0_time3 = Freg2_polr0_time11
-                    end
-                    if t_inner == 12
-                        E_polr0_time3 = Freg2_polr0_time15
-                    end
-                    if t_inner == 16
-                        E_polr0_time3 = Freg2_polr0_time19
-                    end
-                    if t_inner == 20
-                        E_polr0_time3 = Freg2_polr0_time23
-                    end
-                    if t_inner == 24
-                        E_polr0_time3 = Freg2_polr0_time27
-                    end
-                    if t_inner == 28
-                        E_polr0_time3 = Freg2_polr0_time31
-                    end
-                    if t_inner == 32
-                        E_polr0_time3 = Freg2_polr0_time35
-                    end
-                    if t_inner == 36
-                        E_polr0_time3 = Freg2_polr0_time39
-                    end
-                    if t_inner == 40
-                        E_polr0_time3 = Freg2_polr0_time43
-                    end
-                    if t_inner == 44
-                        E_polr0_time3 = Freg2_polr0_time47
-                    end
-                    E_polr1_time3 = zero(Float16x2)
-                    if t_inner == 0
-                        E_polr1_time3 = Freg2_polr1_time3
-                    end
-                    if t_inner == 4
-                        E_polr1_time3 = Freg2_polr1_time7
-                    end
-                    if t_inner == 8
-                        E_polr1_time3 = Freg2_polr1_time11
-                    end
-                    if t_inner == 12
-                        E_polr1_time3 = Freg2_polr1_time15
-                    end
-                    if t_inner == 16
-                        E_polr1_time3 = Freg2_polr1_time19
-                    end
-                    if t_inner == 20
-                        E_polr1_time3 = Freg2_polr1_time23
-                    end
-                    if t_inner == 24
-                        E_polr1_time3 = Freg2_polr1_time27
-                    end
-                    if t_inner == 28
-                        E_polr1_time3 = Freg2_polr1_time31
-                    end
-                    if t_inner == 32
-                        E_polr1_time3 = Freg2_polr1_time35
-                    end
-                    if t_inner == 36
-                        E_polr1_time3 = Freg2_polr1_time39
-                    end
-                    if t_inner == 40
-                        E_polr1_time3 = Freg2_polr1_time43
-                    end
-                    if t_inner == 44
-                        E_polr1_time3 = Freg2_polr1_time47
-                    end
-                    WE_polr0_time0 = swapped_complex_mul(W_polr0, E_polr0_time0)
-                    WE_polr1_time0 = swapped_complex_mul(W_polr1, E_polr1_time0)
-                    WE_polr0_time1 = swapped_complex_mul(W_polr0, E_polr0_time1)
-                    WE_polr1_time1 = swapped_complex_mul(W_polr1, E_polr1_time1)
-                    WE_polr0_time2 = swapped_complex_mul(W_polr0, E_polr0_time2)
-                    WE_polr1_time2 = swapped_complex_mul(W_polr1, E_polr1_time2)
-                    WE_polr0_time3 = swapped_complex_mul(W_polr0, E_polr0_time3)
-                    WE_polr1_time3 = swapped_complex_mul(W_polr1, E_polr1_time3)
-                    X_polr0_time0 = WE_polr0_time0
-                    X_polr1_time0 = WE_polr1_time0
-                    X_polr0_time1 = WE_polr0_time1
-                    X_polr1_time1 = WE_polr1_time1
-                    X_polr0_time2 = WE_polr0_time2
-                    X_polr1_time2 = WE_polr1_time2
-                    X_polr0_time3 = WE_polr0_time3
-                    X_polr1_time3 = WE_polr1_time3
-                    Z_cplx0_polr0_time0 = zero(Float16x2)
-                    Z_cplx1_polr0_time0 = zero(Float16x2)
-                    Z_cplx0_polr1_time0 = zero(Float16x2)
-                    Z_cplx1_polr1_time0 = zero(Float16x2)
-                    Z_cplx0_polr0_time1 = zero(Float16x2)
-                    Z_cplx1_polr0_time1 = zero(Float16x2)
-                    Z_cplx0_polr1_time1 = zero(Float16x2)
-                    Z_cplx1_polr1_time1 = zero(Float16x2)
-                    Z_cplx0_polr0_time2 = zero(Float16x2)
-                    Z_cplx1_polr0_time2 = zero(Float16x2)
-                    Z_cplx0_polr1_time2 = zero(Float16x2)
-                    Z_cplx1_polr1_time2 = zero(Float16x2)
-                    Z_cplx0_polr0_time3 = zero(Float16x2)
-                    Z_cplx1_polr0_time3 = zero(Float16x2)
-                    Z_cplx0_polr1_time3 = zero(Float16x2)
-                    Z_cplx1_polr1_time3 = zero(Float16x2)
-                    (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time0, (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0)
-                    )
-                    (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time0, (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0)
-                    )
-                    (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time1, (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1)
-                    )
-                    (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time1, (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1)
-                    )
-                    (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time2, (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2)
-                    )
-                    (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time2, (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2)
-                    )
-                    (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time3, (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3)
-                    )
-                    (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k8(
-                        (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time3, (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3)
-                    )
-                    Γ²im = Γ²_cplx0
-                    Γ²re = Γ²_cplx1
-                    Zim_polr0_time0 = Z_cplx0_polr0_time0
-                    Zre_polr0_time0 = Z_cplx1_polr0_time0
-                    Zim_polr1_time0 = Z_cplx0_polr1_time0
-                    Zre_polr1_time0 = Z_cplx1_polr1_time0
-                    Zim_polr0_time1 = Z_cplx0_polr0_time1
-                    Zre_polr0_time1 = Z_cplx1_polr0_time1
-                    Zim_polr1_time1 = Z_cplx0_polr1_time1
-                    Zre_polr1_time1 = Z_cplx1_polr1_time1
-                    Zim_polr0_time2 = Z_cplx0_polr0_time2
-                    Zre_polr0_time2 = Z_cplx1_polr0_time2
-                    Zim_polr1_time2 = Z_cplx0_polr1_time2
-                    Zre_polr1_time2 = Z_cplx1_polr1_time2
-                    Zim_polr0_time3 = Z_cplx0_polr0_time3
-                    Zre_polr0_time3 = Z_cplx1_polr0_time3
-                    Zim_polr1_time3 = Z_cplx0_polr1_time3
-                    Zre_polr1_time3 = Z_cplx1_polr1_time3
-                    Vre_polr0_time0 = muladd(Γ²re, Zre_polr0_time0, -Γ²im * Zim_polr0_time0)
-                    Vre_polr1_time0 = muladd(Γ²re, Zre_polr1_time0, -Γ²im * Zim_polr1_time0)
-                    Vre_polr0_time1 = muladd(Γ²re, Zre_polr0_time1, -Γ²im * Zim_polr0_time1)
-                    Vre_polr1_time1 = muladd(Γ²re, Zre_polr1_time1, -Γ²im * Zim_polr1_time1)
-                    Vre_polr0_time2 = muladd(Γ²re, Zre_polr0_time2, -Γ²im * Zim_polr0_time2)
-                    Vre_polr1_time2 = muladd(Γ²re, Zre_polr1_time2, -Γ²im * Zim_polr1_time2)
-                    Vre_polr0_time3 = muladd(Γ²re, Zre_polr0_time3, -Γ²im * Zim_polr0_time3)
-                    Vre_polr1_time3 = muladd(Γ²re, Zre_polr1_time3, -Γ²im * Zim_polr1_time3)
-                    Vim_polr0_time0 = muladd(Γ²re, Zim_polr0_time0, +Γ²im * Zre_polr0_time0)
-                    Vim_polr1_time0 = muladd(Γ²re, Zim_polr1_time0, +Γ²im * Zre_polr1_time0)
-                    Vim_polr0_time1 = muladd(Γ²re, Zim_polr0_time1, +Γ²im * Zre_polr0_time1)
-                    Vim_polr1_time1 = muladd(Γ²re, Zim_polr1_time1, +Γ²im * Zre_polr1_time1)
-                    Vim_polr0_time2 = muladd(Γ²re, Zim_polr0_time2, +Γ²im * Zre_polr0_time2)
-                    Vim_polr1_time2 = muladd(Γ²re, Zim_polr1_time2, +Γ²im * Zre_polr1_time2)
-                    Vim_polr0_time3 = muladd(Γ²re, Zim_polr0_time3, +Γ²im * Zre_polr0_time3)
-                    Vim_polr1_time3 = muladd(Γ²re, Zim_polr1_time3, +Γ²im * Zre_polr1_time3)
-                    V_cplx0_polr0_time0 = Vim_polr0_time0
-                    V_cplx1_polr0_time0 = Vre_polr0_time0
-                    V_cplx0_polr1_time0 = Vim_polr1_time0
-                    V_cplx1_polr1_time0 = Vre_polr1_time0
-                    V_cplx0_polr0_time1 = Vim_polr0_time1
-                    V_cplx1_polr0_time1 = Vre_polr0_time1
-                    V_cplx0_polr1_time1 = Vim_polr1_time1
-                    V_cplx1_polr1_time1 = Vre_polr1_time1
-                    V_cplx0_polr0_time2 = Vim_polr0_time2
-                    V_cplx1_polr0_time2 = Vre_polr0_time2
-                    V_cplx0_polr1_time2 = Vim_polr1_time2
-                    V_cplx1_polr1_time2 = Vre_polr1_time2
-                    V_cplx0_polr0_time3 = Vim_polr0_time3
-                    V_cplx1_polr0_time3 = Vre_polr0_time3
-                    V_cplx0_polr1_time3 = Vim_polr1_time3
-                    V_cplx1_polr1_time3 = Vre_polr1_time3
-                    Y_cplx0_polr0_time0 = zero(Float16x2)
-                    Y_cplx1_polr0_time0 = zero(Float16x2)
-                    Y_cplx0_polr1_time0 = zero(Float16x2)
-                    Y_cplx1_polr1_time0 = zero(Float16x2)
-                    Y_cplx0_polr0_time1 = zero(Float16x2)
-                    Y_cplx1_polr0_time1 = zero(Float16x2)
-                    Y_cplx0_polr1_time1 = zero(Float16x2)
-                    Y_cplx1_polr1_time1 = zero(Float16x2)
-                    Y_cplx0_polr0_time2 = zero(Float16x2)
-                    Y_cplx1_polr0_time2 = zero(Float16x2)
-                    Y_cplx0_polr1_time2 = zero(Float16x2)
-                    Y_cplx1_polr1_time2 = zero(Float16x2)
-                    Y_cplx0_polr0_time3 = zero(Float16x2)
-                    Y_cplx1_polr0_time3 = zero(Float16x2)
-                    Y_cplx0_polr1_time3 = zero(Float16x2)
-                    Y_cplx1_polr1_time3 = zero(Float16x2)
-                    Vim_polr0_time0 = V_cplx0_polr0_time0
-                    Vre_polr0_time0 = V_cplx1_polr0_time0
-                    Vim_polr1_time0 = V_cplx0_polr1_time0
-                    Vre_polr1_time0 = V_cplx1_polr1_time0
-                    Vim_polr0_time1 = V_cplx0_polr0_time1
-                    Vre_polr0_time1 = V_cplx1_polr0_time1
-                    Vim_polr1_time1 = V_cplx0_polr1_time1
-                    Vre_polr1_time1 = V_cplx1_polr1_time1
-                    Vim_polr0_time2 = V_cplx0_polr0_time2
-                    Vre_polr0_time2 = V_cplx1_polr0_time2
-                    Vim_polr1_time2 = V_cplx0_polr1_time2
-                    Vre_polr1_time2 = V_cplx1_polr1_time2
-                    Vim_polr0_time3 = V_cplx0_polr0_time3
-                    Vre_polr0_time3 = V_cplx1_polr0_time3
-                    Vim_polr1_time3 = V_cplx0_polr1_time3
-                    Vre_polr1_time3 = V_cplx1_polr1_time3
-                    V_cplx_in0_polr0_time0 = Vim_polr0_time0
-                    V_cplx_in1_polr0_time0 = Vre_polr0_time0
-                    V_cplx_in0_polr1_time0 = Vim_polr1_time0
-                    V_cplx_in1_polr1_time0 = Vre_polr1_time0
-                    V_cplx_in0_polr0_time1 = Vim_polr0_time1
-                    V_cplx_in1_polr0_time1 = Vre_polr0_time1
-                    V_cplx_in0_polr1_time1 = Vim_polr1_time1
-                    V_cplx_in1_polr1_time1 = Vre_polr1_time1
-                    V_cplx_in0_polr0_time2 = Vim_polr0_time2
-                    V_cplx_in1_polr0_time2 = Vre_polr0_time2
-                    V_cplx_in0_polr1_time2 = Vim_polr1_time2
-                    V_cplx_in1_polr1_time2 = Vre_polr1_time2
-                    V_cplx_in0_polr0_time3 = Vim_polr0_time3
-                    V_cplx_in1_polr0_time3 = Vre_polr0_time3
-                    V_cplx_in0_polr1_time3 = Vim_polr1_time3
-                    V_cplx_in1_polr1_time3 = Vre_polr1_time3
-                    (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr0_time0, V_cplx_in1_polr0_time0),
-                        (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0),
-                    )
-                    (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr1_time0, V_cplx_in1_polr1_time0),
-                        (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0),
-                    )
-                    (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr0_time1, V_cplx_in1_polr0_time1),
-                        (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1),
-                    )
-                    (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr1_time1, V_cplx_in1_polr1_time1),
-                        (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1),
-                    )
-                    (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr0_time2, V_cplx_in1_polr0_time2),
-                        (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2),
-                    )
-                    (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr1_time2, V_cplx_in1_polr1_time2),
-                        (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2),
-                    )
-                    (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr0_time3, V_cplx_in1_polr0_time3),
-                        (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3),
-                    )
-                    (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k16(
-                        (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                        (V_cplx_in0_polr1_time3, V_cplx_in1_polr1_time3),
-                        (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3),
-                    )
-                    G_cplx0_polr0_time0 = Y_cplx0_polr0_time0
-                    G_cplx1_polr0_time0 = Y_cplx1_polr0_time0
-                    G_cplx0_polr1_time0 = Y_cplx0_polr1_time0
-                    G_cplx1_polr1_time0 = Y_cplx1_polr1_time0
-                    G_cplx0_polr0_time1 = Y_cplx0_polr0_time1
-                    G_cplx1_polr0_time1 = Y_cplx1_polr0_time1
-                    G_cplx0_polr1_time1 = Y_cplx0_polr1_time1
-                    G_cplx1_polr1_time1 = Y_cplx1_polr1_time1
-                    G_cplx0_polr0_time2 = Y_cplx0_polr0_time2
-                    G_cplx1_polr0_time2 = Y_cplx1_polr0_time2
-                    G_cplx0_polr1_time2 = Y_cplx0_polr1_time2
-                    G_cplx1_polr1_time2 = Y_cplx1_polr1_time2
-                    G_cplx0_polr0_time3 = Y_cplx0_polr0_time3
-                    G_cplx1_polr0_time3 = Y_cplx1_polr0_time3
-                    G_cplx0_polr1_time3 = Y_cplx0_polr1_time3
-                    G_cplx1_polr1_time3 = Y_cplx1_polr1_time3
-                    (G_cplx0_polr0_time0, G_cplx1_polr0_time0) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
-                        IndexSpaces.get_hi16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
-                    )
-                    (G_cplx0_polr1_time0, G_cplx1_polr1_time0) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
-                        IndexSpaces.get_hi16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
-                    )
-                    (G_cplx0_polr0_time1, G_cplx1_polr0_time1) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
-                        IndexSpaces.get_hi16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
-                    )
-                    (G_cplx0_polr1_time1, G_cplx1_polr1_time1) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
-                        IndexSpaces.get_hi16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
-                    )
-                    (G_cplx0_polr0_time2, G_cplx1_polr0_time2) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
-                        IndexSpaces.get_hi16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
-                    )
-                    (G_cplx0_polr1_time2, G_cplx1_polr1_time2) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
-                        IndexSpaces.get_hi16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
-                    )
-                    (G_cplx0_polr0_time3, G_cplx1_polr0_time3) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
-                        IndexSpaces.get_hi16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
-                    )
-                    (G_cplx0_polr1_time3, G_cplx1_polr1_time3) = (
-                        IndexSpaces.get_lo16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
-                        IndexSpaces.get_hi16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
-                    )
-                    Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx0_polr0_time0
-                    Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx1_polr0_time0
-                    Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx0_polr1_time0
-                    Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx1_polr1_time0
-                    Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 1) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx0_polr0_time1
-                    Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 1) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx1_polr0_time1
-                    Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 1) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx0_polr1_time1
-                    Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 1) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx1_polr1_time1
-                    Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 2) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx0_polr0_time2
-                    Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 2) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx1_polr0_time2
-                    Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 2) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx0_polr1_time2
-                    Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 2) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx1_polr1_time2
-                    Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 3) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx0_polr0_time3
-                    Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 3) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
-                        G_cplx1_polr0_time3
-                    Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 3) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx0_polr1_time3
-                    Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + 3) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
-                        G_cplx1_polr1_time3
-                    IndexSpaces.cuda_sync_threads()
+                for t_inner_lo in 0:4:23
                     let
-                        t = 0
-                        G_beamQ0_polr0 = zero(Float16x2)
-                        G_beamQ1_polr0 = zero(Float16x2)
-                        G_beamQ0_polr1 = zero(Float16x2)
-                        G_beamQ1_polr1 = zero(Float16x2)
-                        if let
-                            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                            mlo = thread ÷ (4i32)
-                            mlo < 6
+                        t_inner_hi = 0
+                        Freg2′_time0 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time0 = Freg2_time0
                         end
-                            G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                            G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                        if t_inner_lo == 4
+                            Freg2′_time0 = Freg2_time4
                         end
-                        X_beamQ0_polr0 = G_beamQ0_polr0
-                        X_beamQ1_polr0 = G_beamQ1_polr0
-                        X_beamQ0_polr1 = G_beamQ0_polr1
-                        X_beamQ1_polr1 = G_beamQ1_polr1
-                        Z_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                        if t_inner_lo == 8
+                            Freg2′_time0 = Freg2_time8
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time0 = Freg2_time12
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time0 = Freg2_time16
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time0 = Freg2_time20
+                        end
+                        Freg2′_time1 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time1 = Freg2_time1
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time1 = Freg2_time5
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time1 = Freg2_time9
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time1 = Freg2_time13
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time1 = Freg2_time17
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time1 = Freg2_time21
+                        end
+                        Freg2′_time2 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time2 = Freg2_time2
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time2 = Freg2_time6
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time2 = Freg2_time10
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time2 = Freg2_time14
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time2 = Freg2_time18
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time2 = Freg2_time22
+                        end
+                        Freg2′_time3 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time3 = Freg2_time3
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time3 = Freg2_time7
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time3 = Freg2_time11
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time3 = Freg2_time15
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time3 = Freg2_time19
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time3 = Freg2_time23
+                        end
+                        (E′_polr0_time0, E′_polr1_time0, E′_polr0_time24, E′_polr1_time24) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time0
                         )
-                        (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                        (E′_polr0_time1, E′_polr1_time1, E′_polr0_time25, E′_polr1_time25) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time1
                         )
-                        (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                        (E′_polr0_time2, E′_polr1_time2, E′_polr0_time26, E′_polr1_time26) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time2
                         )
-                        (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                        (E′_polr0_time3, E′_polr1_time3, E′_polr0_time27, E′_polr1_time27) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time3
+                        )
+                        E_polr0_time0 = E′_polr0_time0
+                        E_polr1_time0 = E′_polr1_time0
+                        E_polr0_time1 = E′_polr0_time1
+                        E_polr1_time1 = E′_polr1_time1
+                        E_polr0_time2 = E′_polr0_time2
+                        E_polr1_time2 = E′_polr1_time2
+                        E_polr0_time3 = E′_polr0_time3
+                        E_polr1_time3 = E′_polr1_time3
+                        WE_polr0_time0 = swapped_complex_mul(W_polr0, E_polr0_time0)
+                        WE_polr1_time0 = swapped_complex_mul(W_polr1, E_polr1_time0)
+                        WE_polr0_time1 = swapped_complex_mul(W_polr0, E_polr0_time1)
+                        WE_polr1_time1 = swapped_complex_mul(W_polr1, E_polr1_time1)
+                        WE_polr0_time2 = swapped_complex_mul(W_polr0, E_polr0_time2)
+                        WE_polr1_time2 = swapped_complex_mul(W_polr1, E_polr1_time2)
+                        WE_polr0_time3 = swapped_complex_mul(W_polr0, E_polr0_time3)
+                        WE_polr1_time3 = swapped_complex_mul(W_polr1, E_polr1_time3)
+                        X_polr0_time0 = WE_polr0_time0
+                        X_polr1_time0 = WE_polr1_time0
+                        X_polr0_time1 = WE_polr0_time1
+                        X_polr1_time1 = WE_polr1_time1
+                        X_polr0_time2 = WE_polr0_time2
+                        X_polr1_time2 = WE_polr1_time2
+                        X_polr0_time3 = WE_polr0_time3
+                        X_polr1_time3 = WE_polr1_time3
+                        Z_cplx0_polr0_time0 = zero(Float16x2)
+                        Z_cplx1_polr0_time0 = zero(Float16x2)
+                        Z_cplx0_polr1_time0 = zero(Float16x2)
+                        Z_cplx1_polr1_time0 = zero(Float16x2)
+                        Z_cplx0_polr0_time1 = zero(Float16x2)
+                        Z_cplx1_polr0_time1 = zero(Float16x2)
+                        Z_cplx0_polr1_time1 = zero(Float16x2)
+                        Z_cplx1_polr1_time1 = zero(Float16x2)
+                        Z_cplx0_polr0_time2 = zero(Float16x2)
+                        Z_cplx1_polr0_time2 = zero(Float16x2)
+                        Z_cplx0_polr1_time2 = zero(Float16x2)
+                        Z_cplx1_polr1_time2 = zero(Float16x2)
+                        Z_cplx0_polr0_time3 = zero(Float16x2)
+                        Z_cplx1_polr0_time3 = zero(Float16x2)
+                        Z_cplx0_polr1_time3 = zero(Float16x2)
+                        Z_cplx1_polr1_time3 = zero(Float16x2)
+                        (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time0, (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0)
+                        )
+                        (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time0, (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0)
+                        )
+                        (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time1, (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1)
+                        )
+                        (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time1, (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1)
+                        )
+                        (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time2, (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2)
+                        )
+                        (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time2, (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2)
+                        )
+                        (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time3, (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3)
+                        )
+                        (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time3, (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3)
                         )
                         Γ²im = Γ²_cplx0
                         Γ²re = Γ²_cplx1
-                        Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
-                        Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
-                        Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
-                        Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
-                        Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
-                        Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
-                        Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
-                        Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
-                        Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
-                        Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
-                        Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
-                        Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
-                        Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
-                        Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
-                        Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
-                        Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
-                        V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
-                        Y_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
-                        Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
-                        Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
-                        Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
-                        Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
-                        Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
-                        Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
-                        Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
-                        V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
-                        (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                        Zim_polr0_time0 = Z_cplx0_polr0_time0
+                        Zre_polr0_time0 = Z_cplx1_polr0_time0
+                        Zim_polr1_time0 = Z_cplx0_polr1_time0
+                        Zre_polr1_time0 = Z_cplx1_polr1_time0
+                        Zim_polr0_time1 = Z_cplx0_polr0_time1
+                        Zre_polr0_time1 = Z_cplx1_polr0_time1
+                        Zim_polr1_time1 = Z_cplx0_polr1_time1
+                        Zre_polr1_time1 = Z_cplx1_polr1_time1
+                        Zim_polr0_time2 = Z_cplx0_polr0_time2
+                        Zre_polr0_time2 = Z_cplx1_polr0_time2
+                        Zim_polr1_time2 = Z_cplx0_polr1_time2
+                        Zre_polr1_time2 = Z_cplx1_polr1_time2
+                        Zim_polr0_time3 = Z_cplx0_polr0_time3
+                        Zre_polr0_time3 = Z_cplx1_polr0_time3
+                        Zim_polr1_time3 = Z_cplx0_polr1_time3
+                        Zre_polr1_time3 = Z_cplx1_polr1_time3
+                        Vre_polr0_time0 = muladd(Γ²re, Zre_polr0_time0, -Γ²im * Zim_polr0_time0)
+                        Vre_polr1_time0 = muladd(Γ²re, Zre_polr1_time0, -Γ²im * Zim_polr1_time0)
+                        Vre_polr0_time1 = muladd(Γ²re, Zre_polr0_time1, -Γ²im * Zim_polr0_time1)
+                        Vre_polr1_time1 = muladd(Γ²re, Zre_polr1_time1, -Γ²im * Zim_polr1_time1)
+                        Vre_polr0_time2 = muladd(Γ²re, Zre_polr0_time2, -Γ²im * Zim_polr0_time2)
+                        Vre_polr1_time2 = muladd(Γ²re, Zre_polr1_time2, -Γ²im * Zim_polr1_time2)
+                        Vre_polr0_time3 = muladd(Γ²re, Zre_polr0_time3, -Γ²im * Zim_polr0_time3)
+                        Vre_polr1_time3 = muladd(Γ²re, Zre_polr1_time3, -Γ²im * Zim_polr1_time3)
+                        Vim_polr0_time0 = muladd(Γ²re, Zim_polr0_time0, +Γ²im * Zre_polr0_time0)
+                        Vim_polr1_time0 = muladd(Γ²re, Zim_polr1_time0, +Γ²im * Zre_polr1_time0)
+                        Vim_polr0_time1 = muladd(Γ²re, Zim_polr0_time1, +Γ²im * Zre_polr0_time1)
+                        Vim_polr1_time1 = muladd(Γ²re, Zim_polr1_time1, +Γ²im * Zre_polr1_time1)
+                        Vim_polr0_time2 = muladd(Γ²re, Zim_polr0_time2, +Γ²im * Zre_polr0_time2)
+                        Vim_polr1_time2 = muladd(Γ²re, Zim_polr1_time2, +Γ²im * Zre_polr1_time2)
+                        Vim_polr0_time3 = muladd(Γ²re, Zim_polr0_time3, +Γ²im * Zre_polr0_time3)
+                        Vim_polr1_time3 = muladd(Γ²re, Zim_polr1_time3, +Γ²im * Zre_polr1_time3)
+                        V_cplx0_polr0_time0 = Vim_polr0_time0
+                        V_cplx1_polr0_time0 = Vre_polr0_time0
+                        V_cplx0_polr1_time0 = Vim_polr1_time0
+                        V_cplx1_polr1_time0 = Vre_polr1_time0
+                        V_cplx0_polr0_time1 = Vim_polr0_time1
+                        V_cplx1_polr0_time1 = Vre_polr0_time1
+                        V_cplx0_polr1_time1 = Vim_polr1_time1
+                        V_cplx1_polr1_time1 = Vre_polr1_time1
+                        V_cplx0_polr0_time2 = Vim_polr0_time2
+                        V_cplx1_polr0_time2 = Vre_polr0_time2
+                        V_cplx0_polr1_time2 = Vim_polr1_time2
+                        V_cplx1_polr1_time2 = Vre_polr1_time2
+                        V_cplx0_polr0_time3 = Vim_polr0_time3
+                        V_cplx1_polr0_time3 = Vre_polr0_time3
+                        V_cplx0_polr1_time3 = Vim_polr1_time3
+                        V_cplx1_polr1_time3 = Vre_polr1_time3
+                        Y_cplx0_polr0_time0 = zero(Float16x2)
+                        Y_cplx1_polr0_time0 = zero(Float16x2)
+                        Y_cplx0_polr1_time0 = zero(Float16x2)
+                        Y_cplx1_polr1_time0 = zero(Float16x2)
+                        Y_cplx0_polr0_time1 = zero(Float16x2)
+                        Y_cplx1_polr0_time1 = zero(Float16x2)
+                        Y_cplx0_polr1_time1 = zero(Float16x2)
+                        Y_cplx1_polr1_time1 = zero(Float16x2)
+                        Y_cplx0_polr0_time2 = zero(Float16x2)
+                        Y_cplx1_polr0_time2 = zero(Float16x2)
+                        Y_cplx0_polr1_time2 = zero(Float16x2)
+                        Y_cplx1_polr1_time2 = zero(Float16x2)
+                        Y_cplx0_polr0_time3 = zero(Float16x2)
+                        Y_cplx1_polr0_time3 = zero(Float16x2)
+                        Y_cplx0_polr1_time3 = zero(Float16x2)
+                        Y_cplx1_polr1_time3 = zero(Float16x2)
+                        Vim_polr0_time0 = V_cplx0_polr0_time0
+                        Vre_polr0_time0 = V_cplx1_polr0_time0
+                        Vim_polr1_time0 = V_cplx0_polr1_time0
+                        Vre_polr1_time0 = V_cplx1_polr1_time0
+                        Vim_polr0_time1 = V_cplx0_polr0_time1
+                        Vre_polr0_time1 = V_cplx1_polr0_time1
+                        Vim_polr1_time1 = V_cplx0_polr1_time1
+                        Vre_polr1_time1 = V_cplx1_polr1_time1
+                        Vim_polr0_time2 = V_cplx0_polr0_time2
+                        Vre_polr0_time2 = V_cplx1_polr0_time2
+                        Vim_polr1_time2 = V_cplx0_polr1_time2
+                        Vre_polr1_time2 = V_cplx1_polr1_time2
+                        Vim_polr0_time3 = V_cplx0_polr0_time3
+                        Vre_polr0_time3 = V_cplx1_polr0_time3
+                        Vim_polr1_time3 = V_cplx0_polr1_time3
+                        Vre_polr1_time3 = V_cplx1_polr1_time3
+                        V_cplx_in0_polr0_time0 = Vim_polr0_time0
+                        V_cplx_in1_polr0_time0 = Vre_polr0_time0
+                        V_cplx_in0_polr1_time0 = Vim_polr1_time0
+                        V_cplx_in1_polr1_time0 = Vre_polr1_time0
+                        V_cplx_in0_polr0_time1 = Vim_polr0_time1
+                        V_cplx_in1_polr0_time1 = Vre_polr0_time1
+                        V_cplx_in0_polr1_time1 = Vim_polr1_time1
+                        V_cplx_in1_polr1_time1 = Vre_polr1_time1
+                        V_cplx_in0_polr0_time2 = Vim_polr0_time2
+                        V_cplx_in1_polr0_time2 = Vre_polr0_time2
+                        V_cplx_in0_polr1_time2 = Vim_polr1_time2
+                        V_cplx_in1_polr1_time2 = Vre_polr1_time2
+                        V_cplx_in0_polr0_time3 = Vim_polr0_time3
+                        V_cplx_in1_polr0_time3 = Vre_polr0_time3
+                        V_cplx_in0_polr1_time3 = Vim_polr1_time3
+                        V_cplx_in1_polr1_time3 = Vre_polr1_time3
+                        (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
-                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            (V_cplx_in0_polr0_time0, V_cplx_in1_polr0_time0),
+                            (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0),
                         )
-                        (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
-                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            (V_cplx_in0_polr1_time0, V_cplx_in1_polr1_time0),
+                            (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0),
                         )
-                        (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
-                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            (V_cplx_in0_polr0_time1, V_cplx_in1_polr0_time1),
+                            (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1),
                         )
-                        (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
-                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            (V_cplx_in0_polr1_time1, V_cplx_in1_polr1_time1),
+                            (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1),
                         )
-                        Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
-                        Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
-                        Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
-                        Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
-                        Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
-                        Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
-                        Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
-                        Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
-                        Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
-                        Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
-                        Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
-                        Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
-                        Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
-                        Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
-                        Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
-                        Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
-                        I_beamQ0_polr0 = muladd(
-                            Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                        (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr0_time2, V_cplx_in1_polr0_time2),
+                            (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2),
                         )
-                        I_beamQ1_polr0 = muladd(
-                            Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                        (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr1_time2, V_cplx_in1_polr1_time2),
+                            (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2),
                         )
-                        I_beamQ0_polr1 = muladd(
-                            Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                        (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr0_time3, V_cplx_in1_polr0_time3),
+                            (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3),
                         )
-                        I_beamQ1_polr1 = muladd(
-                            Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                        (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr1_time3, V_cplx_in1_polr1_time3),
+                            (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3),
                         )
-                        t_running += 1
-                        if t_running == 40
+                        G_cplx0_polr0_time0 = Y_cplx0_polr0_time0
+                        G_cplx1_polr0_time0 = Y_cplx1_polr0_time0
+                        G_cplx0_polr1_time0 = Y_cplx0_polr1_time0
+                        G_cplx1_polr1_time0 = Y_cplx1_polr1_time0
+                        G_cplx0_polr0_time1 = Y_cplx0_polr0_time1
+                        G_cplx1_polr0_time1 = Y_cplx1_polr0_time1
+                        G_cplx0_polr1_time1 = Y_cplx0_polr1_time1
+                        G_cplx1_polr1_time1 = Y_cplx1_polr1_time1
+                        G_cplx0_polr0_time2 = Y_cplx0_polr0_time2
+                        G_cplx1_polr0_time2 = Y_cplx1_polr0_time2
+                        G_cplx0_polr1_time2 = Y_cplx0_polr1_time2
+                        G_cplx1_polr1_time2 = Y_cplx1_polr1_time2
+                        G_cplx0_polr0_time3 = Y_cplx0_polr0_time3
+                        G_cplx1_polr0_time3 = Y_cplx1_polr0_time3
+                        G_cplx0_polr1_time3 = Y_cplx0_polr1_time3
+                        G_cplx1_polr1_time3 = Y_cplx1_polr1_time3
+                        (G_cplx0_polr0_time0, G_cplx1_polr0_time0) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
+                        )
+                        (G_cplx0_polr1_time0, G_cplx1_polr1_time0) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
+                        )
+                        (G_cplx0_polr0_time1, G_cplx1_polr0_time1) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
+                        )
+                        (G_cplx0_polr1_time1, G_cplx1_polr1_time1) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
+                        )
+                        (G_cplx0_polr0_time2, G_cplx1_polr0_time2) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
+                        )
+                        (G_cplx0_polr1_time2, G_cplx1_polr1_time2) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
+                        )
+                        (G_cplx0_polr0_time3, G_cplx1_polr0_time3) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
+                        )
+                        (G_cplx0_polr1_time3, G_cplx1_polr1_time3) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
+                        )
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time0
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time0
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time0
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time0
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time1
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time1
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time1
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time1
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time2
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time2
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time2
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time2
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time3
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time3
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time3
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time3
+                        IndexSpaces.cuda_sync_threads()
+                        let
+                            t = 0
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
                             if let
                                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
-                                p = (2i32) * thread
-                                q = (2i32) * warp
-                                0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
                             end
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ0_polr0
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ1_polr0
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ0_polr1
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ1_polr1
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
                             end
-                            I_beamQ0_polr0 = zero(Float16x2)
-                            I_beamQ1_polr0 = zero(Float16x2)
-                            I_beamQ0_polr1 = zero(Float16x2)
-                            I_beamQ1_polr1 = zero(Float16x2)
-                            t_running = 0
-                            dstime += 1
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
                         end
+                        let
+                            t = 1
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
+                            if let
+                                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
+                            end
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                            end
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
+                        end
+                        let
+                            t = 2
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
+                            if let
+                                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
+                            end
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                            end
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
+                        end
+                        let
+                            t = 3
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
+                            if let
+                                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
+                            end
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                            end
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
+                        end
+                        IndexSpaces.cuda_sync_threads()
                     end
                     let
-                        t = 1
-                        G_beamQ0_polr0 = zero(Float16x2)
-                        G_beamQ1_polr0 = zero(Float16x2)
-                        G_beamQ0_polr1 = zero(Float16x2)
-                        G_beamQ1_polr1 = zero(Float16x2)
-                        if let
-                            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                            mlo = thread ÷ (4i32)
-                            mlo < 6
+                        t_inner_hi = 24
+                        Freg2′_time0 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time0 = Freg2_time0
                         end
-                            G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                            G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                        if t_inner_lo == 4
+                            Freg2′_time0 = Freg2_time4
                         end
-                        X_beamQ0_polr0 = G_beamQ0_polr0
-                        X_beamQ1_polr0 = G_beamQ1_polr0
-                        X_beamQ0_polr1 = G_beamQ0_polr1
-                        X_beamQ1_polr1 = G_beamQ1_polr1
-                        Z_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                        if t_inner_lo == 8
+                            Freg2′_time0 = Freg2_time8
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time0 = Freg2_time12
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time0 = Freg2_time16
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time0 = Freg2_time20
+                        end
+                        Freg2′_time1 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time1 = Freg2_time1
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time1 = Freg2_time5
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time1 = Freg2_time9
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time1 = Freg2_time13
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time1 = Freg2_time17
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time1 = Freg2_time21
+                        end
+                        Freg2′_time2 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time2 = Freg2_time2
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time2 = Freg2_time6
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time2 = Freg2_time10
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time2 = Freg2_time14
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time2 = Freg2_time18
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time2 = Freg2_time22
+                        end
+                        Freg2′_time3 = zero(Int4x8)
+                        if t_inner_lo == 0
+                            Freg2′_time3 = Freg2_time3
+                        end
+                        if t_inner_lo == 4
+                            Freg2′_time3 = Freg2_time7
+                        end
+                        if t_inner_lo == 8
+                            Freg2′_time3 = Freg2_time11
+                        end
+                        if t_inner_lo == 12
+                            Freg2′_time3 = Freg2_time15
+                        end
+                        if t_inner_lo == 16
+                            Freg2′_time3 = Freg2_time19
+                        end
+                        if t_inner_lo == 20
+                            Freg2′_time3 = Freg2_time23
+                        end
+                        (E′_polr0_time0, E′_polr1_time0, E′_polr0_time24, E′_polr1_time24) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time0
                         )
-                        (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                        (E′_polr0_time1, E′_polr1_time1, E′_polr0_time25, E′_polr1_time25) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time1
                         )
-                        (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                        (E′_polr0_time2, E′_polr1_time2, E′_polr0_time26, E′_polr1_time26) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time2
                         )
-                        (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                        (E′_polr0_time3, E′_polr1_time3, E′_polr0_time27, E′_polr1_time27) = convert(
+                            NTuple{4,Float16x2}, Freg2′_time3
+                        )
+                        E_polr0_time0 = E′_polr0_time24
+                        E_polr1_time0 = E′_polr1_time24
+                        E_polr0_time1 = E′_polr0_time25
+                        E_polr1_time1 = E′_polr1_time25
+                        E_polr0_time2 = E′_polr0_time26
+                        E_polr1_time2 = E′_polr1_time26
+                        E_polr0_time3 = E′_polr0_time27
+                        E_polr1_time3 = E′_polr1_time27
+                        WE_polr0_time0 = swapped_complex_mul(W_polr0, E_polr0_time0)
+                        WE_polr1_time0 = swapped_complex_mul(W_polr1, E_polr1_time0)
+                        WE_polr0_time1 = swapped_complex_mul(W_polr0, E_polr0_time1)
+                        WE_polr1_time1 = swapped_complex_mul(W_polr1, E_polr1_time1)
+                        WE_polr0_time2 = swapped_complex_mul(W_polr0, E_polr0_time2)
+                        WE_polr1_time2 = swapped_complex_mul(W_polr1, E_polr1_time2)
+                        WE_polr0_time3 = swapped_complex_mul(W_polr0, E_polr0_time3)
+                        WE_polr1_time3 = swapped_complex_mul(W_polr1, E_polr1_time3)
+                        X_polr0_time0 = WE_polr0_time0
+                        X_polr1_time0 = WE_polr1_time0
+                        X_polr0_time1 = WE_polr0_time1
+                        X_polr1_time1 = WE_polr1_time1
+                        X_polr0_time2 = WE_polr0_time2
+                        X_polr1_time2 = WE_polr1_time2
+                        X_polr0_time3 = WE_polr0_time3
+                        X_polr1_time3 = WE_polr1_time3
+                        Z_cplx0_polr0_time0 = zero(Float16x2)
+                        Z_cplx1_polr0_time0 = zero(Float16x2)
+                        Z_cplx0_polr1_time0 = zero(Float16x2)
+                        Z_cplx1_polr1_time0 = zero(Float16x2)
+                        Z_cplx0_polr0_time1 = zero(Float16x2)
+                        Z_cplx1_polr0_time1 = zero(Float16x2)
+                        Z_cplx0_polr1_time1 = zero(Float16x2)
+                        Z_cplx1_polr1_time1 = zero(Float16x2)
+                        Z_cplx0_polr0_time2 = zero(Float16x2)
+                        Z_cplx1_polr0_time2 = zero(Float16x2)
+                        Z_cplx0_polr1_time2 = zero(Float16x2)
+                        Z_cplx1_polr1_time2 = zero(Float16x2)
+                        Z_cplx0_polr0_time3 = zero(Float16x2)
+                        Z_cplx1_polr0_time3 = zero(Float16x2)
+                        Z_cplx0_polr1_time3 = zero(Float16x2)
+                        Z_cplx1_polr1_time3 = zero(Float16x2)
+                        (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time0, (Z_cplx0_polr0_time0, Z_cplx1_polr0_time0)
+                        )
+                        (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time0, (Z_cplx0_polr1_time0, Z_cplx1_polr1_time0)
+                        )
+                        (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time1, (Z_cplx0_polr0_time1, Z_cplx1_polr0_time1)
+                        )
+                        (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time1, (Z_cplx0_polr1_time1, Z_cplx1_polr1_time1)
+                        )
+                        (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time2, (Z_cplx0_polr0_time2, Z_cplx1_polr0_time2)
+                        )
+                        (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time2, (Z_cplx0_polr1_time2, Z_cplx1_polr1_time2)
+                        )
+                        (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr0_time3, (Z_cplx0_polr0_time3, Z_cplx1_polr0_time3)
+                        )
+                        (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k8(
+                            (Γ¹_cplx0, Γ¹_cplx1), X_polr1_time3, (Z_cplx0_polr1_time3, Z_cplx1_polr1_time3)
                         )
                         Γ²im = Γ²_cplx0
                         Γ²re = Γ²_cplx1
-                        Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
-                        Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
-                        Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
-                        Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
-                        Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
-                        Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
-                        Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
-                        Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
-                        Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
-                        Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
-                        Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
-                        Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
-                        Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
-                        Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
-                        Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
-                        Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
-                        V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
-                        Y_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
-                        Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
-                        Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
-                        Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
-                        Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
-                        Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
-                        Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
-                        Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
-                        V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
-                        (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                        Zim_polr0_time0 = Z_cplx0_polr0_time0
+                        Zre_polr0_time0 = Z_cplx1_polr0_time0
+                        Zim_polr1_time0 = Z_cplx0_polr1_time0
+                        Zre_polr1_time0 = Z_cplx1_polr1_time0
+                        Zim_polr0_time1 = Z_cplx0_polr0_time1
+                        Zre_polr0_time1 = Z_cplx1_polr0_time1
+                        Zim_polr1_time1 = Z_cplx0_polr1_time1
+                        Zre_polr1_time1 = Z_cplx1_polr1_time1
+                        Zim_polr0_time2 = Z_cplx0_polr0_time2
+                        Zre_polr0_time2 = Z_cplx1_polr0_time2
+                        Zim_polr1_time2 = Z_cplx0_polr1_time2
+                        Zre_polr1_time2 = Z_cplx1_polr1_time2
+                        Zim_polr0_time3 = Z_cplx0_polr0_time3
+                        Zre_polr0_time3 = Z_cplx1_polr0_time3
+                        Zim_polr1_time3 = Z_cplx0_polr1_time3
+                        Zre_polr1_time3 = Z_cplx1_polr1_time3
+                        Vre_polr0_time0 = muladd(Γ²re, Zre_polr0_time0, -Γ²im * Zim_polr0_time0)
+                        Vre_polr1_time0 = muladd(Γ²re, Zre_polr1_time0, -Γ²im * Zim_polr1_time0)
+                        Vre_polr0_time1 = muladd(Γ²re, Zre_polr0_time1, -Γ²im * Zim_polr0_time1)
+                        Vre_polr1_time1 = muladd(Γ²re, Zre_polr1_time1, -Γ²im * Zim_polr1_time1)
+                        Vre_polr0_time2 = muladd(Γ²re, Zre_polr0_time2, -Γ²im * Zim_polr0_time2)
+                        Vre_polr1_time2 = muladd(Γ²re, Zre_polr1_time2, -Γ²im * Zim_polr1_time2)
+                        Vre_polr0_time3 = muladd(Γ²re, Zre_polr0_time3, -Γ²im * Zim_polr0_time3)
+                        Vre_polr1_time3 = muladd(Γ²re, Zre_polr1_time3, -Γ²im * Zim_polr1_time3)
+                        Vim_polr0_time0 = muladd(Γ²re, Zim_polr0_time0, +Γ²im * Zre_polr0_time0)
+                        Vim_polr1_time0 = muladd(Γ²re, Zim_polr1_time0, +Γ²im * Zre_polr1_time0)
+                        Vim_polr0_time1 = muladd(Γ²re, Zim_polr0_time1, +Γ²im * Zre_polr0_time1)
+                        Vim_polr1_time1 = muladd(Γ²re, Zim_polr1_time1, +Γ²im * Zre_polr1_time1)
+                        Vim_polr0_time2 = muladd(Γ²re, Zim_polr0_time2, +Γ²im * Zre_polr0_time2)
+                        Vim_polr1_time2 = muladd(Γ²re, Zim_polr1_time2, +Γ²im * Zre_polr1_time2)
+                        Vim_polr0_time3 = muladd(Γ²re, Zim_polr0_time3, +Γ²im * Zre_polr0_time3)
+                        Vim_polr1_time3 = muladd(Γ²re, Zim_polr1_time3, +Γ²im * Zre_polr1_time3)
+                        V_cplx0_polr0_time0 = Vim_polr0_time0
+                        V_cplx1_polr0_time0 = Vre_polr0_time0
+                        V_cplx0_polr1_time0 = Vim_polr1_time0
+                        V_cplx1_polr1_time0 = Vre_polr1_time0
+                        V_cplx0_polr0_time1 = Vim_polr0_time1
+                        V_cplx1_polr0_time1 = Vre_polr0_time1
+                        V_cplx0_polr1_time1 = Vim_polr1_time1
+                        V_cplx1_polr1_time1 = Vre_polr1_time1
+                        V_cplx0_polr0_time2 = Vim_polr0_time2
+                        V_cplx1_polr0_time2 = Vre_polr0_time2
+                        V_cplx0_polr1_time2 = Vim_polr1_time2
+                        V_cplx1_polr1_time2 = Vre_polr1_time2
+                        V_cplx0_polr0_time3 = Vim_polr0_time3
+                        V_cplx1_polr0_time3 = Vre_polr0_time3
+                        V_cplx0_polr1_time3 = Vim_polr1_time3
+                        V_cplx1_polr1_time3 = Vre_polr1_time3
+                        Y_cplx0_polr0_time0 = zero(Float16x2)
+                        Y_cplx1_polr0_time0 = zero(Float16x2)
+                        Y_cplx0_polr1_time0 = zero(Float16x2)
+                        Y_cplx1_polr1_time0 = zero(Float16x2)
+                        Y_cplx0_polr0_time1 = zero(Float16x2)
+                        Y_cplx1_polr0_time1 = zero(Float16x2)
+                        Y_cplx0_polr1_time1 = zero(Float16x2)
+                        Y_cplx1_polr1_time1 = zero(Float16x2)
+                        Y_cplx0_polr0_time2 = zero(Float16x2)
+                        Y_cplx1_polr0_time2 = zero(Float16x2)
+                        Y_cplx0_polr1_time2 = zero(Float16x2)
+                        Y_cplx1_polr1_time2 = zero(Float16x2)
+                        Y_cplx0_polr0_time3 = zero(Float16x2)
+                        Y_cplx1_polr0_time3 = zero(Float16x2)
+                        Y_cplx0_polr1_time3 = zero(Float16x2)
+                        Y_cplx1_polr1_time3 = zero(Float16x2)
+                        Vim_polr0_time0 = V_cplx0_polr0_time0
+                        Vre_polr0_time0 = V_cplx1_polr0_time0
+                        Vim_polr1_time0 = V_cplx0_polr1_time0
+                        Vre_polr1_time0 = V_cplx1_polr1_time0
+                        Vim_polr0_time1 = V_cplx0_polr0_time1
+                        Vre_polr0_time1 = V_cplx1_polr0_time1
+                        Vim_polr1_time1 = V_cplx0_polr1_time1
+                        Vre_polr1_time1 = V_cplx1_polr1_time1
+                        Vim_polr0_time2 = V_cplx0_polr0_time2
+                        Vre_polr0_time2 = V_cplx1_polr0_time2
+                        Vim_polr1_time2 = V_cplx0_polr1_time2
+                        Vre_polr1_time2 = V_cplx1_polr1_time2
+                        Vim_polr0_time3 = V_cplx0_polr0_time3
+                        Vre_polr0_time3 = V_cplx1_polr0_time3
+                        Vim_polr1_time3 = V_cplx0_polr1_time3
+                        Vre_polr1_time3 = V_cplx1_polr1_time3
+                        V_cplx_in0_polr0_time0 = Vim_polr0_time0
+                        V_cplx_in1_polr0_time0 = Vre_polr0_time0
+                        V_cplx_in0_polr1_time0 = Vim_polr1_time0
+                        V_cplx_in1_polr1_time0 = Vre_polr1_time0
+                        V_cplx_in0_polr0_time1 = Vim_polr0_time1
+                        V_cplx_in1_polr0_time1 = Vre_polr0_time1
+                        V_cplx_in0_polr1_time1 = Vim_polr1_time1
+                        V_cplx_in1_polr1_time1 = Vre_polr1_time1
+                        V_cplx_in0_polr0_time2 = Vim_polr0_time2
+                        V_cplx_in1_polr0_time2 = Vre_polr0_time2
+                        V_cplx_in0_polr1_time2 = Vim_polr1_time2
+                        V_cplx_in1_polr1_time2 = Vre_polr1_time2
+                        V_cplx_in0_polr0_time3 = Vim_polr0_time3
+                        V_cplx_in1_polr0_time3 = Vre_polr0_time3
+                        V_cplx_in0_polr1_time3 = Vim_polr1_time3
+                        V_cplx_in1_polr1_time3 = Vre_polr1_time3
+                        (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
-                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            (V_cplx_in0_polr0_time0, V_cplx_in1_polr0_time0),
+                            (Y_cplx0_polr0_time0, Y_cplx1_polr0_time0),
                         )
-                        (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
-                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            (V_cplx_in0_polr1_time0, V_cplx_in1_polr1_time0),
+                            (Y_cplx0_polr1_time0, Y_cplx1_polr1_time0),
                         )
-                        (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
-                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            (V_cplx_in0_polr0_time1, V_cplx_in1_polr0_time1),
+                            (Y_cplx0_polr0_time1, Y_cplx1_polr0_time1),
                         )
-                        (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                        (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1) = IndexSpaces.mma_m16n8k16(
                             (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
-                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            (V_cplx_in0_polr1_time1, V_cplx_in1_polr1_time1),
+                            (Y_cplx0_polr1_time1, Y_cplx1_polr1_time1),
                         )
-                        Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
-                        Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
-                        Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
-                        Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
-                        Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
-                        Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
-                        Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
-                        Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
-                        Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
-                        Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
-                        Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
-                        Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
-                        Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
-                        Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
-                        Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
-                        Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
-                        I_beamQ0_polr0 = muladd(
-                            Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                        (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr0_time2, V_cplx_in1_polr0_time2),
+                            (Y_cplx0_polr0_time2, Y_cplx1_polr0_time2),
                         )
-                        I_beamQ1_polr0 = muladd(
-                            Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                        (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr1_time2, V_cplx_in1_polr1_time2),
+                            (Y_cplx0_polr1_time2, Y_cplx1_polr1_time2),
                         )
-                        I_beamQ0_polr1 = muladd(
-                            Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                        (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr0_time3, V_cplx_in1_polr0_time3),
+                            (Y_cplx0_polr0_time3, Y_cplx1_polr0_time3),
                         )
-                        I_beamQ1_polr1 = muladd(
-                            Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                        (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3) = IndexSpaces.mma_m16n8k16(
+                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                            (V_cplx_in0_polr1_time3, V_cplx_in1_polr1_time3),
+                            (Y_cplx0_polr1_time3, Y_cplx1_polr1_time3),
                         )
-                        t_running += 1
-                        if t_running == 40
+                        G_cplx0_polr0_time0 = Y_cplx0_polr0_time0
+                        G_cplx1_polr0_time0 = Y_cplx1_polr0_time0
+                        G_cplx0_polr1_time0 = Y_cplx0_polr1_time0
+                        G_cplx1_polr1_time0 = Y_cplx1_polr1_time0
+                        G_cplx0_polr0_time1 = Y_cplx0_polr0_time1
+                        G_cplx1_polr0_time1 = Y_cplx1_polr0_time1
+                        G_cplx0_polr1_time1 = Y_cplx0_polr1_time1
+                        G_cplx1_polr1_time1 = Y_cplx1_polr1_time1
+                        G_cplx0_polr0_time2 = Y_cplx0_polr0_time2
+                        G_cplx1_polr0_time2 = Y_cplx1_polr0_time2
+                        G_cplx0_polr1_time2 = Y_cplx0_polr1_time2
+                        G_cplx1_polr1_time2 = Y_cplx1_polr1_time2
+                        G_cplx0_polr0_time3 = Y_cplx0_polr0_time3
+                        G_cplx1_polr0_time3 = Y_cplx1_polr0_time3
+                        G_cplx0_polr1_time3 = Y_cplx0_polr1_time3
+                        G_cplx1_polr1_time3 = Y_cplx1_polr1_time3
+                        (G_cplx0_polr0_time0, G_cplx1_polr0_time0) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time0, G_cplx1_polr0_time0),
+                        )
+                        (G_cplx0_polr1_time0, G_cplx1_polr1_time0) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time0, G_cplx1_polr1_time0),
+                        )
+                        (G_cplx0_polr0_time1, G_cplx1_polr0_time1) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time1, G_cplx1_polr0_time1),
+                        )
+                        (G_cplx0_polr1_time1, G_cplx1_polr1_time1) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time1, G_cplx1_polr1_time1),
+                        )
+                        (G_cplx0_polr0_time2, G_cplx1_polr0_time2) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time2, G_cplx1_polr0_time2),
+                        )
+                        (G_cplx0_polr1_time2, G_cplx1_polr1_time2) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time2, G_cplx1_polr1_time2),
+                        )
+                        (G_cplx0_polr0_time3, G_cplx1_polr0_time3) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
+                            IndexSpaces.get_hi16(G_cplx0_polr0_time3, G_cplx1_polr0_time3),
+                        )
+                        (G_cplx0_polr1_time3, G_cplx1_polr1_time3) = (
+                            IndexSpaces.get_lo16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
+                            IndexSpaces.get_hi16(G_cplx0_polr1_time3, G_cplx1_polr1_time3),
+                        )
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time0
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time0
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time0
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time0
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time1
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time1
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time1
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 1) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time1
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time2
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time2
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time2
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 2) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time2
+                        Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx0_polr0_time3
+                        Gsh_shared[(((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 0 + 0x01] =
+                            G_cplx1_polr0_time3
+                        Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx0_polr1_time3
+                        Gsh_shared[((((((((((((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 2) * 4112 + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 4) % 2) * 2056) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 6) % 6) + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) % 2) * 8256) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 8) % 2) * 1028) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + 3) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + (((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 16) % 2) * 514) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) ÷ 6) % 4) % 4) * 6) + 32) + 0 + 0x01] =
+                            G_cplx1_polr1_time3
+                        IndexSpaces.cuda_sync_threads()
+                        let
+                            t = 0
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
                             if let
                                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
-                                p = (2i32) * thread
-                                q = (2i32) * warp
-                                0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
                             end
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ0_polr0
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ1_polr0
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ0_polr1
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ1_polr1
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
                             end
-                            I_beamQ0_polr0 = zero(Float16x2)
-                            I_beamQ1_polr0 = zero(Float16x2)
-                            I_beamQ0_polr1 = zero(Float16x2)
-                            I_beamQ1_polr1 = zero(Float16x2)
-                            t_running = 0
-                            dstime += 1
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
                         end
-                    end
-                    let
-                        t = 2
-                        G_beamQ0_polr0 = zero(Float16x2)
-                        G_beamQ1_polr0 = zero(Float16x2)
-                        G_beamQ0_polr1 = zero(Float16x2)
-                        G_beamQ1_polr1 = zero(Float16x2)
-                        if let
-                            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                            mlo = thread ÷ (4i32)
-                            mlo < 6
-                        end
-                            G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                            G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                        end
-                        X_beamQ0_polr0 = G_beamQ0_polr0
-                        X_beamQ1_polr0 = G_beamQ1_polr0
-                        X_beamQ0_polr1 = G_beamQ0_polr1
-                        X_beamQ1_polr1 = G_beamQ1_polr1
-                        Z_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
-                        )
-                        (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
-                        )
-                        (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
-                        )
-                        (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
-                        )
-                        Γ²im = Γ²_cplx0
-                        Γ²re = Γ²_cplx1
-                        Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
-                        Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
-                        Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
-                        Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
-                        Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
-                        Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
-                        Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
-                        Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
-                        Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
-                        Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
-                        Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
-                        Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
-                        Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
-                        Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
-                        Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
-                        Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
-                        V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
-                        Y_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
-                        Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
-                        Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
-                        Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
-                        Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
-                        Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
-                        Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
-                        Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
-                        V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
-                        (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
-                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
-                        )
-                        (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
-                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
-                        )
-                        (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
-                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
-                        )
-                        (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
-                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
-                        )
-                        Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
-                        Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
-                        Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
-                        Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
-                        Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
-                        Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
-                        Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
-                        Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
-                        Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
-                        Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
-                        Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
-                        Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
-                        Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
-                        Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
-                        Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
-                        Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
-                        I_beamQ0_polr0 = muladd(
-                            Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
-                        )
-                        I_beamQ1_polr0 = muladd(
-                            Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
-                        )
-                        I_beamQ0_polr1 = muladd(
-                            Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
-                        )
-                        I_beamQ1_polr1 = muladd(
-                            Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
-                        )
-                        t_running += 1
-                        if t_running == 40
+                        let
+                            t = 1
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
                             if let
                                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
-                                p = (2i32) * thread
-                                q = (2i32) * warp
-                                0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
                             end
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ0_polr0
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ1_polr0
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ0_polr1
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ1_polr1
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
                             end
-                            I_beamQ0_polr0 = zero(Float16x2)
-                            I_beamQ1_polr0 = zero(Float16x2)
-                            I_beamQ0_polr1 = zero(Float16x2)
-                            I_beamQ1_polr1 = zero(Float16x2)
-                            t_running = 0
-                            dstime += 1
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
                         end
-                    end
-                    let
-                        t = 3
-                        G_beamQ0_polr0 = zero(Float16x2)
-                        G_beamQ1_polr0 = zero(Float16x2)
-                        G_beamQ0_polr1 = zero(Float16x2)
-                        G_beamQ1_polr1 = zero(Float16x2)
-                        if let
-                            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                            mlo = thread ÷ (4i32)
-                            mlo < 6
-                        end
-                            G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
-                            G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                            G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + (((((IndexSpaces.assume_inrange(t_inner, 0, 4, 48) ÷ 4) % 12) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
-                        end
-                        X_beamQ0_polr0 = G_beamQ0_polr0
-                        X_beamQ1_polr0 = G_beamQ1_polr0
-                        X_beamQ0_polr1 = G_beamQ0_polr1
-                        X_beamQ1_polr1 = G_beamQ1_polr1
-                        Z_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Z_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Z_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Z_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
-                        )
-                        (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
-                        )
-                        (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
-                        )
-                        (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
-                            (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
-                        )
-                        Γ²im = Γ²_cplx0
-                        Γ²re = Γ²_cplx1
-                        Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
-                        Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
-                        Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
-                        Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
-                        Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
-                        Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
-                        Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
-                        Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
-                        Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
-                        Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
-                        Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
-                        Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
-                        Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
-                        Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
-                        Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
-                        Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
-                        V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
-                        Y_beamQ0_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr0 = zero(Float16x2)
-                        Y_beamQ0_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx0_polr1 = zero(Float16x2)
-                        Y_beamQ0_cplx1_polr1 = zero(Float16x2)
-                        Y_beamQ1_cplx1_polr1 = zero(Float16x2)
-                        Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
-                        Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
-                        Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
-                        Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
-                        Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
-                        Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
-                        Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
-                        Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
-                        V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
-                        V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
-                        V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
-                        V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
-                        V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
-                        V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
-                        V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
-                        V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
-                        (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
-                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
-                        )
-                        (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
-                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
-                        )
-                        (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
-                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
-                        )
-                        (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
-                            (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
-                            (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
-                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
-                        )
-                        Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
-                        Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
-                        Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
-                        Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
-                        Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
-                        Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
-                        Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
-                        Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
-                        Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
-                        Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
-                        Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
-                        Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
-                        Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
-                        Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
-                        Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
-                        Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
-                        I_beamQ0_polr0 = muladd(
-                            Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
-                        )
-                        I_beamQ1_polr0 = muladd(
-                            Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
-                        )
-                        I_beamQ0_polr1 = muladd(
-                            Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
-                        )
-                        I_beamQ1_polr1 = muladd(
-                            Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
-                        )
-                        t_running += 1
-                        if t_running == 40
+                        let
+                            t = 2
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
                             if let
                                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
-                                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
-                                p = (2i32) * thread
-                                q = (2i32) * warp
-                                0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
                             end
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ0_polr0
-                                I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
-                                    I_beamQ1_polr0
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ0_polr1
-                                I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
-                                    I_beamQ1_polr1
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
                             end
-                            I_beamQ0_polr0 = zero(Float16x2)
-                            I_beamQ1_polr0 = zero(Float16x2)
-                            I_beamQ0_polr1 = zero(Float16x2)
-                            I_beamQ1_polr1 = zero(Float16x2)
-                            t_running = 0
-                            dstime += 1
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
                         end
+                        let
+                            t = 3
+                            G_beamQ0_polr0 = zero(Float16x2)
+                            G_beamQ1_polr0 = zero(Float16x2)
+                            G_beamQ0_polr1 = zero(Float16x2)
+                            G_beamQ1_polr1 = zero(Float16x2)
+                            if let
+                                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                mlo = thread ÷ (4i32)
+                                mlo < 6
+                            end
+                                G_beamQ0_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ1_polr0 = Gsh_shared[((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 0x01]
+                                G_beamQ0_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                                G_beamQ1_polr1 = Gsh_shared[(((((((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 2) % 2) * 4112 + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 4) % 2) * 2056) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 8) % 6) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) % 2) * 8256) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 8) % 2) * 1028) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 32) % 2) * 257) + ((((((IndexSpaces.assume_inrange(t_inner_lo, 0, 4, 24) ÷ 4) % 6) * 4 + t % 4) + ((IndexSpaces.assume_inrange(t_inner_hi, 0, 24, 48) ÷ 24) % 2) * 24) + ((IndexSpaces.assume_inrange(t_outer, 0, 48, 2064) ÷ 48) % 43) * 48) % 4) * 64) + ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2 + 1) ÷ 16) % 2) * 514) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) % 4) * 6) + 32) + 0x01]
+                            end
+                            X_beamQ0_polr0 = G_beamQ0_polr0
+                            X_beamQ1_polr0 = G_beamQ1_polr0
+                            X_beamQ0_polr1 = G_beamQ0_polr1
+                            X_beamQ1_polr1 = G_beamQ1_polr1
+                            Z_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Z_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Z_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Z_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr0, (Z_beamQ0_cplx0_polr0, Z_beamQ0_cplx1_polr0)
+                            )
+                            (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr0, (Z_beamQ1_cplx0_polr0, Z_beamQ1_cplx1_polr0)
+                            )
+                            (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ0_polr1, (Z_beamQ0_cplx0_polr1, Z_beamQ0_cplx1_polr1)
+                            )
+                            (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k8(
+                                (Γ¹_cplx0, Γ¹_cplx1), X_beamQ1_polr1, (Z_beamQ1_cplx0_polr1, Z_beamQ1_cplx1_polr1)
+                            )
+                            Γ²im = Γ²_cplx0
+                            Γ²re = Γ²_cplx1
+                            Zim_beamQ0_polr0 = Z_beamQ0_cplx0_polr0
+                            Zre_beamQ0_polr0 = Z_beamQ0_cplx1_polr0
+                            Zim_beamQ1_polr0 = Z_beamQ1_cplx0_polr0
+                            Zre_beamQ1_polr0 = Z_beamQ1_cplx1_polr0
+                            Zim_beamQ0_polr1 = Z_beamQ0_cplx0_polr1
+                            Zre_beamQ0_polr1 = Z_beamQ0_cplx1_polr1
+                            Zim_beamQ1_polr1 = Z_beamQ1_cplx0_polr1
+                            Zre_beamQ1_polr1 = Z_beamQ1_cplx1_polr1
+                            Vre_beamQ0_polr0 = muladd(Γ²re, Zre_beamQ0_polr0, -Γ²im * Zim_beamQ0_polr0)
+                            Vre_beamQ1_polr0 = muladd(Γ²re, Zre_beamQ1_polr0, -Γ²im * Zim_beamQ1_polr0)
+                            Vre_beamQ0_polr1 = muladd(Γ²re, Zre_beamQ0_polr1, -Γ²im * Zim_beamQ0_polr1)
+                            Vre_beamQ1_polr1 = muladd(Γ²re, Zre_beamQ1_polr1, -Γ²im * Zim_beamQ1_polr1)
+                            Vim_beamQ0_polr0 = muladd(Γ²re, Zim_beamQ0_polr0, +Γ²im * Zre_beamQ0_polr0)
+                            Vim_beamQ1_polr0 = muladd(Γ²re, Zim_beamQ1_polr0, +Γ²im * Zre_beamQ1_polr0)
+                            Vim_beamQ0_polr1 = muladd(Γ²re, Zim_beamQ0_polr1, +Γ²im * Zre_beamQ0_polr1)
+                            Vim_beamQ1_polr1 = muladd(Γ²re, Zim_beamQ1_polr1, +Γ²im * Zre_beamQ1_polr1)
+                            V_beamQ0_cplx0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx1_polr1 = Vre_beamQ1_polr1
+                            Y_beamQ0_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr0 = zero(Float16x2)
+                            Y_beamQ0_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx0_polr1 = zero(Float16x2)
+                            Y_beamQ0_cplx1_polr1 = zero(Float16x2)
+                            Y_beamQ1_cplx1_polr1 = zero(Float16x2)
+                            Vim_beamQ0_polr0 = V_beamQ0_cplx0_polr0
+                            Vre_beamQ0_polr0 = V_beamQ0_cplx1_polr0
+                            Vim_beamQ1_polr0 = V_beamQ1_cplx0_polr0
+                            Vre_beamQ1_polr0 = V_beamQ1_cplx1_polr0
+                            Vim_beamQ0_polr1 = V_beamQ0_cplx0_polr1
+                            Vre_beamQ0_polr1 = V_beamQ0_cplx1_polr1
+                            Vim_beamQ1_polr1 = V_beamQ1_cplx0_polr1
+                            Vre_beamQ1_polr1 = V_beamQ1_cplx1_polr1
+                            V_beamQ0_cplx_in0_polr0 = Vim_beamQ0_polr0
+                            V_beamQ0_cplx_in1_polr0 = Vre_beamQ0_polr0
+                            V_beamQ1_cplx_in0_polr0 = Vim_beamQ1_polr0
+                            V_beamQ1_cplx_in1_polr0 = Vre_beamQ1_polr0
+                            V_beamQ0_cplx_in0_polr1 = Vim_beamQ0_polr1
+                            V_beamQ0_cplx_in1_polr1 = Vre_beamQ0_polr1
+                            V_beamQ1_cplx_in0_polr1 = Vim_beamQ1_polr1
+                            V_beamQ1_cplx_in1_polr1 = Vre_beamQ1_polr1
+                            (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr0, V_beamQ0_cplx_in1_polr0),
+                                (Y_beamQ0_cplx0_polr0, Y_beamQ0_cplx1_polr0),
+                            )
+                            (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr0, V_beamQ1_cplx_in1_polr0),
+                                (Y_beamQ1_cplx0_polr0, Y_beamQ1_cplx1_polr0),
+                            )
+                            (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ0_cplx_in0_polr1, V_beamQ0_cplx_in1_polr1),
+                                (Y_beamQ0_cplx0_polr1, Y_beamQ0_cplx1_polr1),
+                            )
+                            (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1) = IndexSpaces.mma_m16n8k16(
+                                (Γ³_cplx0_cplx_in0, Γ³_cplx1_cplx_in0, Γ³_cplx0_cplx_in1, Γ³_cplx1_cplx_in1),
+                                (V_beamQ1_cplx_in0_polr1, V_beamQ1_cplx_in1_polr1),
+                                (Y_beamQ1_cplx0_polr1, Y_beamQ1_cplx1_polr1),
+                            )
+                            Ẽ_beamQ0_cplx0_polr0 = Y_beamQ0_cplx0_polr0
+                            Ẽ_beamQ1_cplx0_polr0 = Y_beamQ1_cplx0_polr0
+                            Ẽ_beamQ0_cplx1_polr0 = Y_beamQ0_cplx1_polr0
+                            Ẽ_beamQ1_cplx1_polr0 = Y_beamQ1_cplx1_polr0
+                            Ẽ_beamQ0_cplx0_polr1 = Y_beamQ0_cplx0_polr1
+                            Ẽ_beamQ1_cplx0_polr1 = Y_beamQ1_cplx0_polr1
+                            Ẽ_beamQ0_cplx1_polr1 = Y_beamQ0_cplx1_polr1
+                            Ẽ_beamQ1_cplx1_polr1 = Y_beamQ1_cplx1_polr1
+                            Ẽim_beamQ0_polr0 = Ẽ_beamQ0_cplx0_polr0
+                            Ẽre_beamQ0_polr0 = Ẽ_beamQ0_cplx1_polr0
+                            Ẽim_beamQ1_polr0 = Ẽ_beamQ1_cplx0_polr0
+                            Ẽre_beamQ1_polr0 = Ẽ_beamQ1_cplx1_polr0
+                            Ẽim_beamQ0_polr1 = Ẽ_beamQ0_cplx0_polr1
+                            Ẽre_beamQ0_polr1 = Ẽ_beamQ0_cplx1_polr1
+                            Ẽim_beamQ1_polr1 = Ẽ_beamQ1_cplx0_polr1
+                            Ẽre_beamQ1_polr1 = Ẽ_beamQ1_cplx1_polr1
+                            I_beamQ0_polr0 = muladd(
+                                Ẽre_beamQ0_polr0, Ẽre_beamQ0_polr0, muladd(Ẽim_beamQ0_polr0, Ẽim_beamQ0_polr0, I_beamQ0_polr0)
+                            )
+                            I_beamQ1_polr0 = muladd(
+                                Ẽre_beamQ1_polr0, Ẽre_beamQ1_polr0, muladd(Ẽim_beamQ1_polr0, Ẽim_beamQ1_polr0, I_beamQ1_polr0)
+                            )
+                            I_beamQ0_polr1 = muladd(
+                                Ẽre_beamQ0_polr1, Ẽre_beamQ0_polr1, muladd(Ẽim_beamQ0_polr1, Ẽim_beamQ0_polr1, I_beamQ0_polr1)
+                            )
+                            I_beamQ1_polr1 = muladd(
+                                Ẽre_beamQ1_polr1, Ẽre_beamQ1_polr1, muladd(Ẽim_beamQ1_polr1, Ẽim_beamQ1_polr1, I_beamQ1_polr1)
+                            )
+                            t_running += 1
+                            if t_running == 40
+                                if let
+                                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+                                    warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24)
+                                    p = (2i32) * thread
+                                    q = (2i32) * warp
+                                    0i32 ≤ p < 48 && 0i32 ≤ q < 48
+                                end
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ0_polr0
+                                    I_memory[(((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 0 + 0x01] =
+                                        I_beamQ1_polr0
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ0_polr1
+                                    I_memory[((((((IndexSpaces.assume_inrange(dstime, 0, 1, 52) % 52) % 52) * 193536 + ((1 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 24) % 24) * 2) % 48) * 24) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 84) % 84) % 84) * 1152) + (((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) * 2) ÷ 2) % 24) + 96768) + 0 + 0x01] =
+                                        I_beamQ1_polr1
+                                end
+                                I_beamQ0_polr0 = zero(Float16x2)
+                                I_beamQ1_polr0 = zero(Float16x2)
+                                I_beamQ0_polr1 = zero(Float16x2)
+                                I_beamQ1_polr1 = zero(Float16x2)
+                                t_running = 0
+                                dstime += 1
+                            end
+                        end
+                        IndexSpaces.cuda_sync_threads()
                     end
-                    IndexSpaces.cuda_sync_threads()
                 end
             end
         end
