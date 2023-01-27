@@ -196,10 +196,10 @@ function make_bb_kernel()
     loopT2 = Loop(:T2, T2_stride, idiv(T1_stride, T2_stride))
     loopT1 = Loop(:T1, T1_stride, idiv(T, T1_stride))
 
-    loopD = Loop(:D, 4, idiv(D, 16 * Wd)) # 16 dishes enter the tensor core mma
+    loopD = UnrolledLoop(:D, 4, idiv(D, 16 * Wd)) # 16 dishes enter the tensor core mma
 
     num_A_beam_registers = idiv(B, 8 * Wb)
-    loopB = Loop(:B, 8, num_A_beam_registers) # 8 beams enter the tensor core mma
+    loopB = UnrolledLoop(:B, 8, num_A_beam_registers) # 8 beams enter the tensor core mma
 
     # Physics indices
     int4value = IntValue(:intvalue, 1, 4)
@@ -513,7 +513,7 @@ function make_bb_kernel()
     load!(emitter, :s => layout_s_registers, :s_memory => layout_s_global)
     apply!(emitter, :s, [:s], (s,) -> :($s - $σ))
 
-    if!(emitter, :(!(0 < s < 32))) do emitter
+    if!(emitter, :(!(0i32 < s < 32i32))) do emitter
         apply!(emitter, :info => layout_info_registers, 2i32)
         store!(emitter, :info_memory => layout_info_memory, :info)
         trap!(emitter)
@@ -871,7 +871,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             - name: "info"
               intent: out
               type: Int32
-              indices: [thread, warp]
+              indices: [thread, warp, block]
               shapes: [$num_threads, $num_warps, $num_blocks]
               strides: [1, $num_threads, $(num_threads*num_warps)]
         ...
@@ -1077,21 +1077,23 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # main(; output_kernel=true)
-    # open("output/bb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # open("output/bb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true)
-    #     end
-    # end
+    # Output kernel
+    open("output/bb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    open("output/bb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
+    # This call needs to happen after generating PTX code since it
+    # modifies the generated PTX code
+    main(; output_kernel=true)
 
-    # Run test
-    main(; run_selftest=true)
+    # # Run test
+    # main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
