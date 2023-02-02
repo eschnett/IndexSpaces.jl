@@ -218,8 +218,7 @@ const layout_I_memory = Layout(
         BeamP(:beamP, 2, M) => Memory(:memory, 1, M),
         BeamQ(:beamQ, 1, 2 * N) => Memory(:memory, M, 2 * N),
         Freq(:freq, 1, F) => Memory(:memory, M * 2 * N, F),
-        Polr(:polr, 1, P) => Memory(:memory, M * 2 * N * F, P),
-        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N * F * P, cld(T, Tds)),
+        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N * F, cld(T, Tds)),
     ),
 )
 
@@ -897,13 +896,16 @@ function do_second_fft!(emitter)
 
     apply!(emitter, :Ẽ, [:Y], (Y,) -> :($Y))
 
-    split!(emitter, [:Ẽim, :Ẽre], :Ẽ, Cplx(:cplx, 1, C))
+    split!(emitter, [:Ẽp0, :Ẽp1], :Ẽ, Polr(:polr, 1, P))
+    split!(emitter, [:Ẽp0im, :Ẽp0re], :Ẽp0, Cplx(:cplx, 1, C))
+    split!(emitter, [:Ẽp1im, :Ẽp1re], :Ẽp1, Cplx(:cplx, 1, C))
 
     apply!(
         emitter,
         :I,
-        [:I, :Ẽre, :Ẽim],
-        (I, Ẽre, Ẽim) -> :(muladd($Ẽre, $Ẽre, muladd($Ẽim, $Ẽim, $I)));
+        [:I, :Ẽp0re, :Ẽp0im, :Ẽp1re, :Ẽp1im],
+        (I, Ẽp0re, Ẽp0im, Ẽp1re, Ẽp1im) ->
+            :(muladd($Ẽp1im, $Ẽp1im, muladd($Ẽp1re, $Ẽp1re, muladd($Ẽp0im, $Ẽp0im, muladd($Ẽp0re, $Ẽp0re, $I)))));
         ignore=[Time(:time, 1, T)],
     )
 
@@ -1195,7 +1197,6 @@ function make_frb_kernel()
                 BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
                 BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
-                Polr(:polr, 1, P) => Register(:polr, 1, P),
                 DSTime(:dstime, 1, cld(T, Tds)) => Loop(:dstime, 1, cld(T, Tds)),
             ),
         )
@@ -1450,9 +1451,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             - name: "I"
               intent: out
               type: Float16
-              indices: [beamP, beamQ, F, P, Tds]
-              shape: [$(2*M), $(2*N), $F, $P, $(cld(T, Tds))]
-              strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F), $(2*M*2*N*F*P)]
+              indices: [beamP, beamQ, F, Tds]
+              shape: [$(2*M), $(2*N), $F, $(cld(T, Tds))]
+              strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F)]
             - name: "info"
               intent: out
               type: Int32
@@ -1471,7 +1472,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     S_memory = Array{Int32}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
-    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * P * cld(T, Tds))
+    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * cld(T, Tds))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     println("Setting up input data...")
@@ -1491,8 +1492,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         # Dishes 0:(D-1) are "real" dishes with E-field data.
         # Dishes D:(M*N-1) are "dummy" dishes where we set the E-field to zero.
         grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-        # dish_grid = grid[randperm(length(grid))]
-        dish_grid = grid[1:(M * N)]
+        # dish_grid = grid[1:(M * N)]
+        dish_grid = grid[randperm(length(grid))]
         S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
 
         # Generate a uniform complex number in the unit disk. See
@@ -1503,28 +1504,33 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             c = r * cispi(2 * α)
             return c
         end
+        uniform_factor() = (2 * rand() - 1)
         c2t(c::Complex) = (imag(c), real(c))
         t2c(t::NTuple{2}) = Complex(t[2], t[1])
-        # W_memory .= [Float16x2(c2t(uniform_in_disk())...) for i in eachindex(W_memory)]
-        W_memory .= [Float16x2(0, 1) for i in eachindex(W_memory)]
+        # W_memory .= [Float16x2(0, 1) for i in eachindex(W_memory)]
+        Wvalue = 1 + 0im
+        # Wvalue = uniform_factor() * uniform_in_disk()
+        W_memory .= [Float16x2(c2t(Wvalue)...) for i in eachindex(W_memory)]
 
-        dish = 0 * 24 + 0
-        freq = 0
-        polr = 0
-        time = 0
+        dish = rand(0:(D - 1))
+        freq = rand(0:(F - 1))
+        polr = rand(0:(P - 1))
+        time = rand(0:(T - 1))
+        @show dish freq polr time
         Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
-        Evalue = 1 + 0im
+        Evalue = rand(-7:7) + im * rand(-7:7)
         Evalue8 = zero(SVector{8,Int8})
         Evalue8 = setindex(Evalue8, imag(Evalue), 2 * (dish % 4) + 0 + 1)
         Evalue8 = setindex(Evalue8, real(Evalue), 2 * (dish % 4) + 1 + 1)
         E_memory[Eidx + 1] = Int4x8(Evalue8...)
+        @show Wvalue Evalue
 
         dstime = time ÷ Tds
         for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
             Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
             dishm, dishn = dish_grid[dish + 1]
             # Eqn. (4)
-            Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Evalue
+            Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
             Ivalue = abs2(Ẽvalue)
             Ivalue2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
             Ivalue2 = setindex(Ivalue2, Ivalue, beamp % 2 + 1)
@@ -1715,8 +1721,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
     println("    I:")
     did_test_I_memory = falses(length(I_memory))
-    for dstime in 0:(cld(T, Tds) - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
+    for dstime in 0:(cld(T, Tds) - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
         if beamp % 2 == 0
             @assert !did_test_I_memory[idx + 1]
             did_test_I_memory[idx + 1] = true
@@ -1725,8 +1731,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         want_value2 = convert(NTuple{2,Float32}, I_wanted[idx + 1])
         have_value = have_value2[beamp % 2 + 1]
         want_value = want_value2[beamp % 2 + 1]
-        if have_value ≠ want_value
-            println("        beamp=$beamp beamq=$beamq freq=$freq polr=$polr dstime=$dstime I=$have_value I₀=$want_value")
+        # if have_value ≠ want_value
+        if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
+            println("        beamp=$beamp beamq=$beamq freq=$freq dstime=$dstime I=$have_value I₀=$want_value")
         end
     end
     @assert all(did_test_I_memory)
@@ -1737,7 +1744,6 @@ end
 
 if CUDA.functional()
     # # Output kernel
-    # main(; output_kernel=true)
     # open("output/frb.ptx", "w") do fh
     #     redirect_stdout(fh) do
     #         @device_code_ptx main(; compile_only=true)
@@ -1748,13 +1754,16 @@ if CUDA.functional()
     #         @device_code_sass main(; compile_only=true)
     #     end
     # end
+    # # This call needs to happen after generating PTX code since it
+    # # modifies the generated PTX code
+    # main(; output_kernel=true)
 
     # # Run test
     # main(; run_selftest=true)
 
-    # # Run benchmark
-    # main(; nruns=100)
+    # Run benchmark
+    main(; nruns=100)
 
-    # Regular run, also for profiling
-    main()
+    # # Regular run, also for profiling
+    # main()
 end
