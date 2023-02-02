@@ -1077,20 +1077,20 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # Output kernel
-    open("output/bb.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main(; compile_only=true)
-        end
-    end
-    open("output/bb.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main(; compile_only=true)
-        end
-    end
-    # This call needs to happen after generating PTX code since it
-    # modifies the generated PTX code
-    main(; output_kernel=true)
+    # # Output kernel
+    # open("output/bb.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true)
+    #     end
+    # end
+    # open("output/bb.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(; compile_only=true)
+    #     end
+    # end
+    # # This call needs to happen after generating PTX code since it
+    # # modifies the generated PTX code
+    # main(; output_kernel=true)
 
     # # Run test
     # main(; run_selftest=true)
@@ -1098,6 +1098,6 @@ if CUDA.functional()
     # # Run benchmark
     # main(; nruns=100)
 
-    # # Regular run, also for profiling
-    # main()
+    # Regular run, also for profiling
+    main()
 end
