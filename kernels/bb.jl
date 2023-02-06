@@ -34,6 +34,8 @@ const Time = Index{Physics,TimeTag}
 
 const setup = full_chord
 
+# ADC sampling time: 1 / (2 * 1200 MHz) ≈ 0.4166667 ns
+
 @static if setup ≡ full_chord
 
     # Full CHORD

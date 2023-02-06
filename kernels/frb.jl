@@ -1526,8 +1526,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         @show Wvalue Evalue
 
         dstime = time ÷ Tds
+        @show dstime
         for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * polr + M * 2 * N * F * P * dstime
+            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
             dishm, dishn = dish_grid[dish + 1]
             # Eqn. (4)
             Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
@@ -1761,9 +1762,9 @@ if CUDA.functional()
     # # Run test
     # main(; run_selftest=true)
 
-    # Run benchmark
-    main(; nruns=100)
+    # # Run benchmark
+    # main(; nruns=100)
 
-    # # Regular run, also for profiling
-    # main()
+    # Regular run, also for profiling
+    main()
 end
