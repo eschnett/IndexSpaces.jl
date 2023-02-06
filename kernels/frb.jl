@@ -108,11 +108,11 @@ const num_blocks_per_sm = B
 #     blocks: [84]
 #     shmem_bytes: 76896
 #   result-μsec:
-#     runtime: 1779.8
-#     scaled-runtime: 5424.2
+#     runtime: 1901.0
+#     scaled-runtime: 5793.6
 #     scaled-number-of-frequencies: 256
 #     dataframe-length: 56347.2
-#     dataframe-percent: 9.6
+#     dataframe-percent: 10.3
 
 # CHORD indices
 
@@ -1225,12 +1225,14 @@ function make_frb_kernel()
             read_Fsh2!(emitter)
             sync_threads!(emitter)
 
-            # This loop should probably be unrolled for execution speed, but that increases compile time significantly
-            # loop!(emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))) do emitter
-            loop!(
-                emitter, Time(:time, Tinner, idiv(Touter, 2 * Tinner)) => Loop(:t_inner_lo, Tinner, idiv(Touter, 2 * Tinner))
-            ) do emitter
-                unrolled_loop!(emitter, Time(:time, idiv(Touter, 2), 2) => UnrolledLoop(:t_inner_hi, idiv(Touter, 2), 2)) do emitter
+            unrolled_loop!(emitter, Time(:time, idiv(Touter, 2), 2) => UnrolledLoop(:t_inner_hi, idiv(Touter, 2), 2)) do emitter
+                # This loop should probably be unrolled for execution speed, but that increases compile time significantly
+                # loop!(
+                #     emitter, Time(:time, Tinner, idiv(Touter, Tinner)) => Loop(:t_inner, Tinner, idiv(Touter, Tinner))
+                # ) do emitter
+                loop!(
+                    emitter, Time(:time, Tinner, idiv(Touter, 2 * Tinner)) => Loop(:t_inner_lo, Tinner, idiv(Touter, 2 * Tinner))
+                ) do emitter
 
                     # 4.10 First FFT
                     # (111)
@@ -1260,8 +1262,9 @@ function make_frb_kernel()
                         do_second_fft!(emitter)
 
                         push!(emitter.statements, :(t_running += $(1i32)))
-                        # TODO: Skip this write-back for some of the `t` and `t_inner` iterations, depending on `% T_ds`
-                        if true
+                        # Skip this write-back for some of the `t` and `t_inner` iterations, depending on `% T_ds`
+                        # (This condition will be evaluated at compile time)
+                        if!(emitter, :((t_inner_hi + t + 1i32) % $(Int32(gcd(Tinner, Tds))) == 0i32)) do emitter
                             if!(emitter, :(t_running == $(Int32(Tds)))) do emitter
                                 if!(
                                     emitter,
@@ -1284,6 +1287,8 @@ function make_frb_kernel()
 
                                 nothing
                             end
+
+                            nothing
                         end
 
                         nothing
@@ -1504,12 +1509,12 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             c = r * cispi(2 * α)
             return c
         end
-        uniform_factor() = (2 * rand() - 1)
+        uniform_factor() = (2 * rand(Float32) - 1)
         c2t(c::Complex) = (imag(c), real(c))
         t2c(t::NTuple{2}) = Complex(t[2], t[1])
-        # W_memory .= [Float16x2(0, 1) for i in eachindex(W_memory)]
-        Wvalue = 1 + 0im
-        # Wvalue = uniform_factor() * uniform_in_disk()
+        # Wvalue = 1 + 0im
+        Wvalue = uniform_factor() * uniform_in_disk()
+        # TODO: Set only on element of `W`, and this requires the dish gridding
         W_memory .= [Float16x2(c2t(Wvalue)...) for i in eachindex(W_memory)]
 
         dish = rand(0:(D - 1))
@@ -1723,13 +1728,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     println("    I:")
     did_test_I_memory = falses(length(I_memory))
     for dstime in 0:(cld(T, Tds) - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-        idx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
+        Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
         if beamp % 2 == 0
-            @assert !did_test_I_memory[idx + 1]
-            did_test_I_memory[idx + 1] = true
+            @assert !did_test_I_memory[Iidx + 1]
+            did_test_I_memory[Iidx + 1] = true
         end
-        have_value2 = convert(NTuple{2,Float32}, I_memory[idx + 1])
-        want_value2 = convert(NTuple{2,Float32}, I_wanted[idx + 1])
+        have_value2 = convert(NTuple{2,Float32}, I_memory[Iidx + 1])
+        want_value2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
         have_value = have_value2[beamp % 2 + 1]
         want_value = want_value2[beamp % 2 + 1]
         # if have_value ≠ want_value
