@@ -501,6 +501,7 @@ function do_first_fft!(emitter)
     select!(emitter, :E, :E′, Register(:time, idiv(Touter, 2), 2) => UnrolledLoop(:t_inner_hi, idiv(Touter, 2), 2))
 
     apply!(emitter, :WE, [:E, :W], (E, W) -> :(swapped_complex_mul($W, $E)))
+    #CPLX apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
 
     # Chapter 4.10 notation:
     #     G_mq = FT WE_mn
@@ -599,9 +600,12 @@ function do_first_fft!(emitter)
     # Section 3 `W` is called `V` here
     split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
     split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
+    #CPLX split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
+    #CPLX split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
     apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
     apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
     merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
+    #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
 
     # Third step
     let
@@ -643,6 +647,8 @@ function do_first_fft!(emitter)
         #TODO: Implement this cleaner, e.g. via a `rename!` function
         split!(emitter, [:Vim, :Vre], :V, Cplx(:cplx, 1, 2))
         merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
+        #CPLX split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
+        #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
         @assert trailing_zeros(Npad) ≥ 5
         mma_is = [BeamQ(:beamQ, 8, 2), BeamQ(:beamQ, 16, 2), BeamQ(:beamQ, 32, 2), Cplx(:cplx, 1, 2)]
         mma_js = [DishNlo(:dishNlo, 1, 2), DishNlo(:dishNlo, 2, 2), DishNlo(:dishNlo, 4, 2), Cplx(:cplx_in, 1, 2)]
@@ -850,9 +856,12 @@ function do_second_fft!(emitter)
     # Section 3 `W` is called `V` here
     split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
     split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
+    #CPLX split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
+    #CPLX split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
     apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
     apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
     merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
+    #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
 
     # Third step
     let
@@ -887,6 +896,8 @@ function do_second_fft!(emitter)
         #TODO: Implement this cleaner, e.g. via a `rename!` function
         split!(emitter, [:Vim, :Vre], :V, Cplx(:cplx, 1, 2))
         merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
+        #CPLX split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
+        #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
         @assert trailing_zeros(Npad) ≥ 5
         mma_is = [BeamP(:beamP, 8, 2), BeamP(:beamP, 16, 2), BeamP(:beamP, 32, 2), Cplx(:cplx, 1, 2)]
         mma_js = [DishMlo(:dishMlo, 1, 2), DishMlo(:dishMlo, 2, 2), DishMlo(:dishMlo, 4, 2), Cplx(:cplx_in, 1, 2)]
@@ -899,6 +910,8 @@ function do_second_fft!(emitter)
     split!(emitter, [:Ẽp0, :Ẽp1], :Ẽ, Polr(:polr, 1, P))
     split!(emitter, [:Ẽp0im, :Ẽp0re], :Ẽp0, Cplx(:cplx, 1, C))
     split!(emitter, [:Ẽp1im, :Ẽp1re], :Ẽp1, Cplx(:cplx, 1, C))
+    #CPLX split!(emitter, [:Ẽp0re, :Ẽp0im], :Ẽp0, Cplx(:cplx, 1, C))
+    #CPLX split!(emitter, [:Ẽp1re, :Ẽp1im], :Ẽp1, Cplx(:cplx, 1, C))
 
     apply!(
         emitter,
@@ -1480,269 +1493,283 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     I_wanted = Array{Float16x2}(undef, M * 2 * N * F * cld(T, Tds))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
-    println("Setting up input data...")
-    map!(i -> zero(Int32), S_memory, S_memory)
-    map!(i -> zero(Float16x2), W_memory, W_memory)
-    map!(i -> zero(Int4x8), E_memory, E_memory)
-    map!(i -> zero(Float16x2), I_wanted, I_wanted)
-    map!(i -> zero(Int32), info_wanted, info_wanted)
-
-    input = :random
-    if input ≡ :zero
-        # do nothing
-    elseif input ≡ :random
-        Random.seed!(0)
-
-        # Choose dish grid
-        # Dishes 0:(D-1) are "real" dishes with E-field data.
-        # Dishes D:(M*N-1) are "dummy" dishes where we set the E-field to zero.
-        grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-        # dish_grid = grid[1:(M * N)]
-        dish_grid = grid[randperm(length(grid))]
-        S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
-
-        # Generate a uniform complex number in the unit disk. See
-        # <https://stats.stackexchange.com/questions/481543/generating-random-points-uniformly-on-a-disk>.
-        function uniform_in_disk()
-            r = sqrt(rand(Float32))
-            α = rand(Float32)
-            c = r * cispi(2 * α)
-            return c
+    Random.seed!(0)
+    niters = run_selftest ? 100 : 1
+    found_error = false
+    for iter in 1:niters
+        if run_selftest
+            println("Self-test iteration #$iter:")
         end
-        uniform_factor() = (2 * rand(Float32) - 1)
-        c2t(c::Complex) = (imag(c), real(c))
-        t2c(t::NTuple{2}) = Complex(t[2], t[1])
-        # Wvalue = 1 + 0im
-        Wvalue = uniform_factor() * uniform_in_disk()
-        # TODO: Set only on element of `W`, and this requires the dish gridding
-        W_memory .= [Float16x2(c2t(Wvalue)...) for i in eachindex(W_memory)]
 
-        dish = rand(0:(D - 1))
-        freq = rand(0:(F - 1))
-        polr = rand(0:(P - 1))
-        time = rand(0:(T - 1))
-        @show dish freq polr time
-        Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
-        Evalue = rand(-7:7) + im * rand(-7:7)
-        Evalue8 = zero(SVector{8,Int8})
-        Evalue8 = setindex(Evalue8, imag(Evalue), 2 * (dish % 4) + 0 + 1)
-        Evalue8 = setindex(Evalue8, real(Evalue), 2 * (dish % 4) + 1 + 1)
-        E_memory[Eidx + 1] = Int4x8(Evalue8...)
-        @show Wvalue Evalue
+        println("Setting up input data...")
+        map!(i -> zero(Int32), S_memory, S_memory)
+        map!(i -> zero(Float16x2), W_memory, W_memory)
+        map!(i -> zero(Int4x8), E_memory, E_memory)
+        map!(i -> zero(Float16x2), I_wanted, I_wanted)
+        map!(i -> zero(Int32), info_wanted, info_wanted)
 
-        dstime = time ÷ Tds
-        @show dstime
-        for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
-            dishm, dishn = dish_grid[dish + 1]
-            # Eqn. (4)
-            Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
-            Ivalue = abs2(Ẽvalue)
-            Ivalue2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
-            Ivalue2 = setindex(Ivalue2, Ivalue, beamp % 2 + 1)
-            I_wanted[Iidx + 1] = Float16x2(Ivalue2...)
-        end
-    end
+        input = :random
+        if input ≡ :zero
+            # do nothing
+        elseif input ≡ :random
 
-    println("Copying data from CPU to GPU...")
-    S_cuda = CuArray(S_memory)
-    W_cuda = CuArray(W_memory)
-    E_cuda = CuArray(E_memory)
-    I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
-    info_cuda = CUDA.fill(-1i32, length(info_wanted))
-    Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh1_shmem_size * num_blocks)
-    Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh2_shmem_size * num_blocks)
-    Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), Gsh_shmem_size * num_blocks)
+            # Choose dish grid
+            # Dishes 0:(D-1) are "real" dishes with E-field data.
+            # Dishes D:(M*N-1) are "dummy" dishes where we set the E-field to zero.
+            grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
+            # dish_grid = grid[1:(M * N)]
+            dish_grid = grid[randperm(length(grid))]
+            S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
 
-    println("Running kernel...")
-    kernel(
-        S_cuda,
-        W_cuda,
-        E_cuda,
-        I_cuda,
-        info_cuda,
-        Fsh1_cuda,
-        Fsh2_cuda,
-        Gsh_cuda;
-        threads=(num_threads, num_warps),
-        blocks=num_blocks,
-        shmem=shmem_bytes,
-    )
-    synchronize()
-
-    if nruns > 0
-        stats = @timed begin
-            for run in 1:nruns
-                kernel(
-                    S_cuda,
-                    W_cuda,
-                    E_cuda,
-                    I_cuda,
-                    info_cuda,
-                    Fsh1_cuda,
-                    Fsh2_cuda,
-                    Gsh_cuda;
-                    threads=(num_threads, num_warps),
-                    blocks=num_blocks,
-                    shmem=shmem_bytes,
-                )
+            # Generate a uniform complex number in the unit disk. See
+            # <https://stats.stackexchange.com/questions/481543/generating-random-points-uniformly-on-a-disk>.
+            function uniform_in_disk()
+                r = sqrt(rand(Float32))
+                α = rand(Float32)
+                c = r * cispi(2 * α)
+                return c
             end
-            synchronize()
+            uniform_factor() = (2 * rand(Float32) - 1)
+            c2t(c::Complex) = (imag(c), real(c))
+            t2c(t::NTuple{2}) = Complex(t[2], t[1])
+            # Wvalue = 1 + 0im
+            Wvalue = uniform_factor() * uniform_in_disk()
+            # TODO: Set only on element of `W`, and this requires the dish gridding
+            W_memory .= [Float16x2(c2t(Wvalue)...) for i in eachindex(W_memory)]
+
+            dish = rand(0:(D - 1))
+            freq = rand(0:(F - 1))
+            polr = rand(0:(P - 1))
+            time = rand(0:(T - 1))
+            @show dish freq polr time
+            Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
+            Evalue = rand(-7:7) + im * rand(-7:7)
+            Evalue8 = zero(SVector{8,Int8})
+            Evalue8 = setindex(Evalue8, imag(Evalue), 2 * (dish % 4) + 0 + 1)
+            Evalue8 = setindex(Evalue8, real(Evalue), 2 * (dish % 4) + 1 + 1)
+            E_memory[Eidx + 1] = Int4x8(Evalue8...)
+            @show Wvalue Evalue
+
+            dstime = time ÷ Tds
+            @show dstime
+            for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+                Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
+                dishm, dishn = dish_grid[dish + 1]
+                # Eqn. (4)
+                Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
+                Ivalue = abs2(Ẽvalue)
+                Ivalue2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
+                Ivalue2 = setindex(Ivalue2, Ivalue, beamp % 2 + 1)
+                I_wanted[Iidx + 1] = Float16x2(Ivalue2...)
+            end
         end
-        # All times in μsec
-        runtime = stats.time / nruns * 1.0e+6
-        num_frequencies_scaled = F₀
-        runtime_scaled = runtime / F * num_frequencies_scaled
-        dataframe_length = T * sampling_time
-        fraction = runtime_scaled / dataframe_length
-        round1(x) = round(x; digits=1)
-        println("""
-        benchmark-result:
-          kernel: "frb"
-          description: "FRB beamformer"
-          design-parameters:
-            beam-layout: [$(2*M), $(2*N)]
-            dish-layout: [$M, $N]
-            downsampling-factor: $Tds
-            number-of-complex-components: $C
-            number-of-dishes: $D
-            number-of-frequencies: $F
-            number-of-polarizations: $P
-            number-of-timesamples: $T
-            sampling-time: $sampling_time
-          compile-parameters:
-            minthreads: $(num_threads * num_warps)
-            blocks_per_sm: $num_blocks_per_sm
-          call-parameters:
-            threads: [$num_threads, $num_warps]
-            blocks: [$num_blocks]
-            shmem_bytes: $shmem_bytes
-          result-μsec:
-            runtime: $(round1(runtime))
-            scaled-runtime: $(round1(runtime_scaled))
-            scaled-number-of-frequencies: $num_frequencies_scaled
-            dataframe-length: $(round1(dataframe_length))
-            dataframe-percent: $(round1(fraction * 100))
-        """)
+
+        println("Copying data from CPU to GPU...")
+        S_cuda = CuArray(S_memory)
+        W_cuda = CuArray(W_memory)
+        E_cuda = CuArray(E_memory)
+        I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
+        info_cuda = CUDA.fill(-1i32, length(info_wanted))
+        Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh1_shmem_size * num_blocks)
+        Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh2_shmem_size * num_blocks)
+        Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), Gsh_shmem_size * num_blocks)
+
+        println("Running kernel...")
+        kernel(
+            S_cuda,
+            W_cuda,
+            E_cuda,
+            I_cuda,
+            info_cuda,
+            Fsh1_cuda,
+            Fsh2_cuda,
+            Gsh_cuda;
+            threads=(num_threads, num_warps),
+            blocks=num_blocks,
+            shmem=shmem_bytes,
+        )
+        synchronize()
+
+        if nruns > 0
+            stats = @timed begin
+                for run in 1:nruns
+                    kernel(
+                        S_cuda,
+                        W_cuda,
+                        E_cuda,
+                        I_cuda,
+                        info_cuda,
+                        Fsh1_cuda,
+                        Fsh2_cuda,
+                        Gsh_cuda;
+                        threads=(num_threads, num_warps),
+                        blocks=num_blocks,
+                        shmem=shmem_bytes,
+                    )
+                end
+                synchronize()
+            end
+            # All times in μsec
+            runtime = stats.time / nruns * 1.0e+6
+            num_frequencies_scaled = F₀
+            runtime_scaled = runtime / F * num_frequencies_scaled
+            dataframe_length = T * sampling_time
+            fraction = runtime_scaled / dataframe_length
+            round1(x) = round(x; digits=1)
+            println("""
+            benchmark-result:
+              kernel: "frb"
+              description: "FRB beamformer"
+              design-parameters:
+                beam-layout: [$(2*M), $(2*N)]
+                dish-layout: [$M, $N]
+                downsampling-factor: $Tds
+                number-of-complex-components: $C
+                number-of-dishes: $D
+                number-of-frequencies: $F
+                number-of-polarizations: $P
+                number-of-timesamples: $T
+                sampling-time: $sampling_time
+              compile-parameters:
+                minthreads: $(num_threads * num_warps)
+                blocks_per_sm: $num_blocks_per_sm
+              call-parameters:
+                threads: [$num_threads, $num_warps]
+                blocks: [$num_blocks]
+                shmem_bytes: $shmem_bytes
+              result-μsec:
+                runtime: $(round1(runtime))
+                scaled-runtime: $(round1(runtime_scaled))
+                scaled-number-of-frequencies: $num_frequencies_scaled
+                dataframe-length: $(round1(dataframe_length))
+                dataframe-percent: $(round1(fraction * 100))
+            """)
+        end
+
+        println("Copying data back from GPU to CPU...")
+        I_memory = Array(I_cuda)
+        info_memory = Array(info_cuda)
+        @assert all(info_memory .== 0)
+        Fsh1_memory = Array(Fsh1_cuda)
+        Fsh2_memory = Array(Fsh2_cuda)
+        Gsh_memory = Array(Gsh_cuda)
+
+        println("Checking results...")
+
+        # println("    Fsh1:")
+        # did_test_Fsh1_memory = falses(length(Fsh1_memory))
+        # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
+        #     idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
+        #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
+        #         @assert !did_test_Fsh1_memory[idx + 1]
+        #         did_test_Fsh1_memory[idx + 1] = true
+        #     end
+        #     value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
+        #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+        #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+        #     value = Complex(value_re, value_im)
+        #     if value ≠ 0
+        #         S = S_memory[dish + 1]
+        #         m = S ÷ 33 % M
+        #         n = S ÷ ΣF2 % N
+        #         println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
+        #     end
+        # end
+        # # Check padding
+        # for i in eachindex(did_test_Fsh1_memory)
+        #     if !did_test_Fsh1_memory[i]
+        #         if Fsh1_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
+        #             println("        i=$i Fsh1=$(Fsh1_memory[i])")
+        #         end
+        #     end
+        # end
+        # 
+        # println("    Fsh2:")
+        # did_test_Fsh2_memory = falses(length(Fsh2_memory))
+        # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
+        #     dishMlo = dishM % idiv(M, 4)
+        #     dishMhi = dishM ÷ idiv(M, 4)
+        #     dishNlo = dishN % idiv(N, 4)
+        #     dishNhi = dishN ÷ idiv(N, 4)
+        #     idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
+        #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
+        #         @assert !did_test_Fsh2_memory[idx + 1]
+        #         did_test_Fsh2_memory[idx + 1] = true
+        #     end
+        #     value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
+        #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
+        #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
+        #     value = Complex(value_re, value_im)
+        #     if value ≠ 0
+        #         println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
+        #     end
+        # end
+        # # Check padding
+        # for i in eachindex(did_test_Fsh2_memory)
+        #     if !did_test_Fsh2_memory[i]
+        #         if Fsh2_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
+        #             println("        i=$i Fsh2=$(Fsh2_memory[i])")
+        #         end
+        #     end
+        # end
+        # 
+        # println("    Gsh:")
+        # did_test_Gsh_memory = falses(length(Gsh_memory))
+        # for time in 0:(Tinner - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamQ in 0:(2 * N - 1), dishM in 0:(M - 1)
+        #     idx =
+        #         dishM +
+        #         ΣG0 * (beamQ % 2) +
+        #         ΣG1 * 16 * (beamQ ÷ 2 % 2) +
+        #         ΣG1 * 8 * (beamQ ÷ 4 % 2) +
+        #         ΣG1 * 4 * (beamQ ÷ 8 % 2) +
+        #         ΣG1 * 2 * (beamQ ÷ 16 % 2) +
+        #         ΣG1 * (beamQ ÷ 32 % 2) +
+        #         Mpad * polr +
+        #         Mpad * 2 * (time % Tinner)
+        #     @assert !did_test_Gsh_memory[idx + 1]
+        #     did_test_Gsh_memory[idx + 1] = true
+        #     value2 = convert(NTuple{2,Float16}, Gsh_memory[idx + 1])
+        #     value_im = value2[1]
+        #     value_re = value2[2]
+        #     value = Complex(value_re, value_im)
+        #     if value ≠ 0
+        #         println("        dishM=$dishM beamQ=$beamQ freq=$freq polr=$polr time=$time Gsh=$value")
+        #     end
+        # end
+        # # Check padding
+        # for i in eachindex(did_test_Gsh_memory)
+        #     if !did_test_Gsh_memory[i]
+        #         if Gsh_memory[i] ≠ Float16x2(NaN, NaN) && Gsh_memory[i] ≠ Float16x2(0, 0)
+        #             println("        i=$i Gsh=$(Gsh_memory[i])")
+        #         end
+        #     end
+        # end
+
+        println("    I:")
+        did_test_I_memory = falses(length(I_memory))
+        for dstime in 0:(cld(T, Tds) - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
+            if beamp % 2 == 0
+                @assert !did_test_I_memory[Iidx + 1]
+                did_test_I_memory[Iidx + 1] = true
+            end
+            have_value2 = convert(NTuple{2,Float32}, I_memory[Iidx + 1])
+            want_value2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
+            have_value = have_value2[beamp % 2 + 1]
+            want_value = want_value2[beamp % 2 + 1]
+            # if have_value ≠ want_value
+            if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
+                println("        beamp=$beamp beamq=$beamq freq=$freq dstime=$dstime I=$have_value I₀=$want_value")
+                found_error = true
+            end
+        end
+        @assert all(did_test_I_memory)
+
+        found_error && break
     end
-
-    println("Copying data back from GPU to CPU...")
-    I_memory = Array(I_cuda)
-    info_memory = Array(info_cuda)
-    @assert all(info_memory .== 0)
-    Fsh1_memory = Array(Fsh1_cuda)
-    Fsh2_memory = Array(Fsh2_cuda)
-    Gsh_memory = Array(Gsh_cuda)
-
-    println("Checking results...")
-
-    # println("    Fsh1:")
-    # did_test_Fsh1_memory = falses(length(Fsh1_memory))
-    # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
-    #     idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
-    #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
-    #         @assert !did_test_Fsh1_memory[idx + 1]
-    #         did_test_Fsh1_memory[idx + 1] = true
-    #     end
-    #     value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
-    #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-    #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-    #     value = Complex(value_re, value_im)
-    #     if value ≠ 0
-    #         S = S_memory[dish + 1]
-    #         m = S ÷ 33 % M
-    #         n = S ÷ ΣF2 % N
-    #         println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
-    #     end
-    # end
-    # # Check padding
-    # for i in eachindex(did_test_Fsh1_memory)
-    #     if !did_test_Fsh1_memory[i]
-    #         if Fsh1_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-    #             println("        i=$i Fsh1=$(Fsh1_memory[i])")
-    #         end
-    #     end
-    # end
-    # 
-    # println("    Fsh2:")
-    # did_test_Fsh2_memory = falses(length(Fsh2_memory))
-    # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
-    #     dishMlo = dishM % idiv(M, 4)
-    #     dishMhi = dishM ÷ idiv(M, 4)
-    #     dishNlo = dishN % idiv(N, 4)
-    #     dishNhi = dishN ÷ idiv(N, 4)
-    #     idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
-    #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
-    #         @assert !did_test_Fsh2_memory[idx + 1]
-    #         did_test_Fsh2_memory[idx + 1] = true
-    #     end
-    #     value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
-    #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-    #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-    #     value = Complex(value_re, value_im)
-    #     if value ≠ 0
-    #         println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
-    #     end
-    # end
-    # # Check padding
-    # for i in eachindex(did_test_Fsh2_memory)
-    #     if !did_test_Fsh2_memory[i]
-    #         if Fsh2_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-    #             println("        i=$i Fsh2=$(Fsh2_memory[i])")
-    #         end
-    #     end
-    # end
-    # 
-    # println("    Gsh:")
-    # did_test_Gsh_memory = falses(length(Gsh_memory))
-    # for time in 0:(Tinner - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamQ in 0:(2 * N - 1), dishM in 0:(M - 1)
-    #     idx =
-    #         dishM +
-    #         ΣG0 * (beamQ % 2) +
-    #         ΣG1 * 16 * (beamQ ÷ 2 % 2) +
-    #         ΣG1 * 8 * (beamQ ÷ 4 % 2) +
-    #         ΣG1 * 4 * (beamQ ÷ 8 % 2) +
-    #         ΣG1 * 2 * (beamQ ÷ 16 % 2) +
-    #         ΣG1 * (beamQ ÷ 32 % 2) +
-    #         Mpad * polr +
-    #         Mpad * 2 * (time % Tinner)
-    #     @assert !did_test_Gsh_memory[idx + 1]
-    #     did_test_Gsh_memory[idx + 1] = true
-    #     value2 = convert(NTuple{2,Float16}, Gsh_memory[idx + 1])
-    #     value_im = value2[1]
-    #     value_re = value2[2]
-    #     value = Complex(value_re, value_im)
-    #     if value ≠ 0
-    #         println("        dishM=$dishM beamQ=$beamQ freq=$freq polr=$polr time=$time Gsh=$value")
-    #     end
-    # end
-    # # Check padding
-    # for i in eachindex(did_test_Gsh_memory)
-    #     if !did_test_Gsh_memory[i]
-    #         if Gsh_memory[i] ≠ Float16x2(NaN, NaN) && Gsh_memory[i] ≠ Float16x2(0, 0)
-    #             println("        i=$i Gsh=$(Gsh_memory[i])")
-    #         end
-    #     end
-    # end
-
-    println("    I:")
-    did_test_I_memory = falses(length(I_memory))
-    for dstime in 0:(cld(T, Tds) - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-        Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
-        if beamp % 2 == 0
-            @assert !did_test_I_memory[Iidx + 1]
-            did_test_I_memory[Iidx + 1] = true
-        end
-        have_value2 = convert(NTuple{2,Float32}, I_memory[Iidx + 1])
-        want_value2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
-        have_value = have_value2[beamp % 2 + 1]
-        want_value = want_value2[beamp % 2 + 1]
-        # if have_value ≠ want_value
-        if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
-            println("        beamp=$beamp beamq=$beamq freq=$freq dstime=$dstime I=$have_value I₀=$want_value")
-        end
+    if found_error
+        println("*** FOUND ERROR DURING SELF-TEST ***")
     end
-    @assert all(did_test_I_memory)
 
     println("Done.")
     return nothing
