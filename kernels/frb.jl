@@ -120,6 +120,7 @@ const num_blocks_per_sm = B
     CplxTag
     DishTag
     # DishMTag
+    MNTag
     DishMloTag
     DishMhiTag
     # DishNTag
@@ -138,6 +139,7 @@ end
 
 const Cplx = Index{Physics,CplxTag}
 const Dish = Index{Physics,DishTag}
+const MN = Index{Physics,MNTag}
 # const DishM = Index{Physics,DishMTag}
 const DishMlo = Index{Physics,DishMloTag}
 const DishMhi = Index{Physics,DishMhiTag}
@@ -169,30 +171,13 @@ const layout_E_memory = Layout(
 )
 
 # We have M * N ≥ D dishes here. The additional ("dummy") dishes are initialized to zero.
-const layout_S_memory = Layout(
-    Dict(IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32), Dish(:dish, 1, M * N) => Memory(:memory, 1, M * N))
+const layout_Smn_memory = Layout(
+    Dict(
+        IntValue(:intvalue, 1, 16) => SIMD(:simd, 1, 16),
+        MN(:mn, 1, 2) => SIMD(:simd, 16, 2),
+        Dish(:dish, 1, M * N) => Memory(:memory, 1, M * N),
+    ),
 )
-
-function calc_S(m::Integer, n::Integer)
-    @assert 0 ≤ m < M
-    @assert 0 ≤ n < N
-    # mlo = m % idiv(M, 4)
-    # mhi = m ÷ idiv(M, 4)
-    # @assert 0 ≤ mlo < idiv(M, 4)
-    # @assert 0 ≤ mhi < 4
-    # nlo = n % idiv(N, 4)
-    # nhi = n ÷ idiv(N, 4)
-    # @assert 0 ≤ nlo < idiv(N, 4)
-    # @assert 0 ≤ nhi < 4
-    # S = 33 * mlo + 33 * idiv(M, 4) * mhi + ΣF2 * nlo + ΣF2 * idiv(N, 4) * nhi
-    S = 33 * m + ΣF2 * n
-    @assert 0 ≤ S < N * ΣF2
-    return S
-end
-# let
-#     all_S = [calc_S(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
-#     @assert allunique(all_S)
-# end
 
 const layout_W_memory = Layout(
     Dict(
@@ -1145,7 +1130,6 @@ function make_frb_kernel()
             ),
         )
         # This loads garbage for idiv(M * N, W) ≤ thread < 32
-        # load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
         apply!(emitter, :S => layout_S_registers, 999999999i32)
         @assert idiv(M * N, W) == 24
         @assert num_threads == 32
@@ -1155,7 +1139,18 @@ function make_frb_kernel()
                 thread < $(Int32(idiv(M * N, W)))
             end
         )) do emitter
-            load!(emitter, :S => layout_S_registers, :S_memory => layout_S_memory)
+            layout_Smn_registers = Layout(
+                Dict(
+                    IntValue(:intvalue, 1, 16) => SIMD(:simd, 1, 16),
+                    MN(:mn, 1, 2) => SIMD(:simd, 16, 2),
+                    Dish(:dish, 1, W) => Warp(:warp, 1, W),
+                    Dish(:dish, W, idiv(M * N, W)) => Thread(:thread, 1, idiv(M * N, W)),
+                ),
+            )
+            load!(emitter, :Smn => layout_Smn_registers, :Smn_memory => layout_Smn_memory)
+            widen!(emitter, :Smn, :Smn, SIMD(:simd, 16, 2) => Register(:mn, 1, 2))
+            split!(emitter, [:Sm, :Sn], :Smn, Register(:mn, 1, 2))
+            apply!(emitter, :S, [:Sm, :Sn], (Sm, Sn) -> :(33i32 * Sm + $(Int32(ΣF2)) * Sn))
             nothing
         end
     end
@@ -1356,7 +1351,7 @@ println("[Creating frb kernel...]")
 const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
-@eval function frb(S_memory, W_memory, E_memory, I_memory, info_memory, Fsh1_memory, Fsh2_memory, Gsh_memory)
+@eval function frb(Smn_memory, W_memory, E_memory, I_memory, info_memory, Fsh1_memory, Fsh2_memory, Gsh_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     Fsh1_shared = reinterpret(Int4x8, shmem)
     Fsh2_shared = reinterpret(Int4x8, shmem)
@@ -1399,7 +1394,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm frb(
-        CUDA.zeros(Int32, 0),
+        CUDA.zeros(Int16x2, 0),
         CUDA.zeros(Float16x2, 0),
         CUDA.zeros(Int4x8, 0),
         CUDA.zeros(Float16x2, 0),
@@ -1414,80 +1409,10 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         return nothing
     end
 
-    if output_kernel
-        ptx = read("output/frb.ptx", String)
-        ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
-        open("output/frb.ptx", "w") do fh
-            write(fh, ptx)
-        end
-        kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
-        open("output/frb.yaml", "w") do fh
-            print(
-                fh,
-                """
-        --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
-        kernel-description:
-          name: "frb"
-          description: "FRB beamformer"
-          design-parameters:
-            beam-layout: [$(2*M), $(2*N)]
-            dish-layout: [$M, $N]
-            downsampling-factor: $Tds
-            number-of-complex-components: $C
-            number-of-dishes: $D
-            number-of-frequencies: $F
-            number-of-polarizations: $P
-            number-of-timesamples: $T
-            sampling-time: $sampling_time
-          compile-parameters:
-            minthreads: $(num_threads * num_warps)
-            blocks_per_sm: $num_blocks_per_sm
-          call-parameters:
-            threads: [$num_threads, $num_warps]
-            blocks: [$num_blocks]
-            shmem_bytes: $shmem_bytes
-          kernel-name: "$kernel_name"
-          kernel-arguments:
-            - name: "S"
-              intent: in
-              type: Int32
-              indices: [D]
-              shape: [$(M*N)]
-              strides: [1]
-            - name: "W"
-              intent: in
-              type: Float16
-              indices: [C, dishM, dishN, F, P]
-              shape: [$C, $M, $N, $F, $P]
-              strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*F), $(C*M*N*F*P)]
-            - name: "E"
-              intent: in
-              type: Int4
-              indices: [C, D, F, P, T]
-              shape: [$C, $D, $F, $P, $T]
-              strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
-            - name: "I"
-              intent: out
-              type: Float16
-              indices: [beamP, beamQ, F, Tds]
-              shape: [$(2*M), $(2*N), $F, $(cld(T, Tds))]
-              strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F)]
-            - name: "info"
-              intent: out
-              type: Int32
-              indices: [thread, warp, block]
-              shapes: [$num_threads, $num_warps, $num_blocks]
-              strides: [1, $num_threads, $(num_threads*num_warps)]
-        ...
-        """,
-            )
-        end
-    end
-
     println("Allocating input data...")
 
     # TODO: determine types and sizes automatically
-    S_memory = Array{Int32}(undef, M * N)
+    Smn_memory = Array{Int16x2}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
     I_wanted = Array{Float16x2}(undef, M * 2 * N * F * cld(T, Tds))
@@ -1502,7 +1427,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         end
 
         println("Setting up input data...")
-        map!(i -> zero(Int32), S_memory, S_memory)
+        map!(i -> zero(Int16x2), Smn_memory, Smn_memory)
         map!(i -> zero(Float16x2), W_memory, W_memory)
         map!(i -> zero(Int4x8), E_memory, E_memory)
         map!(i -> zero(Float16x2), I_wanted, I_wanted)
@@ -1519,7 +1444,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             grid = [(m, n) for m in 0:(M - 1), n in 0:(N - 1)]
             # dish_grid = grid[1:(M * N)]
             dish_grid = grid[randperm(length(grid))]
-            S_memory .= [calc_S(m, n) for (m, n) in dish_grid]
+            for d in 1:(M * N)
+                Smn_memory[d] = Int16x2(dish_grid[d]...)
+            end
 
             # Generate a uniform complex number in the unit disk. See
             # <https://stats.stackexchange.com/questions/481543/generating-random-points-uniformly-on-a-disk>.
@@ -1532,6 +1459,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             uniform_factor() = (2 * rand(Float32) - 1)
             c2t(c::Complex) = (imag(c), real(c))
             t2c(t::NTuple{2}) = Complex(t[2], t[1])
+            #CPLX c2t(c::Complex) = (real(c), imag(c))
+            #CPLX t2c(t::NTuple{2}) = Complex(t[1], t[2])
             # Wvalue = 1 + 0im
             Wvalue = uniform_factor() * uniform_in_disk()
             # TODO: Set only on element of `W`, and this requires the dish gridding
@@ -1565,7 +1494,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         end
 
         println("Copying data from CPU to GPU...")
-        S_cuda = CuArray(S_memory)
+        Smn_cuda = CuArray(Smn_memory)
         W_cuda = CuArray(W_memory)
         E_cuda = CuArray(E_memory)
         I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
@@ -1576,7 +1505,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
         println("Running kernel...")
         kernel(
-            S_cuda,
+            Smn_cuda,
             W_cuda,
             E_cuda,
             I_cuda,
@@ -1594,7 +1523,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             stats = @timed begin
                 for run in 1:nruns
                     kernel(
-                        S_cuda,
+                        Smn_cuda,
                         W_cuda,
                         E_cuda,
                         I_cuda,
@@ -1775,21 +1704,91 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     return nothing
 end
 
+function fix_ptx_kernel()
+    ptx = read("output/frb.ptx", String)
+    ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
+    open("output/frb.ptx", "w") do fh
+        write(fh, ptx)
+    end
+    kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
+    open("output/frb.yaml", "w") do fh
+        print(
+            fh,
+            """
+    --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
+    kernel-description:
+      name: "frb"
+      description: "FRB beamformer"
+      design-parameters:
+        beam-layout: [$(2*M), $(2*N)]
+        dish-layout: [$M, $N]
+        downsampling-factor: $Tds
+        number-of-complex-components: $C
+        number-of-dishes: $D
+        number-of-frequencies: $F
+        number-of-polarizations: $P
+        number-of-timesamples: $T
+        sampling-time: $sampling_time
+      compile-parameters:
+        minthreads: $(num_threads * num_warps)
+        blocks_per_sm: $num_blocks_per_sm
+      call-parameters:
+        threads: [$num_threads, $num_warps]
+        blocks: [$num_blocks]
+        shmem_bytes: $shmem_bytes
+      kernel-name: "$kernel_name"
+      kernel-arguments:
+        - name: "S"
+          intent: in
+          type: Int16
+          indices: [MN, D]
+          shape: [2, $(M*N)]
+          strides: [1, 2]
+        - name: "W"
+          intent: in
+          type: Float16
+          indices: [C, dishM, dishN, F, P]
+          shape: [$C, $M, $N, $F, $P]
+          strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*F), $(C*M*N*F*P)]
+        - name: "E"
+          intent: in
+          type: Int4
+          indices: [C, D, F, P, T]
+          shape: [$C, $D, $F, $P, $T]
+          strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+        - name: "I"
+          intent: out
+          type: Float16
+          indices: [beamP, beamQ, F, Tds]
+          shape: [$(2*M), $(2*N), $F, $(cld(T, Tds))]
+          strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F)]
+        - name: "info"
+          intent: out
+          type: Int32
+          indices: [thread, warp, block]
+          shapes: [$num_threads, $num_warps, $num_blocks]
+          strides: [1, $num_threads, $(num_threads*num_warps)]
+    ...
+    """,
+        )
+    end
+    return nothing
+end
+
 if CUDA.functional()
     # # Output kernel
+    # main(; output_kernel=true)
     # open("output/frb.ptx", "w") do fh
     #     redirect_stdout(fh) do
     #         @device_code_ptx main(; compile_only=true)
     #     end
     # end
+    # fix_ptx_kernel()
     # open("output/frb.sass", "w") do fh
     #     redirect_stdout(fh) do
     #         @device_code_sass main(; compile_only=true)
     #     end
     # end
-    # # This call needs to happen after generating PTX code since it
-    # # modifies the generated PTX code
-    # main(; output_kernel=true)
 
     # # Run test
     # main(; run_selftest=true)
