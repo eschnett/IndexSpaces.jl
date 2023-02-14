@@ -27,8 +27,6 @@ constexpr int F = 1;  // TODO 256; // frequency channels per GPU
 
 constexpr int Tds = 40; // time downsampling factor
 
-using int4x2_t = uint8_t;
-
 double gettime() {
   struct timeval tp;
   gettimeofday(&tp, nullptr);
@@ -37,6 +35,10 @@ double gettime() {
 
 // Integer divide, rounding up (towards positive infinity)
 constexpr int cld(const int x, const int y) { return (x + y - 1) / y; }
+
+// 4-bit integers
+
+using int4x2_t = uint8_t;
 
 constexpr int4x2_t set4(const int8_t lo, const int8_t hi) {
   return (uint8_t(lo) & 0x0f) | ((uint8_t(hi) << 4) & 0xf0);
@@ -200,7 +202,7 @@ void frb_simple(const int32_t *__restrict__ const S,
 int main(int argc, char **argv) {
   std::cout << "CHORD FRB beamformer\n";
 
-  std::cout << "Initialize input...\n";
+  std::cout << "Initializing input...\n";
   srand(0);
   const int time = std::int64_t(rand()) * T / (std::int64_t(RAND_MAX) + 1);
   const int dish =
