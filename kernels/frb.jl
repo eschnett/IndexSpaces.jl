@@ -1351,26 +1351,11 @@ println("[Creating frb kernel...]")
 const frb_kernel = make_frb_kernel()
 println("[Done creating frb kernel]")
 
-@eval function frb(Smn_memory, W_memory, E_memory, I_memory, info_memory, Fsh1_memory, Fsh2_memory, Gsh_memory)
+@eval function frb(Smn_memory, W_memory, E_memory, I_memory, info_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     Fsh1_shared = reinterpret(Int4x8, shmem)
     Fsh2_shared = reinterpret(Int4x8, shmem)
     Gsh_shared = reinterpret(Float16x2, shmem)
-    # Fsh1_shared = let
-    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-    #     block_offset = $Fsh1_shmem_size
-    #     @view Fsh1_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    # end
-    # Fsh2_shared = let
-    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-    #     block_offset = $Fsh2_shmem_size
-    #     @view Fsh2_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    # end
-    # Gsh_shared = let
-    #     block = IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, $num_blocks)
-    #     block_offset = $Gsh_shmem_size
-    #     @view Gsh_memory[(block_offset * block + 1):(block_offset * block + block_offset)]
-    # end
     $frb_kernel
     return nothing
 end
@@ -1394,14 +1379,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm frb(
-        CUDA.zeros(Int16x2, 0),
-        CUDA.zeros(Float16x2, 0),
-        CUDA.zeros(Int4x8, 0),
-        CUDA.zeros(Float16x2, 0),
-        CUDA.zeros(Int32, 0),
-        CUDA.zeros(Int4x8, 0),
-        CUDA.zeros(Int4x8, 0),
-        CUDA.zeros(Float16x2, 0),
+        CUDA.zeros(Int16x2, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
@@ -1499,24 +1477,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         E_cuda = CuArray(E_memory)
         I_cuda = CUDA.fill(Float16x2(NaN, NaN), length(I_wanted))
         info_cuda = CUDA.fill(-1i32, length(info_wanted))
-        Fsh1_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh1_shmem_size * num_blocks)
-        Fsh2_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), Fsh2_shmem_size * num_blocks)
-        Gsh_cuda = CUDA.fill(Float16x2(NaN, NaN), Gsh_shmem_size * num_blocks)
 
         println("Running kernel...")
-        kernel(
-            Smn_cuda,
-            W_cuda,
-            E_cuda,
-            I_cuda,
-            info_cuda,
-            Fsh1_cuda,
-            Fsh2_cuda,
-            Gsh_cuda;
-            threads=(num_threads, num_warps),
-            blocks=num_blocks,
-            shmem=shmem_bytes,
-        )
+        kernel(Smn_cuda, W_cuda, E_cuda, I_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
         synchronize()
 
         if nruns > 0
@@ -1527,10 +1490,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                         W_cuda,
                         E_cuda,
                         I_cuda,
-                        info_cuda,
-                        Fsh1_cuda,
-                        Fsh2_cuda,
-                        Gsh_cuda;
+                        info_cuda;
                         threads=(num_threads, num_warps),
                         blocks=num_blocks,
                         shmem=shmem_bytes,
@@ -1579,100 +1539,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         I_memory = Array(I_cuda)
         info_memory = Array(info_cuda)
         @assert all(info_memory .== 0)
-        Fsh1_memory = Array(Fsh1_cuda)
-        Fsh2_memory = Array(Fsh2_cuda)
-        Gsh_memory = Array(Gsh_cuda)
 
         println("Checking results...")
-
-        # println("    Fsh1:")
-        # did_test_Fsh1_memory = falses(length(Fsh1_memory))
-        # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
-        #     idx = 32 * (dish % 8) + ΣF1 * (dish ÷ 8) + time % idiv(Touter, 2)
-        #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
-        #         @assert !did_test_Fsh1_memory[idx + 1]
-        #         did_test_Fsh1_memory[idx + 1] = true
-        #     end
-        #     value8 = convert(NTuple{8,Int8}, Fsh1_memory[idx + 1])
-        #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-        #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-        #     value = Complex(value_re, value_im)
-        #     if value ≠ 0
-        #         S = S_memory[dish + 1]
-        #         m = S ÷ 33 % M
-        #         n = S ÷ ΣF2 % N
-        #         println("        dish=$dish freq=$freq polr=$polr time=$time Fsh1=$value (m,n)=($m,$n) S=$S")
-        #     end
-        # end
-        # # Check padding
-        # for i in eachindex(did_test_Fsh1_memory)
-        #     if !did_test_Fsh1_memory[i]
-        #         if Fsh1_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-        #             println("        i=$i Fsh1=$(Fsh1_memory[i])")
-        #         end
-        #     end
-        # end
-        # 
-        # println("    Fsh2:")
-        # did_test_Fsh2_memory = falses(length(Fsh2_memory))
-        # for time in 0:(Touter - 1), polr in 0:(P - 1), freq in 0:(F - 1), dishN in 0:(N - 1), dishM in 0:(M - 1)
-        #     dishMlo = dishM % idiv(M, 4)
-        #     dishMhi = dishM ÷ idiv(M, 4)
-        #     dishNlo = dishN % idiv(N, 4)
-        #     dishNhi = dishN ÷ idiv(N, 4)
-        #     idx = 33 * dishMlo + 33 * idiv(M, 4) * dishMhi + ΣF2 * dishNlo + ΣF2 * idiv(N, 4) * dishNhi + time % idiv(Touter, 2)
-        #     if polr == 0 && time ÷ idiv(Touter, 2) == 0
-        #         @assert !did_test_Fsh2_memory[idx + 1]
-        #         did_test_Fsh2_memory[idx + 1] = true
-        #     end
-        #     value8 = convert(NTuple{8,Int8}, Fsh2_memory[idx + 1])
-        #     value_im = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 0 + 1]
-        #     value_re = value8[polr + 2 * (time ÷ idiv(Touter, 2)) + 4 * 1 + 1]
-        #     value = Complex(value_re, value_im)
-        #     if value ≠ 0
-        #         println("        dishM=$dishM dishN=$dishN freq=$freq polr=$polr time=$time Fsh2=$value")
-        #     end
-        # end
-        # # Check padding
-        # for i in eachindex(did_test_Fsh2_memory)
-        #     if !did_test_Fsh2_memory[i]
-        #         if Fsh2_memory[i] ≠ Int4x8(-8, -8, -8, -8, -8, -8, -8, -8)
-        #             println("        i=$i Fsh2=$(Fsh2_memory[i])")
-        #         end
-        #     end
-        # end
-        # 
-        # println("    Gsh:")
-        # did_test_Gsh_memory = falses(length(Gsh_memory))
-        # for time in 0:(Tinner - 1), polr in 0:(P - 1), freq in 0:(F - 1), beamQ in 0:(2 * N - 1), dishM in 0:(M - 1)
-        #     idx =
-        #         dishM +
-        #         ΣG0 * (beamQ % 2) +
-        #         ΣG1 * 16 * (beamQ ÷ 2 % 2) +
-        #         ΣG1 * 8 * (beamQ ÷ 4 % 2) +
-        #         ΣG1 * 4 * (beamQ ÷ 8 % 2) +
-        #         ΣG1 * 2 * (beamQ ÷ 16 % 2) +
-        #         ΣG1 * (beamQ ÷ 32 % 2) +
-        #         Mpad * polr +
-        #         Mpad * 2 * (time % Tinner)
-        #     @assert !did_test_Gsh_memory[idx + 1]
-        #     did_test_Gsh_memory[idx + 1] = true
-        #     value2 = convert(NTuple{2,Float16}, Gsh_memory[idx + 1])
-        #     value_im = value2[1]
-        #     value_re = value2[2]
-        #     value = Complex(value_re, value_im)
-        #     if value ≠ 0
-        #         println("        dishM=$dishM beamQ=$beamQ freq=$freq polr=$polr time=$time Gsh=$value")
-        #     end
-        # end
-        # # Check padding
-        # for i in eachindex(did_test_Gsh_memory)
-        #     if !did_test_Gsh_memory[i]
-        #         if Gsh_memory[i] ≠ Float16x2(NaN, NaN) && Gsh_memory[i] ≠ Float16x2(0, 0)
-        #             println("        i=$i Gsh=$(Gsh_memory[i])")
-        #         end
-        #     end
-        # end
 
         println("    I:")
         did_test_I_memory = falses(length(I_memory))
@@ -1776,19 +1644,19 @@ function fix_ptx_kernel()
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # main(; output_kernel=true)
-    # open("output/frb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # fix_ptx_kernel()
-    # open("output/frb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true)
-    #     end
-    # end
+    # Output kernel
+    main(; output_kernel=true)
+    open("output/frb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    fix_ptx_kernel()
+    open("output/frb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
 
     # # Run test
     # main(; run_selftest=true)
@@ -1796,6 +1664,6 @@ if CUDA.functional()
     # # Run benchmark
     # main(; nruns=100)
 
-    # Regular run, also for profiling
-    main()
+    # # Regular run, also for profiling
+    # main()
 end
