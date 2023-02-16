@@ -177,6 +177,16 @@ struct Layout{Typ1,Typ2}
     Layout(dict::Dict{<:Index{Typ1},<:Index{Typ2}}) where {Typ1,Typ2} = Layout{Typ1,Typ2}(dict)
 end
 
+function Layout(pairs::AbstractVector{<:Pair{<:Index{Typ1},<:Index{Typ2}}}) where {Typ1,Typ2}
+    dict = Dict{Index{Typ1},Index{Typ2}}()
+    for (k, v) in pairs
+        @assert k ∉ keys(dict)
+        @assert v ∉ values(dict)
+        dict[k] = v
+    end
+    return Layout(dict)::Layout{Typ1,Typ2}
+end
+
 function Base.show(io::IO, layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     println(io, "Layout{$Typ1,$Typ2}:")
     for k in sort!(collect(keys(layout.dict)))
