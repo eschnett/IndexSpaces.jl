@@ -214,7 +214,30 @@ const layout_E_registers = Layout([
     Time(:time, 1, 4) => Register(:time, 1, 4),
     # one input tile: 128 dishes, 4 times
     # assign input tiles to warps
-    Time(:time, 16, Touter ÷ 16) => Warp(:warp, 1, 16),
+    Time(:time, U, Touter ÷ U) => Warp(:warp, 1, 16),
+    # sect. 5.2
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
+])
+
+# eqn. (142)
+@assert U == 16
+const layout_Ē_registers = Layout([
+    IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+    Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+    Dish(:dish, 16, 2) => Thread(:thread, 1, 2),
+    Dish(:dish, 32, 2) => Thread(:thread, 2, 2),
+    Dish(:dish, 64, 2) => Thread(:thread, 4, 2),
+    Dish(:dish, 8, 2) => Thread(:thread, 8, 2),
+    Freq(:freq, 2, 2) => Thread(:thread, 16, 2),
+    Dish(:dish, 2, 4) => Register(:dish, 2, 4),
+    Freq(:freq, 4, U ÷ 4) => Register(:freq, 4, U ÷ 4),
+    # one input tile: 128 dishes, 4 times
+    # assign input tiles to warps
+    Time(:time, U, Touter ÷ U) => Warp(:warp, 1, 16),
     # sect. 5.2
     Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
@@ -490,7 +513,7 @@ function upchan!(emitter)
         permute!(emitter, :E1, :E, Dish(:dish, 8, 2), Time(:time, 8, 2))
         split!(emitter, [:E1lo, :E1hi], :E1, Register(:dish, 8, 2))
         merge!(emitter, :E1, [:E1lo, :E1hi], Time(:time, 8, 2) => Register(:time, 8, 2))
-        # Swap Dish(2,2) and Time(8,2), i.e. Register(:dish,8,2) and SIMD(16,2)
+        # Swap Dish(2,2) and Time(8,2), i.e. Register(:time,8,2) and SIMD(16,2)
         permute!(emitter, :E2, :E1, Dish(:dish, 2, 2), Time(:time, 8, 2))
         split!(emitter, [:E2lo, :E2hi], :E2, Register(:time, 8, 2))
         merge!(emitter, :E2, [:E2lo, :E2hi], Dish(:dish, 2, 2) => Register(:dish, 2, 2))
@@ -704,14 +727,41 @@ function upchan!(emitter)
                 # Step 9: Write F̄_out to shared memory
                 store!(emitter, :F̄_shared => layout_F̄_shared, :F̄_out)
 
+                # Advance ring buffer
+                split!(emitter, [Symbol(:F_ringbuf_m, m) for m in 0:(M - 2)], :F_ringbuf, Register(:mtaps, 1, M - 1))
+                for m in 0:(M - 3)
+                    apply!(emitter, Symbol(:F_ringbuf_m, m), [Symbol(:F_ringbuf_m, m + 1)], (F,) -> :($F))
+                end
+                merge!(
+                    emitter,
+                    :F_ringbuf,
+                    [Symbol(:F_ringbuf_m, m) for m in 0:(M - 2)],
+                    MTaps(:mtaps, 1, M - 1) => Register(:mtaps, 1, M - 1),
+                )
+
                 return nothing
-            end
+            end# unrolled_loop!(Dish(:dish, D ÷ Dr, Dr) => UnrolledLoop(:dish, D ÷ Dr, Dr))
 
             return nothing
-        end
+        end # loop!(Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U))
+
+        sync_threads!(emitter)
+
+        # Step 10: Copy outer block from shared memory to global memory
+        load!(emitter, :Ē => layout_Ē_registers, :F̄_shared => layout_F̄_shared)
+        # eqn. (145)
+        # Swap Dish(2,2) and Freq(2,2), i.e. Register(:dish,2,2) and SIMD(16,2)
+        permute!(emitter, :Ē1, :Ē, Dish(:dish, 2, 2), Freq(:freq, 1, 2))
+        split!(emitter, [:Ē1lo, :Ē1hi], :Ē1, Register(:dish, 2, 2))
+        merge!(emitter, :Ē1, [:Ē1lo, :Ē1hi], Freq(:freq, 1, 2) => Register(:freq, 1, 2))
+        # Swap Dish(8,2) and Freq(1,2), i.e. Register(:freq,1,2) and Thread(8,2)
+        permute!(emitter, :Ē2, :Ē1, Dish(:dish, 8, 2), Freq(:freq, 1, 2))
+        split!(emitter, [:Ē2lo, :Ē2hi], :Ē2, Register(:freq, 1, 2))
+        merge!(emitter, :Ē2, [:Ē2lo, :Ē2hi], Dish(:dish, 8, 2) => Register(:dish, 8, 2))
+        store!(emitter, :Ē_memory => layout_Ē_memory, :Ē2; align=16)
 
         return nothing
-    end
+    end # loop!(Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter))
 
     return nothing
 end

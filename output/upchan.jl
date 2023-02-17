@@ -1,5 +1,5 @@
 @fastmath @inbounds(
-    begin #= /Users/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:728 =#
+    begin #= /Users/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:778 =#
         F_ringbuf_mtaps0 = zero(Int4x8)
         F_ringbuf_mtaps1 = zero(Int4x8)
         F_ringbuf_mtaps2 = zero(Int4x8)
@@ -546,8 +546,330 @@
                     F̄_out = Int4x8((E5_cplx0_dish0, E5_cplx1_dish0, E5_cplx0_dish1, E5_cplx1_dish1))
                     F̄_shared[((((((((IndexSpaces.assume_inrange(t_inner, 0, 16, 256) ÷ 16) % 16) * 16) ÷ 16) % 16) * 545 + ((((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 8) % 2) * 2 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 32) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 8) * 4) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 64) ÷ 2) % 2) * 32) + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 2) * 2) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 4) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2) * 8) ÷ 2) % 8) * 65) + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 8) % 2) * 2 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 32) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 8) * 4) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 64) ÷ 4) % 32) + 0 + 0x01] =
                         F̄_out
+                    F_ringbuf_m0 = F_ringbuf_mtaps0
+                    F_ringbuf_m1 = F_ringbuf_mtaps1
+                    F_ringbuf_m2 = F_ringbuf_mtaps2
+                    F_ringbuf_m0 = F_ringbuf_m1
+                    F_ringbuf_m1 = F_ringbuf_m2
+                    F_ringbuf_mtaps0 = F_ringbuf_m0
+                    F_ringbuf_mtaps1 = F_ringbuf_m1
+                    F_ringbuf_mtaps2 = F_ringbuf_m2
                 end
             end
+            IndexSpaces.cuda_sync_threads()
+            Ē_dish0_freq0 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 2) % 2) * 32) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) ÷ 2) % 8) * 65) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 4) % 32) + 0x01]
+            Ē_dish2_freq0 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 2) % 2) * 32) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 4) % 32) + 0x01]
+            Ē_dish4_freq0 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 2) % 2) * 32) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 4) % 32) + 0x01]
+            Ē_dish6_freq0 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 2) % 2) * 32) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 4) % 32) + 0x01]
+            Ē_dish0_freq4 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 4) ÷ 2) % 8) * 65) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 4) % 32) + 0x01]
+            Ē_dish2_freq4 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 4) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 4) % 32) + 0x01]
+            Ē_dish4_freq4 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 4) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 4) % 32) + 0x01]
+            Ē_dish6_freq4 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 4) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 4) % 32) + 0x01]
+            Ē_dish0_freq8 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 8) ÷ 2) % 8) * 65) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 4) % 32) + 0x01]
+            Ē_dish2_freq8 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 8) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 4) % 32) + 0x01]
+            Ē_dish4_freq8 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 8) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 4) % 32) + 0x01]
+            Ē_dish6_freq8 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 8) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 4) % 32) + 0x01]
+            Ē_dish0_freq12 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 12) ÷ 2) % 8) * 65) + (((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) ÷ 4) % 32) + 0x01]
+            Ē_dish2_freq12 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 12) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 2) ÷ 4) % 32) + 0x01]
+            Ē_dish4_freq12 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 12) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 4) ÷ 4) % 32) + 0x01]
+            Ē_dish6_freq12 = F̄_shared[(((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 16) * 545 + (((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 2) % 2) * 32) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 16) % 2) * 2) + 12) ÷ 2) % 8) * 65) + ((((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 2) * 8 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128) + 6) ÷ 4) % 32) + 0x01]
+            (Ē1_dish0_freq0, Ē1_dish2_freq0) = (
+                IndexSpaces.get_lo16(Ē_dish0_freq0, Ē_dish2_freq0), IndexSpaces.get_hi16(Ē_dish0_freq0, Ē_dish2_freq0)
+            )
+            (Ē1_dish4_freq0, Ē1_dish6_freq0) = (
+                IndexSpaces.get_lo16(Ē_dish4_freq0, Ē_dish6_freq0), IndexSpaces.get_hi16(Ē_dish4_freq0, Ē_dish6_freq0)
+            )
+            (Ē1_dish0_freq4, Ē1_dish2_freq4) = (
+                IndexSpaces.get_lo16(Ē_dish0_freq4, Ē_dish2_freq4), IndexSpaces.get_hi16(Ē_dish0_freq4, Ē_dish2_freq4)
+            )
+            (Ē1_dish4_freq4, Ē1_dish6_freq4) = (
+                IndexSpaces.get_lo16(Ē_dish4_freq4, Ē_dish6_freq4), IndexSpaces.get_hi16(Ē_dish4_freq4, Ē_dish6_freq4)
+            )
+            (Ē1_dish0_freq8, Ē1_dish2_freq8) = (
+                IndexSpaces.get_lo16(Ē_dish0_freq8, Ē_dish2_freq8), IndexSpaces.get_hi16(Ē_dish0_freq8, Ē_dish2_freq8)
+            )
+            (Ē1_dish4_freq8, Ē1_dish6_freq8) = (
+                IndexSpaces.get_lo16(Ē_dish4_freq8, Ē_dish6_freq8), IndexSpaces.get_hi16(Ē_dish4_freq8, Ē_dish6_freq8)
+            )
+            (Ē1_dish0_freq12, Ē1_dish2_freq12) = (
+                IndexSpaces.get_lo16(Ē_dish0_freq12, Ē_dish2_freq12), IndexSpaces.get_hi16(Ē_dish0_freq12, Ē_dish2_freq12)
+            )
+            (Ē1_dish4_freq12, Ē1_dish6_freq12) = (
+                IndexSpaces.get_lo16(Ē_dish4_freq12, Ē_dish6_freq12), IndexSpaces.get_hi16(Ē_dish4_freq12, Ē_dish6_freq12)
+            )
+            Ē1lo_dish0_freq0 = Ē1_dish0_freq0
+            Ē1hi_dish0_freq0 = Ē1_dish0_freq1
+            Ē1lo_dish4_freq0 = Ē1_dish4_freq0
+            Ē1hi_dish4_freq0 = Ē1_dish4_freq1
+            Ē1lo_dish0_freq4 = Ē1_dish0_freq4
+            Ē1hi_dish0_freq4 = Ē1_dish0_freq5
+            Ē1lo_dish4_freq4 = Ē1_dish4_freq4
+            Ē1hi_dish4_freq4 = Ē1_dish4_freq5
+            Ē1lo_dish0_freq8 = Ē1_dish0_freq8
+            Ē1hi_dish0_freq8 = Ē1_dish0_freq9
+            Ē1lo_dish4_freq8 = Ē1_dish4_freq8
+            Ē1hi_dish4_freq8 = Ē1_dish4_freq9
+            Ē1lo_dish0_freq12 = Ē1_dish0_freq12
+            Ē1hi_dish0_freq12 = Ē1_dish0_freq13
+            Ē1lo_dish4_freq12 = Ē1_dish4_freq12
+            Ē1hi_dish4_freq12 = Ē1_dish4_freq13
+            Ē1_dish0_freq0 = Ē1lo_dish0_freq0
+            Ē1_dish0_freq1 = Ē1hi_dish0_freq0
+            Ē1_dish4_freq0 = Ē1lo_dish4_freq0
+            Ē1_dish4_freq1 = Ē1hi_dish4_freq0
+            Ē1_dish0_freq4 = Ē1lo_dish0_freq4
+            Ē1_dish0_freq5 = Ē1hi_dish0_freq4
+            Ē1_dish4_freq4 = Ē1lo_dish4_freq4
+            Ē1_dish4_freq5 = Ē1hi_dish4_freq4
+            Ē1_dish0_freq8 = Ē1lo_dish0_freq8
+            Ē1_dish0_freq9 = Ē1hi_dish0_freq8
+            Ē1_dish4_freq8 = Ē1lo_dish4_freq8
+            Ē1_dish4_freq9 = Ē1hi_dish4_freq8
+            Ē1_dish0_freq12 = Ē1lo_dish0_freq12
+            Ē1_dish0_freq13 = Ē1hi_dish0_freq12
+            Ē1_dish4_freq12 = Ē1lo_dish4_freq12
+            Ē1_dish4_freq13 = Ē1hi_dish4_freq12
+            is_lo_thread = IndexSpaces.cuda_threadidx() & 0x00000008 == 0x00
+            (Ē2_dish0_freq0, Ē2_dish0_freq1) = let
+                src = if is_lo_thread
+                    Ē1_dish0_freq1
+                else
+                    Ē1_dish0_freq0
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish0_freq0, dst)
+                else
+                    (dst, Ē1_dish0_freq1)
+                end
+            end
+            (Ē2_dish4_freq0, Ē2_dish4_freq1) = let
+                src = if is_lo_thread
+                    Ē1_dish4_freq1
+                else
+                    Ē1_dish4_freq0
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish4_freq0, dst)
+                else
+                    (dst, Ē1_dish4_freq1)
+                end
+            end
+            (Ē2_dish0_freq4, Ē2_dish0_freq5) = let
+                src = if is_lo_thread
+                    Ē1_dish0_freq5
+                else
+                    Ē1_dish0_freq4
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish0_freq4, dst)
+                else
+                    (dst, Ē1_dish0_freq5)
+                end
+            end
+            (Ē2_dish4_freq4, Ē2_dish4_freq5) = let
+                src = if is_lo_thread
+                    Ē1_dish4_freq5
+                else
+                    Ē1_dish4_freq4
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish4_freq4, dst)
+                else
+                    (dst, Ē1_dish4_freq5)
+                end
+            end
+            (Ē2_dish0_freq8, Ē2_dish0_freq9) = let
+                src = if is_lo_thread
+                    Ē1_dish0_freq9
+                else
+                    Ē1_dish0_freq8
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish0_freq8, dst)
+                else
+                    (dst, Ē1_dish0_freq9)
+                end
+            end
+            (Ē2_dish4_freq8, Ē2_dish4_freq9) = let
+                src = if is_lo_thread
+                    Ē1_dish4_freq9
+                else
+                    Ē1_dish4_freq8
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish4_freq8, dst)
+                else
+                    (dst, Ē1_dish4_freq9)
+                end
+            end
+            (Ē2_dish0_freq12, Ē2_dish0_freq13) = let
+                src = if is_lo_thread
+                    Ē1_dish0_freq13
+                else
+                    Ē1_dish0_freq12
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish0_freq12, dst)
+                else
+                    (dst, Ē1_dish0_freq13)
+                end
+            end
+            (Ē2_dish4_freq12, Ē2_dish4_freq13) = let
+                src = if is_lo_thread
+                    Ē1_dish4_freq13
+                else
+                    Ē1_dish4_freq12
+                end
+                dst = IndexSpaces.cuda_shfl_xor_sync(0xffffffff, src, 0x00000008)
+                if is_lo_thread
+                    (Ē1_dish4_freq12, dst)
+                else
+                    (dst, Ē1_dish4_freq13)
+                end
+            end
+            Ē2lo_dish0_freq0 = Ē2_dish0_freq0
+            Ē2hi_dish0_freq0 = Ē2_dish8_freq0
+            Ē2lo_dish4_freq0 = Ē2_dish4_freq0
+            Ē2hi_dish4_freq0 = Ē2_dish12_freq0
+            Ē2lo_dish0_freq4 = Ē2_dish0_freq4
+            Ē2hi_dish0_freq4 = Ē2_dish8_freq4
+            Ē2lo_dish4_freq4 = Ē2_dish4_freq4
+            Ē2hi_dish4_freq4 = Ē2_dish12_freq4
+            Ē2lo_dish0_freq8 = Ē2_dish0_freq8
+            Ē2hi_dish0_freq8 = Ē2_dish8_freq8
+            Ē2lo_dish4_freq8 = Ē2_dish4_freq8
+            Ē2hi_dish4_freq8 = Ē2_dish12_freq8
+            Ē2lo_dish0_freq12 = Ē2_dish0_freq12
+            Ē2hi_dish0_freq12 = Ē2_dish8_freq12
+            Ē2lo_dish4_freq12 = Ē2_dish4_freq12
+            Ē2hi_dish4_freq12 = Ē2_dish12_freq12
+            Ē2_dish0_freq0 = Ē2lo_dish0_freq0
+            Ē2_dish8_freq0 = Ē2hi_dish0_freq0
+            Ē2_dish4_freq0 = Ē2lo_dish4_freq0
+            Ē2_dish12_freq0 = Ē2hi_dish4_freq0
+            Ē2_dish0_freq4 = Ē2lo_dish0_freq4
+            Ē2_dish8_freq4 = Ē2hi_dish0_freq4
+            Ē2_dish4_freq4 = Ē2lo_dish4_freq4
+            Ē2_dish12_freq4 = Ē2hi_dish4_freq4
+            Ē2_dish0_freq8 = Ē2lo_dish0_freq8
+            Ē2_dish8_freq8 = Ē2hi_dish0_freq8
+            Ē2_dish4_freq8 = Ē2lo_dish4_freq8
+            Ē2_dish12_freq8 = Ē2hi_dish4_freq8
+            Ē2_dish0_freq12 = Ē2lo_dish0_freq12
+            Ē2_dish8_freq12 = Ē2hi_dish0_freq12
+            Ē2_dish4_freq12 = Ē2lo_dish4_freq12
+            Ē2_dish12_freq12 = Ē2hi_dish4_freq12
+            IndexSpaces.unsafe_store4_global!(
+                Ē_memory,
+                (
+                    (
+                        (
+                            (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 32768 +
+                            ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 2048) * 65536
+                        ) +
+                        (
+                            (
+                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                            ) % 256
+                        ) * 128
+                    ) +
+                    (
+                        (
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                        ) ÷ 4
+                    ) % 128
+                ) +
+                0 +
+                0x01,
+                (Ē2_dish0_freq0, Ē2_dish4_freq0, Ē2_dish8_freq0, Ē2_dish12_freq0),
+            )
+            IndexSpaces.unsafe_store4_global!(
+                Ē_memory,
+                (
+                    (
+                        (
+                            (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 32768 +
+                            ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 2048) * 65536
+                        ) +
+                        (
+                            (
+                                (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + 4) +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                            ) % 256
+                        ) * 128
+                    ) +
+                    (
+                        (
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                        ) ÷ 4
+                    ) % 128
+                ) +
+                0 +
+                0x01,
+                (Ē2_dish0_freq4, Ē2_dish4_freq4, Ē2_dish8_freq4, Ē2_dish12_freq4),
+            )
+            IndexSpaces.unsafe_store4_global!(
+                Ē_memory,
+                (
+                    (
+                        (
+                            (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 32768 +
+                            ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 2048) * 65536
+                        ) +
+                        (
+                            (
+                                (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + 8) +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                            ) % 256
+                        ) * 128
+                    ) +
+                    (
+                        (
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                        ) ÷ 4
+                    ) % 128
+                ) +
+                0 +
+                0x01,
+                (Ē2_dish0_freq8, Ē2_dish4_freq8, Ē2_dish8_freq8, Ē2_dish12_freq8),
+            )
+            IndexSpaces.unsafe_store4_global!(
+                Ē_memory,
+                (
+                    (
+                        (
+                            (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 32768 +
+                            ((((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 16) ÷ 16) % 2048) * 65536
+                        ) +
+                        (
+                            (
+                                (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 16 + 12) +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4
+                            ) % 256
+                        ) * 128
+                    ) +
+                    (
+                        (
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                        ) ÷ 4
+                    ) % 128
+                ) +
+                0 +
+                0x01,
+                (Ē2_dish0_freq12, Ē2_dish4_freq12, Ē2_dish8_freq12, Ē2_dish12_freq12),
+            )
         end
     end
 )
