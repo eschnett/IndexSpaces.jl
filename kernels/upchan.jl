@@ -4,6 +4,9 @@
 using CUDASIMDTypes
 using IndexSpaces
 
+Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
+Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
+
 # CHORD Setup
 
 # Compile-time constants
@@ -18,8 +21,8 @@ const M = 4
 const K = 4
 
 const S = M * U
-const F̄ = F * U
-const T̄ = T ÷ U
+# const F̄ = F * U
+# const T̄ = T ÷ U
 
 # Derived constants
 
@@ -46,10 +49,6 @@ const num_blocks_per_sm = B
     PolrTag
     FreqTag
     MTapsTag
-    UFactorTag
-    # SLengthTag
-    TimeBarTag
-    FreqBarTag
     ThreadTag
     WarpTag
     BlockTag
@@ -61,11 +60,6 @@ const Dish = Index{Physics,DishTag}
 const Polr = Index{Physics,PolrTag}
 const Freq = Index{Physics,FreqTag}
 const MTaps = Index{Physics,MTapsTag}
-const UFactor = Index{Physics,UFactorTag}
-# const SLength = Index{Physics,SLengthTag}
-# TODO: Remove `Bar`, these are just different bits
-const TimeBar = Index{Physics,TimeBarTag}
-const FreqBar = Index{Physics,FreqBarTag}
 
 # Layouts
 
@@ -85,8 +79,8 @@ const layout_W_memory = Layout([
 
 const layout_G_memory = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Time(:time, 1, 2) => SIMD(:simd, 16, 2),
-    Time(:time, 2, U ÷ 2) => Memory(:memory, 1, U ÷ 2),
+    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+    Freq(:freq, 2, (F * U) ÷ 2) => Memory(:memory, 1, (F * U) ÷ 2),
 ])
 
 const layout_E_memory = Layout([
@@ -94,7 +88,7 @@ const layout_E_memory = Layout([
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
     Dish(:dish, 1, 4) => SIMD(:simd, 8, 4),
     Dish(:dish, 4, D ÷ 4) => Memory(:memory, 1, D ÷ 4),
-    Freq(:freq, 1, F) => Memory(:memory, (D ÷ 4), F),
+    Freq(:freq, U, F) => Memory(:memory, (D ÷ 4), F),
     Polr(:polr, 1, P) => Memory(:memory, (D ÷ 4) * F, P),
     Time(:time, 1, T) => Memory(:memory, (D ÷ 4) * F * P, T),
 ])
@@ -104,9 +98,9 @@ const layout_Ē_memory = Layout([
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
     Dish(:dish, 1, 4) => SIMD(:simd, 8, 4),
     Dish(:dish, 4, D ÷ 4) => Memory(:memory, 1, D ÷ 4),
-    FreqBar(:freqbar, 1, F * U) => Memory(:memory, (D ÷ 4), F̄),
-    Polr(:polr, 1, P) => Memory(:memory, (D ÷ 4) * F̄, P),
-    TimeBar(:timebar, 1, T ÷ U) => Memory(:memory, (D ÷ 4) * F̄ * P, T̄),
+    Freq(:freq, 1, F * U) => Memory(:memory, (D ÷ 4), F * U),
+    Polr(:polr, 1, P) => Memory(:memory, (D ÷ 4) * (F * U), P),
+    Time(:time, U, T ÷ U) => Memory(:memory, (D ÷ 4) * (F * U) * P, T ÷ U),
 ])
 
 # Shared memory layouts
@@ -121,56 +115,45 @@ const Σ = U ≤ 64 ? 32 * U + 33 : 65 * (U ÷ 2) + 1
 const layout_F_shared = Layout([
     IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1 << 0, 2) => SIMD(:simd, 8, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
     Time(:time, 8, 2) => SIMD(:simd, 16, 2),
     #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
     #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1 << 0, 2),
     #Unpacked UFactor(:ufactor, 1, 2) => SIMD(:simd, 16, 2),
     # eqn. (94)
-    Dish(:dish, 1 << 2, 2) => Shared(:shared, 1, 2),
-    Dish(:dish, 1 << 3, 2) => Shared(:shared, 2, 2),
-    Dish(:dish, 1 << 4, 2) => Shared(:shared, 4, 2),
-    Dish(:dish, 1 << 5, 2) => Shared(:shared, 8, 2),
-    Dish(:dish, 1 << 6, 2) => Shared(:shared, 16, 2),
-    Dish(:dish, 1 << 1, 2) => Shared(:shared, 32, 2),
+    Dish(:dish, 4, 32) => Shared(:shared, 1, 32),
+    Dish(:dish, 2, 2) => Shared(:shared, 32, 2),
     # eqn. (100)
-    Time(:time, 4, 2) => Shared(:shared, 65 * (1 << 0), 2),
-    Time(:time, 2, 2) => Shared(:shared, 65 * (1 << 1), 2),
-    Time(:time, 1, 2) => Shared(:shared, 65 * (1 << 2), 2),
+    Time(:time, 4, 2) => Shared(:shared, 65 * 1, 2),
+    Time(:time, 2, 2) => Shared(:shared, 65 * 2, 2),
+    Time(:time, 1, 2) => Shared(:shared, 65 * 4, 2),
     # eqn. (100)
-    # TimeBar(:timebar, 1, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
     Time(:time, U, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 @assert K == 4
 const layout_F̄_shared = Layout([
     IntValue(:intvalue, 1, K) => SIMD(:simd, 1, 4),
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1 << 0, 2) => SIMD(:simd, 8, 2),
-    UFactor(:ufactor, 1, 2) => SIMD(:simd, 16, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
     # eqn. (94)
-    Dish(:dish, 1 << 2, 2) => Shared(:shared, 1, 2),
-    Dish(:dish, 1 << 3, 2) => Shared(:shared, 2, 2),
-    Dish(:dish, 1 << 4, 2) => Shared(:shared, 4, 2),
-    Dish(:dish, 1 << 5, 2) => Shared(:shared, 8, 2),
-    Dish(:dish, 1 << 6, 2) => Shared(:shared, 16, 2),
-    Dish(:dish, 1 << 1, 2) => Shared(:shared, 32, 2),
-    # eqn. (100)
-    Time(:time, 4, 2) => Shared(:shared, 65 * (1 << 0), 2),
-    Time(:time, 2, 2) => Shared(:shared, 65 * (1 << 1), 2),
-    Time(:time, 1, 2) => Shared(:shared, 65 * (1 << 2), 2),
-    # eqn. (100)
-    TimeBar(:timebar, 1, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
+    Dish(:dish, 4, 32) => Shared(:shared, 1, 32),
+    Dish(:dish, 2, 2) => Shared(:shared, 32, 2),
+    # eqn. (102)
+    Freq(:freq, 2, 8) => Shared(:shared, 65, 8),
+    # eqn. (102)
+    Time(:time, U, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
     # Cplx(:cplx, 1, C) => Shared(:shared, Σ * (Touter ÷ U), 2),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 # Register layouts
@@ -180,10 +163,10 @@ const layout_F̄_shared = Layout([
 @assert U == 16
 const layout_W_registers = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
-    Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
-    Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
-    Time(:time, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
+    Time(:time, 8, 2) => SIMD(:simd, 16, 2),
+    Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+    Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+    Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
     # Thread(:thread, 1 << 4, 2),
     # Thread(:thread, 1 << 3, 2),
     MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M),
@@ -195,10 +178,10 @@ const layout_W_registers = Layout([
 const layout_X_registers = Layout(
     Dict(
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
-        Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
-        Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
-        Time(:time, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
+        Time(:time, 8, 2) => SIMD(:simd, 16, 2),
+        Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+        Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+        Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
         # Thread(:thread, 1 << 4, 2),
         # Thread(:thread, 1 << 3, 2),
         Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
@@ -210,10 +193,10 @@ const layout_X_registers = Layout(
 @assert U == 16
 const layout_G_registers = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Time(:time, 1 << 0, 2) => SIMD(:simd, 16, 2),
-    Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
-    Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
-    Time(:time, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
+    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+    Freq(:freq, 2, 2) => Thread(:thread, 1 << 1, 2),
+    Freq(:freq, 4, 2) => Thread(:thread, 1 << 0, 2),
+    Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
     # Thread(:thread, 1 << 4, 2),
     # Thread(:thread, 1 << 3, 2),
 ])
@@ -233,9 +216,9 @@ const layout_E_registers = Layout([
     # assign input tiles to warps
     Time(:time, 16, Touter ÷ 16) => Warp(:warp, 1, 16),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 # eqn. (104)
@@ -254,27 +237,28 @@ const layout_F_registers = Layout([
     # eqn. (110)
     IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1 << 0, 2) => SIMD(:simd, 8, 2),
-    Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+    Time(:time, 8, 2) => SIMD(:simd, 16, 2),
     # eqn. (111)
     #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
     #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
     #Unpacked Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
     # eqn. (105)
-    Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
-    Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
-    Time(:time, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
-    Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 4, 2),
-    Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
-    Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
-    Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
-    Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
-    Dish(:dish, 1 << 1, 2) => Warp(:warp, 1 << 3, 2),
+    Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+    Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+    Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
+    Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+    Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
+    Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
+    Dish(:dish, 4, 2) => Warp(:warp, 1 << 0, 2),
+    Dish(:dish, 8, 2) => Warp(:warp, 1 << 1, 2),
+    Dish(:dish, 16, 2) => Warp(:warp, 1 << 2, 2),
+    Dish(:dish, 2, 2) => Warp(:warp, 1 << 3, 2),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 @assert U == 16
@@ -285,35 +269,36 @@ const layout_F̄_registers = Layout([
     # eqn. (110)
     IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1 << 0, 2) => SIMD(:simd, 8, 2),
-    UFactor(:ufactor, 1 << 0, 2) => SIMD(:simd, 16, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
     # eqn. (111)
     #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
     #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
-    #Unpacked UFactor(:ufactor, 1 << 0, 2) => SIMD(:simd, 16, 2),
+    #Unpacked Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
     # eqn. (105)
-    UFactor(:ufactor, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
-    UFactor(:ufactor, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
-    UFactor(:ufactor, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
-    Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 4, 2),
-    Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
-    Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
-    Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
-    Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
-    Dish(:dish, 1 << 1, 2) => Warp(:warp, 1 << 3, 2),
+    Freq(:freq, 2, 2) => Thread(:thread, 1 << 1, 2),
+    Freq(:freq, 4, 2) => Thread(:thread, 1 << 0, 2),
+    Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
+    Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+    Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
+    Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
+    Dish(:dish, 4, 2) => Warp(:warp, 1 << 0, 2),
+    Dish(:dish, 8, 2) => Warp(:warp, 1 << 1, 2),
+    Dish(:dish, 16, 2) => Warp(:warp, 1 << 2, 2),
+    Dish(:dish, 2, 2) => Warp(:warp, 1 << 3, 2),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 const layout_F_ringbuf_registers = Layout([
     # eqn. (110)
     IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1 << 0, 2) => SIMD(:simd, 8, 2),
-    Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+    Time(:time, 8, 2) => SIMD(:simd, 16, 2),
     # eqn. (111)
     #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
@@ -323,19 +308,19 @@ const layout_F_ringbuf_registers = Layout([
     Time(:time, U ÷ Ur, Ur) => Register(:time, U ÷ Ur, Ur),
     Dish(:dish, D ÷ Dr, Dr) => Register(:dish, D ÷ Dr, Dr),
     # eqn. (105)
-    Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
-    Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
-    Time(:time, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
-    Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 4, 2),
-    Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
-    Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
-    Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
-    Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
-    Dish(:dish, 1 << 1, 2) => Warp(:warp, 1 << 3, 2),
+    Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+    Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+    Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
+    Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
+    Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
+    Dish(:dish, 4, 2) => Warp(:warp, 1 << 0, 2),
+    Dish(:dish, 8, 2) => Warp(:warp, 1 << 1, 2),
+    Dish(:dish, 16, 2) => Warp(:warp, 1 << 2, 2),
+    Dish(:dish, 2, 2) => Warp(:warp, 1 << 3, 2),
     # sect. 5.2
-    Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
+    Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-    Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+    Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
 # Kernel setup
@@ -385,12 +370,12 @@ function upchan!(emitter)
     @assert U == 16
     layout_Γ¹reim_registers = Layout([
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
-        Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
-        Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
-        FreqBar(:freqbar, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
-        FreqBar(:freqbar, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
-        FreqBar(:freqbar, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
+        Time(:time, 8, 2) => SIMD(:simd, 16, 2),
+        Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+        Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+        Freq(:freq, 1, 2) => Thread(:thread, 1 << 2, 2),
+        Freq(:freq, 2, 2) => Thread(:thread, 1 << 4, 2),
+        Freq(:freq, 4, 2) => Thread(:thread, 1 << 3, 2),
     ])
     # eqn. (60)
     push!(
@@ -405,8 +390,8 @@ function upchan!(emitter)
                 thread4 = (thread ÷ 16i32) % 2i32
                 timehi0 = 1i32 * thread0 + 2i32 * thread1
                 timehi1 = timehi0 + 4i32
-                freqbarlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
-                Γ¹0, Γ¹1 = (cispi(-2 * timehi0 * freqbarlo / Float32(2^8)), cispi(-2 * timehi1 * freqbarlo / Float32(2^8)))
+                freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
+                Γ¹0, Γ¹1 = (cispi(-2 * timehi0 * freqlo / Float32(2^8)), cispi(-2 * timehi1 * freqlo / Float32(2^8)))
                 (Γ¹0, Γ¹1)
             end
         end,
@@ -422,10 +407,10 @@ function upchan!(emitter)
     @assert U == 16
     layout_Γ²reim_registers = Layout([
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, 1 << 0, 2) => SIMD(:simd, 16, 2),
-        FreqBar(:freqbar, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
-        FreqBar(:freqbar, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
-        FreqBar(:freqbar, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
+        Time(:time, 1, 2) => SIMD(:simd, 16, 2),
+        Freq(:freq, 1, 2) => Thread(:thread, 1 << 2, 2),
+        Freq(:freq, 2, 2) => Thread(:thread, 1 << 4, 2),
+        Freq(:freq, 4, 2) => Thread(:thread, 1 << 3, 2),
     ])
     # eqn. (61)
     push!(
@@ -440,8 +425,8 @@ function upchan!(emitter)
                 thread4 = (thread ÷ 16i32) % 2i32
                 timelo0 = 0i32
                 timelo1 = 1i32
-                freqbarlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
-                (Γ²0, Γ²1) = (cispi(-2 * timelo0 * freqbarlo / Float32(2^16)), cispi(-2 * timelo1 * freqbarlo / Float32(2^16)))
+                freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
+                (Γ²0, Γ²1) = (cispi(-2 * timelo0 * freqlo / Float32(2^16)), cispi(-2 * timelo1 * freqlo / Float32(2^16)))
                 (Γ²0, Γ²1)
             end
         end,
@@ -453,12 +438,12 @@ function upchan!(emitter)
     @assert U == 16
     layout_Γ³reim_registers = Layout([
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, 1 << 0, 2) => SIMD(:simd, 16, 2),
-        Dish(:dish_in, 1 << 5, 2) => Thread(:thread, 1 << 1, 2),
-        Dish(:dish_in, 1 << 6, 2) => Thread(:thread, 1 << 0, 2),
-        FreqBar(:freqbar, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
-        Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 4, 2),
-        Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
+        Time(:time, 1, 2) => SIMD(:simd, 16, 2),
+        Dish(:dish_in, 32, 2) => Thread(:thread, 1 << 1, 2),
+        Dish(:dish_in, 64, 2) => Thread(:thread, 1 << 0, 2),
+        Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
+        Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
+        Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
     ])
     # eqn. (62)
     push!(
@@ -473,14 +458,13 @@ function upchan!(emitter)
                 thread4 = (thread ÷ 16i32) % 2i32
                 timelo0 = 0i32
                 timelo1 = 1i32
-                freqbarlo = 1i32 * thread2
+                freqlo = 1i32 * thread2
                 # Sparsity pattern, a Kronecker δ in the spectator indices
                 dish_in = 1i32 * thread1 + 2i32 * thread0
                 dish = 1i32 * thread4 + 2i32 * thread3
                 delta = dish == dish_in
                 Γ³0, Γ³1 = (
-                    delta * cispi(-2 * timelo0 * freqbarlo / Float32(2^1)),
-                    delta * cispi(-2 * timelo1 * freqbarlo / Float32(2^1)),
+                    delta * cispi(-2 * timelo0 * freqlo / Float32(2^1)), delta * cispi(-2 * timelo1 * freqlo / Float32(2^1))
                 )
                 (Γ³0, Γ³1)
             end
@@ -534,7 +518,6 @@ function upchan!(emitter)
                 # Step 2: Read F-array miniblock from shared memory
 
                 load!(emitter, :F_in => layout_F_registers, :F_shared => layout_F_shared)
-                apply!(emitter, :F̄_out => layout_F̄_registers, :(zero(Int8x4)))
 
                 # Loop over unpacked miniblocks:
                 # This is an implicit loop over Dish(:dish, 1, 2)
@@ -600,7 +583,7 @@ function upchan!(emitter)
                     begin
                         # D_ik = A_ij * B_jk + C_ik
                         # output indices
-                        mma_is = [FreqBar(:freqbar, 1, 2), FreqBar(:freqbar, 4, 2), FreqBar(:freqbar, 2, 2), Cplx(:cplx, 1, C)]
+                        mma_is = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2), Cplx(:cplx, 1, C)]
                         # input indices
                         mma_js = [Time(:time, 8, 2), Time(:time, 2, 2), Time(:time, 4, 2), Cplx(:cplx_in, 1, 2)]
                         # spectator indices
@@ -620,10 +603,11 @@ function upchan!(emitter)
                             Time(:time, 1 << 0, 2) => SIMD(:simd, 16, 2),
                             Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 1, 2),
                             Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 0, 2),
-                            FreqBar(:freqbar, 1, 2) => Thread(:thread, 1 << 2, 2),
-                            FreqBar(:freqbar, 2, 2) => Thread(:thread, 1 << 4, 2),
-                            FreqBar(:freqbar, 4, 2) => Thread(:thread, 1 << 3, 2),
+                            Freq(:freq, 1, 2) => Thread(:thread, 1 << 2, 2),
+                            Freq(:freq, 2, 2) => Thread(:thread, 1 << 4, 2),
+                            Freq(:freq, 4, 2) => Thread(:thread, 1 << 3, 2),
                             Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+                            Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
                             Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
                             Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
                             Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
@@ -632,7 +616,7 @@ function upchan!(emitter)
                             # sect. 5.2
                             Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
                             Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-                            Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+                            Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
                         ])
                         apply!(emitter, :WW => layout_WW_registers, :(zero(Float16x2)))
                         mma_row_col_m16n8k16_f16!(
@@ -647,11 +631,11 @@ function upchan!(emitter)
                     begin
                         # D_ik = A_ij * B_jk + C_ik
                         # output indices
-                        mma_is = [FreqBar(:freqbar, 8, 2), Dish(:dish, 64, 2), Dish(:dish, 32, 2), Cplx(:cplx, 1, C)]
+                        mma_is = [Freq(:freq, 8, 2), Dish(:dish, 64, 2), Dish(:dish, 32, 2), Cplx(:cplx, 1, C)]
                         # input indices
                         mma_js = [Time(:time, 1, 2), Dish(:dish_in, 64, 2), Dish(:dish_in, 32, 2), Cplx(:cplx_in, 1, 2)]
                         # spectator indices
-                        mma_ks = [FreqBar(:freqbar, 1, 2), FreqBar(:freqbar, 4, 2), FreqBar(:freqbar, 2, 2)]
+                        mma_ks = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2)]
                         #
                         let
                             layout = copy(emitter.environment[:ZZ])
@@ -673,13 +657,14 @@ function upchan!(emitter)
                         end
                         layout_YY_registers = Layout([
                             FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-                            FreqBar(:freqbar, 1 << 0, 2) => SIMD(:simd, 16, 2),
-                            FreqBar(:freqbar, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
-                            FreqBar(:freqbar, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
-                            FreqBar(:freqbar, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
+                            Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
+                            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
+                            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
+                            Freq(:freq, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
                             Dish(:dish, 1 << 5, 2) => Thread(:thread, 1 << 4, 2),
                             Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
                             Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+                            Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
                             Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
                             Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
                             Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
@@ -688,18 +673,36 @@ function upchan!(emitter)
                             # sect. 5.2
                             Dish(:dish, 1 << 7, D ÷ 128) => Block(:block, 1, D ÷ 128),
                             Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
-                            Freq(:freq, 1, F) => Block(:block, (D ÷ 128) * P, F),
+                            Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
                         ])
                         apply!(emitter, :YY => layout_YY_registers, :(zero(Float16x2)))
                         mma_row_col_m16n8k16_f16!(
                             emitter, :YY, :Γ³ => (mma_is, mma_js), :ZZ => (mma_js, mma_ks), :YY => (mma_is, mma_ks)
                         )
                     end
-                    apply!(emitter, :E4, [:YY], (YY,) -> :YY)
+                    apply!(emitter, :E4, [:YY], (YY,) -> :($YY))
 
-                else
+                else            # unsupported value for U
                     @assert false
                 end
+
+                # Step 7: Compute E5 by applying gains to E4
+                apply!(emitter, :E5, [:E4, :Gains], (E4, G) -> :($G * $E4))
+
+                # Step 8: Compute F̄_out by quantizing E5
+                apply!(emitter, :E5, [:E5], (E5,) -> :(clamp($E5, Float16x2(-7, -7), Float16x2(+7, +7))))
+                narrow2!(
+                    emitter,
+                    :F̄_out,
+                    :E5,
+                    Register(:cplx, 1, C) => SIMD(:simd, 4, 2),
+                    Register(:dish, 1, 2) => SIMD(:simd, 8, 2);
+                    newtype=IntValue,
+                )
+                @assert emitter.environment[:F̄_out] == layout_F̄_registers
+
+                # Step 9: Write F̄_out to shared memory
+                store!(emitter, :F̄_shared => layout_F̄_shared, :F̄_out)
 
                 return nothing
             end
