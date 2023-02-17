@@ -1231,7 +1231,10 @@ function widen!(
 
     @assert newtype ≡ nothing || newtype <: Index{Physics}
     res_tag = newtype ≡ nothing ? indextag(var_value) : indextag(newtype)
-    res_value = Index{Physics,res_tag}(var_value.name, var_value.offset, var_value.length * simd.length)
+    res_value_name = get(
+        Dict(IntValue => :intvalue, FloatValue => :floatvalue, BFloatValue => :bfloatvalue), newtype, var_value.name
+    )
+    res_value = Index{Physics,res_tag}(res_value_name, var_value.offset, var_value.length * simd.length)
 
     res_layout[res_value] = SIMD(:simd, var_value.offset, var_value.length * simd.length)
 
@@ -1427,6 +1430,100 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
             @assert false
         end
         push!(emitter.statements, stmt)
+    end
+
+    return nothing
+end
+
+export narrow2!
+function narrow2!(
+    emitter::Emitter,
+    res::Symbol,
+    var::Symbol,
+    register_simd1::Pair{Register,SIMD},
+    register_simd2::Pair{Register,SIMD};
+    newtype::Union{Nothing,Type}=nothing,
+)
+    register1, simd1 = register_simd1
+    register2, simd2 = register_simd2
+
+    var_layout = emitter.environment[var]
+    var_value = get_value_index(var_layout)::Index{Physics}
+
+    # res may or may not already exist
+    # @assert res ∉ emitter.environment
+
+    @assert register1.length == 2
+    @assert register2.length == 2
+    @assert ispow2(register1.offset)
+    @assert ispow2(register2.offset)
+    register1_bit = trailing_zeros(register1.offset)
+    register2_bit = trailing_zeros(register2.offset)
+    @assert register1.offset == 1 << register1_bit
+    @assert register2.offset == 1 << register2_bit
+    register1_phys = inv(var_layout)[register1]
+    register2_phys = inv(var_layout)[register2]
+
+    @assert simd1.length == 2
+    @assert simd2.length == 2
+    @assert ispow2(simd1.offset)
+    @assert ispow2(simd2.offset)
+    simd1_bit = trailing_zeros(simd1.offset)
+    simd2_bit = trailing_zeros(simd2.offset)
+    @assert simd1.offset == 1 << simd1_bit
+    @assert simd2.offset == 1 << simd2_bit
+
+    tmp_layout = copy(var_layout)
+    delete!(tmp_layout, register1_phys)
+    delete!(tmp_layout, register2_phys)
+
+    res_layout = copy(tmp_layout)
+    inv_res_layout = inv(res_layout)
+    value = inv_res_layout[SIMD(:simd, 1, 2)]
+    value_tag = indextag(value)::ValueTag
+    # TODO: Generalize this; we could handle other tags as well
+    @assert value_tag == FloatValueTag
+    @assert newtype <: Index{Physics}
+    @assert indextag(newtype) == IntValueTag
+    @assert Index{Physics,value_tag}(value.name, simd1.offset, simd1.length) ∈ res_layout
+    @assert Index{Physics,value_tag}(value.name, simd2.offset, simd2.length) ∈ res_layout
+    delete!(res_layout, var_value)
+    delete!(res_layout, Index{Physics,value_tag}(value.name, simd1.offset, simd1.length))
+    delete!(res_layout, Index{Physics,value_tag}(value.name, simd2.offset, simd2.length))
+    res_tag = newtype ≡ nothing ? indextag(var_value) : indextag(newtype)
+    res_value_name = get(
+        Dict(IntValue => :intvalue, FloatValue => :floatvalue, BFloatValue => :bfloatvalue), newtype, var_value.name
+    )
+    res_value = Index{Physics,res_tag}(res_value_name, var_value.offset, var_value.length ÷ simd1.length ÷ simd2.length)
+    res_layout[res_value] = SIMD(:simd, var_value.offset, var_value.length ÷ simd1.length ÷ simd2.length)
+    res_layout[register1_phys] = simd1
+    res_layout[register2_phys] = simd2
+
+    emitter.environment[res] = res_layout
+
+    # TODO: Generalize this; we could handle (3, 4) as well
+    @assert simd1_bit == 2
+    @assert simd2_bit == 3
+
+    loop_over_registers(emitter, tmp_layout) do state
+        state0 = copy(state)
+        state1 = copy(state)
+        state2 = copy(state)
+        state3 = copy(state)
+        state0.dict[register1.name] = get(state0.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state1.dict[register1.name] = get(state1.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state2.dict[register1.name] = get(state2.dict, register1.name, Int32(0)) + Int32(0 * register1.offset)
+        state3.dict[register1.name] = get(state3.dict, register1.name, Int32(0)) + Int32(1 * register1.offset)
+        state0.dict[register2.name] = get(state0.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state1.dict[register2.name] = get(state1.dict, register2.name, Int32(0)) + Int32(0 * register2.offset)
+        state2.dict[register2.name] = get(state2.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        state3.dict[register2.name] = get(state3.dict, register2.name, Int32(0)) + Int32(1 * register2.offset)
+        res_name = register_name(res, state)
+        var0_name = register_name(var, state0)
+        var1_name = register_name(var, state1)
+        var2_name = register_name(var, state2)
+        var3_name = register_name(var, state3)
+        push!(emitter.statements, :($res_name = Int4x8(($var0_name, $var1_name, $var2_name, $var3_name))))
     end
 
     return nothing
