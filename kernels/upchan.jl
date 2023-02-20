@@ -1,6 +1,7 @@
 # CHORD upchannelization kernel
 # <CHORD_GPU_upchannelization.pdf>
 
+using CUDA
 using CUDASIMDTypes
 using IndexSpaces
 
@@ -11,6 +12,7 @@ Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
 
 # Compile-time constants
 
+const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
 const T = 32768
 const D = 512
@@ -19,10 +21,6 @@ const F = 16
 const U = 16
 const M = 4
 const K = 4
-
-const S = M * U
-# const F̄ = F * U
-# const T̄ = T ÷ U
 
 # Derived constants
 
@@ -49,6 +47,7 @@ const num_blocks_per_sm = B
     PolrTag
     FreqTag
     MTapsTag
+    ReplTag
     ThreadTag
     WarpTag
     BlockTag
@@ -60,6 +59,7 @@ const Dish = Index{Physics,DishTag}
 const Polr = Index{Physics,PolrTag}
 const Freq = Index{Physics,FreqTag}
 const MTaps = Index{Physics,MTapsTag}
+const Repl = Index{Physics,ReplTag}
 
 # Layouts
 
@@ -103,6 +103,13 @@ const layout_Ē_memory = Layout([
     Time(:time, U, T ÷ U) => Memory(:memory, (D ÷ 4) * (F * U) * P, T ÷ U),
 ])
 
+const layout_info_memory = Layout([
+    IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32),
+    Index{Physics,ThreadTag}(:thread, 1, num_threads) => Memory(:memory, 1, num_threads),
+    Index{Physics,WarpTag}(:warp, 1, num_warps) => Memory(:memory, num_threads, num_warps),
+    Index{Physics,BlockTag}(:block, 1, num_blocks) => Memory(:memory, num_threads * num_warps, num_blocks),
+])
+
 # Shared memory layouts
 
 # eqn. (101)
@@ -135,6 +142,7 @@ const layout_F_shared = Layout([
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
     Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
+const layout_F_shared_size = Σ * (Touter ÷ U)
 
 @assert K == 4
 const layout_F̄_shared = Layout([
@@ -155,6 +163,7 @@ const layout_F̄_shared = Layout([
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
     Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
+const layout_F̄_shared_size = Σ * (Touter ÷ U)
 
 # Register layouts
 
@@ -346,9 +355,17 @@ const layout_F_ringbuf_registers = Layout([
     Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
 ])
 
+const layout_info_registers = Layout([
+    IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32),
+    Index{Physics,ThreadTag}(:thread, 1, num_threads) => Thread(:thread, 1, num_threads),
+    Index{Physics,WarpTag}(:warp, 1, num_warps) => Warp(:warp, 1, num_warps),
+    Index{Physics,BlockTag}(:block, 1, num_blocks) => Block(:block, 1, num_blocks),
+])
+
 # Kernel setup
 
-const shmem_size = 0            # TODO
+const shmem_size = cld(layout_F_shared_size, 32) * 32 + cld(layout_F̄_shared_size, 32) * 32
+
 const shmem_bytes = 4 * shmem_size
 
 const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_per_sm, shmem_bytes)
@@ -357,6 +374,10 @@ const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_
 
 # sect. 5.5
 function upchan!(emitter)
+    # Set info output
+    apply!(emitter, :info => layout_info_registers, 1i32)
+    store!(emitter, :info_memory => layout_info_memory, :info)
+
     # Initialize ring buffer
     apply!(emitter, :F_ringbuf => layout_F_ringbuf_registers, :(zero(Int4x8)))
 
@@ -439,7 +460,7 @@ function upchan!(emitter)
     push!(
         emitter.statements,
         quote
-            (Γ¹0, Γ¹1) = let
+            (Γ²0, Γ²1) = let
                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
                 thread0 = (thread ÷ 1i32) % 2i32
                 thread1 = (thread ÷ 2i32) % 2i32
@@ -500,6 +521,8 @@ function upchan!(emitter)
     merge!(emitter, :Γ³re, [:Γ³reim, :Γ³rere], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
     merge!(emitter, :Γ³im, [:Γ³imim, :Γ³imre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
     merge!(emitter, :Γ³, [:Γ³im, :Γ³re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    # Why do we need this? `mma_row_col_m16n8k16_f16!` should skip this tag if not present.
+    merge!(emitter, :Γ³, [:Γ³, :Γ³], Dish(:dish, 1, 2) => Register(:dish, 1, 2))
 
     # Outermost loop over outer blocks
     loop!(emitter, Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter)) do emitter
@@ -517,7 +540,7 @@ function upchan!(emitter)
         permute!(emitter, :E2, :E1, Dish(:dish, 2, 2), Time(:time, 8, 2))
         split!(emitter, [:E2lo, :E2hi], :E2, Register(:time, 8, 2))
         merge!(emitter, :E2, [:E2lo, :E2hi], Dish(:dish, 2, 2) => Register(:dish, 2, 2))
-        apply!(emitter, :F, [:E2], (E2,) -> :E2)
+        apply!(emitter, :F, [:E2], (E2,) -> :($E2))
         # Unpack
         #Unpack widen2!(
         #Unpack     emitter,
@@ -594,8 +617,8 @@ function upchan!(emitter)
                 # Step 5: Compute E3 by applying phases to E2
                 split!(emitter, [:E2im, :E2re], :E2, Cplx(:cplx, 1, C))
                 split!(emitter, [:Xim, :Xre], :X, Cplx(:cplx, 1, C))
-                apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd(-Xim * E2im, Xre, E2re)))
-                apply!(emitter, :E3im, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd(Xim * E2re, Xre, E2im)))
+                apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd(-$Xim * $E2im, $Xre, $E2re)))
+                apply!(emitter, :E3im, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xim * $E2re, $Xre, $E2im)))
                 merge!(emitter, :E3, [:E3im, :E3re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
                 # Step 6: Compute E4 by FFTing E3
@@ -611,16 +634,6 @@ function upchan!(emitter)
                         mma_js = [Time(:time, 8, 2), Time(:time, 2, 2), Time(:time, 4, 2), Cplx(:cplx_in, 1, 2)]
                         # spectator indices
                         mma_ks = [Time(:time, 1, 2), Dish(:dish, 64, 2), Dish(:dish, 32, 2)]
-                        #
-                        let
-                            layout = copy(emitter.environment[:XX])
-                            k = Cplx(:cplx, 1, C)
-                            k′ = Cplx(:cplx_in, 1, C)
-                            v = layout[k]
-                            delete!(layout, k)
-                            layout[k′] = v
-                            emitter.environment[:XX] = layout
-                        end
                         layout_WW_registers = Layout([
                             FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
                             Time(:time, 1 << 0, 2) => SIMD(:simd, 16, 2),
@@ -641,6 +654,8 @@ function upchan!(emitter)
                             Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
                             Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
                         ])
+                        split!(emitter, [:XXim, :XXre], :XX, Cplx(:cplx, 1, C))
+                        merge!(emitter, :XX, [:XXim, :XXre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
                         apply!(emitter, :WW => layout_WW_registers, :(zero(Float16x2)))
                         mma_row_col_m16n8k16_f16!(
                             emitter, :WW, :Γ¹ => (mma_is, mma_js), :XX => (mma_js, mma_ks), :WW => (mma_is, mma_ks)
@@ -648,7 +663,21 @@ function upchan!(emitter)
                     end
 
                     # Step 6.2: Z = exp(...) W
-                    apply!(emitter, :ZZ, [:WW, :Γ²], (WW, Γ²) -> :(swapped_complex_mul(Γ², W)))
+                    split!(emitter, [:Γ²im, :Γ²re], :Γ², Cplx(:cplx, 1, C))
+                    split!(emitter, [:WWim, :WWre], :WW, Cplx(:cplx, 1, C))
+                    apply!(
+                        emitter,
+                        :ZZre,
+                        [:WWre, :WWim, :Γ²re, :Γ²im],
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd(-$Γ²im * $WWim, $Γ²re, $WWre)),
+                    )
+                    apply!(
+                        emitter,
+                        :ZZim,
+                        [:WWre, :WWim, :Γ²re, :Γ²im],
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²im * $WWre, $Γ²re, $WWim)),
+                    )
+                    merge!(emitter, :ZZ, [:ZZim, :ZZre], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
                     # Step 6.3: Length 2 FFT: Y = exp(...) Z
                     begin
@@ -660,15 +689,10 @@ function upchan!(emitter)
                         # spectator indices
                         mma_ks = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2)]
                         #
+                        split!(emitter, [:ZZim, :ZZre], :ZZ, Cplx(:cplx, 1, C))
+                        merge!(emitter, :ZZ, [:ZZim, :ZZre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
                         let
                             layout = copy(emitter.environment[:ZZ])
-                            begin
-                                k = Cplx(:cplx, 1, C)
-                                k′ = Cplx(:cplx_in, 1, C)
-                                v = layout[k]
-                                delete!(layout, k)
-                                layout[k′] = v
-                            end
                             for dish in [1 << 5, 1 << 6]
                                 k = Dish(:dish, dish, 2)
                                 k′ = Dish(:dish_in, dish, 2)
@@ -763,6 +787,10 @@ function upchan!(emitter)
         return nothing
     end # loop!(Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter))
 
+    # Set info output
+    apply!(emitter, :info => layout_info_registers, 0i32)
+    store!(emitter, :info_memory => layout_info_memory, :info)
+
     return nothing
 end
 
@@ -791,4 +819,132 @@ println("[Done creating upchan kernel]")
 
 open("output/upchan.jl", "w") do fh
     println(fh, upchan_kernel)
+end
+
+@eval function upchan(G_memory, W_memory, E_memory, Ē_memory, info_memory)
+    shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
+    F_shared = reinterpret(Int4x8, shmem)
+    F̄_shared = reinterpret(Int4x8, shmem)
+    $upchan_kernel
+    return nothing
+end
+
+function main(; compile_only::Bool=false, silent::Bool=false)
+    !silent && println("CHORD upchannelizer")
+
+    !silent && println("Compiling kernel...")
+    num_threads = kernel_setup.num_threads
+    num_warps = kernel_setup.num_warps
+    num_blocks = kernel_setup.num_blocks
+    num_blocks_per_sm = kernel_setup.num_blocks_per_sm
+    shmem_bytes = kernel_setup.shmem_bytes
+    shmem_size = shmem_bytes ÷ 4
+    @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
+    @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
+    kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm upchan(
+        CUDA.zeros(Float16x2, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
+    )
+    attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
+
+    if compile_only
+        return nothing
+    end
+
+    return nothing
+end
+
+function fix_ptx_kernel()
+    ptx = read("output/upchan.ptx", String)
+    ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
+    open("output/upchan.ptx", "w") do fh
+        write(fh, ptx)
+    end
+    kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
+    open("output/upchan.yaml", "w") do fh
+        print(
+            fh,
+            """
+    --- !<tag:chord-observatory.ca/x-engine/kernel-description-1.0.0>
+    kernel-description:
+      name: "upchan"
+      description: "Upchannelizer"
+      design-parameters:
+        number-of-complex-components: $C
+        number-of-dishes: $D
+        number-of-frequencies: $F
+        number-of-polarizations: $P
+        number-of-taps: $M
+        number-of-timesamples: $T
+        sampling-time-μsec: $sampling_time_μsec
+        upchannelization-factor: $U
+      compile-parameters:
+        minthreads: $(num_threads * num_warps)
+        blocks_per_sm: $num_blocks_per_sm
+      call-parameters:
+        threads: [$num_threads, $num_warps]
+        blocks: [$num_blocks]
+        shmem_bytes: $shmem_bytes
+      kernel-name: "$kernel_name"
+      kernel-arguments:
+        - name: "G"
+          intent: in
+          type: Float16
+          indices: [F̄]
+          shape: [$(F*U)]
+          strides: [1]
+        - name: "W"
+          intent: in
+          type: Float16
+          indices: [U, M]
+          shape: [$U, $M]
+          strides: [1, $U]
+        - name: "E"
+          intent: in
+          type: Int4
+          indices: [C, D, F, P, T]
+          shape: [$C, $D, $F, $P, $T]
+          strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+        - name: "Ē"
+          intent: out
+          type: Int4
+          indices: [C, D, F̄, P, T̄]
+          shape: [$C, $D, $(F*U), $P, $(T÷U)]
+          strides: [1, $C, $(C*D), $(C*D*F*U), $(C*D*F*U*P)]
+        - name: "info"
+          intent: out
+          type: Int32
+          indices: [thread, warp, block]
+          shapes: [$num_threads, $num_warps, $num_blocks]
+          strides: [1, $num_threads, $(num_threads*num_warps)]
+    ...
+    """,
+        )
+    end
+    return nothing
+end
+
+if CUDA.functional()
+    # Output kernel
+    println("Writing PTX code...")
+    open("output/upchan.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true, silent=true)
+        end
+    end
+    fix_ptx_kernel()
+    println("Writing SASS code...")
+    open("output/upchan.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true, silent=true)
+        end
+    end
+
+    # # Run test
+    # main(; run_selftest=true)
+
+    # # Run benchmark
+    # main(; nruns=100)
+
+    # # Regular run, also for profiling
+    # main()
 end
