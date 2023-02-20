@@ -1672,7 +1672,7 @@ function split!(emitter::Emitter, ress::AbstractVector{Symbol}, var::Symbol, reg
     loop_over_registers(emitter, res_layout) do state
         for (n, res) in enumerate(ress)
             state′ = copy(state)
-            state′.dict[index.name] = get(state′.dict, index.name, 0i32) + Int32((n - 1) * index.offset)
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + Int32((n - 1) * register.offset)
             res_name = register_name(res, state)
             var_name = register_name(var, state′)
             push!(emitter.statements, :($res_name = $var_name))
