@@ -25,7 +25,7 @@ idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # Compile-time constants (section 4.4)
 
 # Full CHORD
-const sampling_time = 27.3
+const sampling_time_μsec = 16 * 4096 / (2 * 1200)
 const C = 2
 const T = 2064
 const D = 512
@@ -33,7 +33,7 @@ const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 84   # 256
+const F = 256                   # 84 for benchmarking
 
 const Touter = 48
 const Tinner = 4
@@ -1502,7 +1502,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             runtime = stats.time / nruns * 1.0e+6
             num_frequencies_scaled = F₀
             runtime_scaled = runtime / F * num_frequencies_scaled
-            dataframe_length = T * sampling_time
+            dataframe_length = T * sampling_time_μsec
             fraction = runtime_scaled / dataframe_length
             round1(x) = round(x; digits=1)
             println("""
@@ -1518,7 +1518,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 number-of-frequencies: $F
                 number-of-polarizations: $P
                 number-of-timesamples: $T
-                sampling-time: $sampling_time
+                sampling-time-μsec: $sampling_time_μsec
               compile-parameters:
                 minthreads: $(num_threads * num_warps)
                 blocks_per_sm: $num_blocks_per_sm
@@ -1596,7 +1596,7 @@ function fix_ptx_kernel()
         number-of-frequencies: $F
         number-of-polarizations: $P
         number-of-timesamples: $T
-        sampling-time: $sampling_time
+        sampling-time-μsec: $sampling_time_μsec
       compile-parameters:
         minthreads: $(num_threads * num_warps)
         blocks_per_sm: $num_blocks_per_sm
@@ -1658,8 +1658,8 @@ if CUDA.functional()
         end
     end
 
-    # # Run test
-    # main(; run_selftest=true)
+    # Run test
+    main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
