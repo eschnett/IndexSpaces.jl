@@ -33,7 +33,7 @@ const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 256                   # 84 for benchmarking
+const F = 256                   # use 84 for benchmarking
 
 const Touter = 48
 const Tinner = 4
@@ -99,7 +99,7 @@ const num_blocks_per_sm = B
 #     number-of-frequencies: 84
 #     number-of-polarizations: 2
 #     number-of-timesamples: 2064
-#     sampling-time: 27.3
+#     sampling-time-μsec: 27.30666666666667
 #   compile-parameters:
 #     minthreads: 768
 #     blocks_per_sm: 1
@@ -108,11 +108,11 @@ const num_blocks_per_sm = B
 #     blocks: [84]
 #     shmem_bytes: 76896
 #   result-μsec:
-#     runtime: 1901.0
-#     scaled-runtime: 5793.6
+#     runtime: 1796.2
+#     scaled-runtime: 5474.2
 #     scaled-number-of-frequencies: 256
-#     dataframe-length: 56347.2
-#     dataframe-percent: 10.3
+#     dataframe-length: 56361.0
+#     dataframe-percent: 9.7
 
 # CHORD indices
 
@@ -202,8 +202,8 @@ const layout_I_memory = Layout(
         BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
         BeamP(:beamP, 2, M) => Memory(:memory, 1, M),
         BeamQ(:beamQ, 1, 2 * N) => Memory(:memory, M, 2 * N),
-        Freq(:freq, 1, F) => Memory(:memory, M * 2 * N, F),
-        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N * F, cld(T, Tds)),
+        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N, cld(T, Tds)),
+        Freq(:freq, 1, F) => Memory(:memory, M * 2 * N * cld(T, Tds), F),
     ),
 )
 
@@ -1393,7 +1393,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     Smn_memory = Array{Int16x2}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
-    I_wanted = Array{Float16x2}(undef, M * 2 * N * F * cld(T, Tds))
+    I_wanted = Array{Float16x2}(undef, M * 2 * N * cld(T, Tds) * F)
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     Random.seed!(0)
@@ -1460,7 +1460,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             dstime = time ÷ Tds
             @show dstime
             for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-                Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
+                Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * cld(T, Tds) * freq
                 dishm, dishn = dish_grid[dish + 1]
                 # Eqn. (4)
                 Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
@@ -1544,8 +1544,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
         println("    I:")
         did_test_I_memory = falses(length(I_memory))
-        for dstime in 0:(cld(T, Tds) - 1), freq in 0:(F - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * freq + M * 2 * N * F * dstime
+        for freq in 0:(F - 1), dstime in 0:(cld(T, Tds) - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * cld(T, Tds) * freq
             if beamp % 2 == 0
                 @assert !did_test_I_memory[Iidx + 1]
                 did_test_I_memory[Iidx + 1] = true
@@ -1627,9 +1627,9 @@ function fix_ptx_kernel()
         - name: "I"
           intent: out
           type: Float16
-          indices: [beamP, beamQ, F, Tds]
-          shape: [$(2*M), $(2*N), $F, $(cld(T, Tds))]
-          strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F)]
+          indices: [beamP, beamQ, Tds, F]
+          shape: [$(2*M), $(2*N), $(cld(T, Tds)), $F]
+          strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*cld(T,Tds))]
         - name: "info"
           intent: out
           type: Int32

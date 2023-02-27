@@ -19,7 +19,7 @@ kernel-description:
     threads: [32, 24]
     blocks: [256]
     shmem_bytes: 76896
-  kernel-name: "_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE"
+  kernel-name: "_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE"
   kernel-arguments:
     - name: "S"
       intent: in
@@ -42,9 +42,9 @@ kernel-description:
     - name: "I"
       intent: out
       type: Float16
-      indices: [beamP, beamQ, F, Tds]
-      shape: [48, 48, 256, 52]
-      strides: [1, 48, 2304, 589824]
+      indices: [beamP, beamQ, Tds, F]
+      shape: [48, 48, 52, 256]
+      strides: [1, 48, 2304, 119808]
     - name: "info"
       intent: out
       type: Int32

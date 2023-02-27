@@ -10,7 +10,7 @@ Compiling kernel...
 .target sm_86
 .address_size 64
 
-	// .globl	_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE // -- Begin function _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE
+	// .globl	_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE // -- Begin function _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE
 .func gpu_report_exception
 (
 	.param .b64 gpu_report_exception_param_0
@@ -29,14 +29,14 @@ Compiling kernel...
 }
 .extern .shared .align 32 .b8 shmem[];
 .global .align 1 .b8 exception1[10] = {101, 120, 99, 101, 112, 116, 105, 111, 110, 0};
-                                        // @_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE
-.visible .entry _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE(
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_0[8],
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_1[32],
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_2[32],
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_3[32],
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_4[32],
-	.param .align 8 .b8 _Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_5[32]
+                                        // @_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE
+.visible .entry _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE(
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_0[8],
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_1[32],
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_2[32],
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_3[32],
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_4[32],
+	.param .align 8 .b8 _Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_5[32]
 )
 .reqntid 768, 1, 1
 .minnctapersm 1
@@ -55,7 +55,7 @@ Compiling kernel...
 	@%p1 bra 	LBB0_2;
 	bra.uni 	LBB0_1;
 LBB0_2:                                 // %L10
-	ld.param.u64 	%rd12, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_5];
+	ld.param.u64 	%rd12, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_5];
 	mov.u32 	%r1, %tid.x;
 	mov.u32 	%r2, %ctaid.x;
 	mul.lo.s32 	%r259, %r2, 768;
@@ -391,7 +391,7 @@ LBB0_10:                                // %L314
 	cvt.u16.u32 	%rs283, %r1;
 	@%p26 bra 	LBB0_12;
 // %bb.11:                              // %L350
-	ld.param.u64 	%rd1, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_1];
+	ld.param.u64 	%rd1, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_1];
 	and.b16  	%rs31, %rs283, 255;
 	mul.lo.s16 	%rs32, %rs31, 171;
 	shr.u16 	%rs33, %rs32, 12;
@@ -446,7 +446,7 @@ LBB0_12:                                // %L428
 	mov.u32 	%r3349, %r3348;
 	bra.uni 	LBB0_15;
 LBB0_14:                                // %L454
-	ld.param.u64 	%rd2, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_2];
+	ld.param.u64 	%rd2, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_2];
 	cvt.u16.u32 	%rs41, %r3;
 	and.b16  	%rs42, %rs41, 255;
 	mul.lo.s16 	%rs43, %rs42, 171;
@@ -481,8 +481,8 @@ LBB0_14:                                // %L454
 	add.s64 	%rd24, %rd2, %rd23;
 	ld.global.u32 	%r3349, [%rd24];
 LBB0_15:                                // %L734
-	ld.param.u64 	%rd3, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_3];
-	ld.param.u64 	%rd4, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_4];
+	ld.param.u64 	%rd3, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_3];
+	ld.param.u64 	%rd4, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_4];
 	// begin inline asm
 	cvt.rn.f16x2.f32 %r253, %r255, %r254;
 	// end inline asm
@@ -667,7 +667,7 @@ LBB0_15:                                // %L734
 	add.s64 	%rd9, %rd26, %rd55;
 	add.s32 	%r73, %r71, 32;
 	add.s32 	%r74, %r71, 8288;
-	mul.lo.s32 	%r434, %r2, 1152;
+	mul.lo.s32 	%r434, %r2, 59904;
 	or.b32  	%r435, %r434, %r45;
 	cvt.u16.u32 	%rs70, %r3;
 	shl.b16 	%rs71, %rs70, 1;
@@ -2474,7 +2474,7 @@ LBB0_22:                                // %L20954
 	@%p26 bra 	LBB0_25;
 // %bb.24:                              // %L21159
                                         //   in Loop: Header=BB0_18 Depth=2
-	mul.lo.s32 	%r2058, %r3382, 294912;
+	mul.lo.s32 	%r2058, %r3382, 1152;
 	add.s32 	%r2059, %r75, %r2058;
 	mul.wide.u32 	%rd232, %r2059, 4;
 	add.s64 	%rd233, %rd4, %rd232;
@@ -3610,7 +3610,7 @@ LBB0_32:                                // %L30959
 	@%p26 bra 	LBB0_35;
 // %bb.34:                              // %L31164
                                         //   in Loop: Header=BB0_28 Depth=2
-	mul.lo.s32 	%r3332, %r3382, 294912;
+	mul.lo.s32 	%r3332, %r3382, 1152;
 	add.s32 	%r3333, %r75, %r3332;
 	mul.wide.u32 	%rd288, %r3333, 4;
 	add.s64 	%rd289, %rd4, %rd288;
@@ -3623,7 +3623,7 @@ LBB0_32:                                // %L30959
 LBB0_38:                                // %guard_pass14638
 	@%p26 bra 	LBB0_40;
 // %bb.39:                              // %L31498
-	mul.lo.s32 	%r3336, %r3382, 294912;
+	mul.lo.s32 	%r3336, %r3382, 1152;
 	add.s32 	%r3337, %r75, %r3336;
 	mul.wide.u32 	%rd292, %r3337, 4;
 	add.s64 	%rd293, %rd4, %rd292;
@@ -3637,7 +3637,7 @@ LBB0_40:                                // %L31730
 	st.global.u32 	[%rd5], %r3339;
 	ret;
 LBB0_1:                                 // %L8
-	ld.param.u64 	%rd11, [_Z15julia_frb_1123513CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_0];
+	ld.param.u64 	%rd11, [_Z15julia_frb_1037413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE_param_0];
 	mov.u64 	%rd16, exception1;
 	cvta.global.u64 	%rd17, %rd16;
 	{ // callseq 4, 0
