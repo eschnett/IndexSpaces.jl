@@ -39,7 +39,7 @@ const setup = full_chord
 @static if setup ≡ full_chord
 
     # Full CHORD
-    const sampling_time = 1.7
+    const sampling_time_μsec = 4096 / (2 * 1200)
     const C = 2
     const T = 32768
     const D = 512
@@ -58,7 +58,7 @@ const setup = full_chord
 elseif setup ≡ chord_pathfinder
 
     # CHORD pathfinder
-    const sampling_time = 1.7
+    const sampling_time_μsec = 1.7
     const C = 2
     const T = 32768
     const D = 64
@@ -77,7 +77,7 @@ elseif setup ≡ chord_pathfinder
 elseif setup ≡ hirax
 
     # HIRAX:
-    const sampling_time = 2.56μsec
+    const sampling_time_μsec = 2.56μsec
     const T = 32768
     #     B = 8...32
     const D = 256
@@ -619,14 +619,14 @@ function make_bb_kernel()
 
                     unrolled_loop!(emitter, Dish(:dish, loopD.offset, loopD.length) => loopD) do emitter
                         select!(emitter, :AselBD, :AselB, Register(:dish, loopD.offset, loopD.length) => loopD)
-                        split!(emitter, [:Aim, :Are], :AselBD, cplx)
+                        split!(emitter, [:Are, :Aim], :AselBD, cplx)
 
                         load!(emitter, :E0 => layout_E0_registers, :E_shared => layout_E_shared)
 
                         # TODO: Don't undo offset encoding, don't shift right; fold this into a fixup after multiplying by A
                         widen!(emitter, :E1, :E0, SIMD(:simd, 4, 2) => Register(:cplx, 1, C))
 
-                        split!(emitter, [:E1im, :E1re], :E1, cplx)
+                        split!(emitter, [:E1re, :E1im], :E1, cplx)
 
                         mma_beams = [beam0, beam1, beam2]
                         mma_dishes = [
@@ -666,7 +666,7 @@ function make_bb_kernel()
                     end
 
                     apply!(emitter, :Jure, [:Jurepos, :Jureneg], (Jurepos, Jureneg) -> :($Jurepos - $Jureneg))
-                    merge!(emitter, :Ju, [:Juim, :Jure], cplx => Register(:cplx, 1, C))
+                    merge!(emitter, :Ju, [:Jure, :Juim], cplx => Register(:cplx, 1, C))
 
                     # TODO: Break ties to even?
                     @assert σ ≥ 1
@@ -835,7 +835,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             number-of-frequencies: $F
             number-of-polarizations: $P
             number-of-timesamples: $T
-            sampling-time: $sampling_time
+            sampling-time-μsec: $sampling_time_μsec
             shift-parameter-σ: $σ
           compile-parameters:
             minthreads: $(num_threads * num_warps)
@@ -939,20 +939,20 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             end
             println("    freq=$freq polr=$polr time=$time dish=$dish beam=$beam Eval=$Eval Aval=$Aval sval=$sval Jval=$Jval")
             A_memory[(((freq * P + polr) * B + beam) * D + dish) ÷ 2 + 1] += if dish % 2 == 0
-                Int8x4(Aval.im, Aval.re, 0, 0)
+                Int8x4(Aval.re, Aval.im, 0, 0)
             elseif dish % 2 == 1
-                Int8x4(0, 0, Aval.im, Aval.re)
+                Int8x4(0, 0, Aval.re, Aval.im)
             else
                 @assert false
             end
             E_memory[(((time * P + polr) * F + freq) * D + dish) ÷ 4 + 1] += if dish % 4 == 0
-                Int4x8(Eval.im, Eval.re, 0, 0, 0, 0, 0, 0)
+                Int4x8(Eval.re, Eval.im, 0, 0, 0, 0, 0, 0)
             elseif dish % 4 == 1
-                Int4x8(0, 0, Eval.im, Eval.re, 0, 0, 0, 0)
+                Int4x8(0, 0, Eval.re, Eval.im, 0, 0, 0, 0)
             elseif dish % 4 == 2
-                Int4x8(0, 0, 0, 0, Eval.im, Eval.re, 0, 0)
+                Int4x8(0, 0, 0, 0, Eval.re, Eval.im, 0, 0)
             elseif dish % 4 == 3
-                Int4x8(0, 0, 0, 0, 0, 0, Eval.im, Eval.re)
+                Int4x8(0, 0, 0, 0, 0, 0, Eval.re, Eval.im)
             else
                 @assert false
             end
@@ -969,10 +969,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 s = s_memory[(f * P + p) * B + b + 1]
                 Ju = 0 + 0im
                 for d in 0:(D - 1)
-                    A = Complex{Int}(reverse(reinterpret(NTuple{2,Int8}, A_memory)[((f * P + p) * B + b) * D + d + 1])...)
-                    E = Complex{Int}(
-                        reverse(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * P + p) * F + f) * D + d + 1]))...
-                    )
+                    A = Complex{Int}(reinterpret(NTuple{2,Int8}, A_memory)[((f * P + p) * B + b) * D + d + 1]...)
+                    E = Complex{Int}(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * P + p) * F + f) * D + d + 1])...)
                     Ju += A * E
                 end
                 Ju = shift(Ju, σ)
@@ -980,7 +978,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 J = Ju
                 J = shift(J, s - σ)
                 reinterpret(Int4x2, J_wanted)[((b * F + f) * P + p) * T + t + 1] = Int4x2(
-                    Int32(clamp(J.im, -7:+7)), Int32(clamp(J.re, -7:+7))
+                    Int32(clamp(J.re, -7:+7)), Int32(clamp(J.im, -7:+7))
                 )
             end
         end
@@ -1017,7 +1015,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         runtime = stats.time / nruns * 1.0e+6
         num_frequencies_scaled = F₀
         runtime_scaled = runtime / F * num_frequencies_scaled
-        dataframe_length = T * sampling_time
+        dataframe_length = T * sampling_time_μsec
         fraction = runtime_scaled / dataframe_length
         round1(x) = round(x; digits=1)
         println("""
@@ -1031,7 +1029,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             number-of-frequencies: $F
             number-of-polarizations: $P
             number-of-timesamples: $T
-            sampling-time: $sampling_time
+            sampling-time-μsec: $sampling_time_μsec
             shift-parameter-σ: $σ
           compile-parameters:
             minthreads: $(num_threads * num_warps)
@@ -1079,27 +1077,27 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # open("output/bb.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true)
-    #     end
-    # end
-    # open("output/bb.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true)
-    #     end
-    # end
-    # # This call needs to happen after generating PTX code since it
-    # # modifies the generated PTX code
-    # main(; output_kernel=true)
+    # Output kernel
+    open("output/bb.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true)
+        end
+    end
+    open("output/bb.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true)
+        end
+    end
+    # This call needs to happen after generating PTX code since it
+    # modifies the generated PTX code
+    main(; output_kernel=true)
 
-    # # Run test
-    # main(; run_selftest=true)
+    # Run test
+    main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
 
-    # Regular run, also for profiling
-    main()
+    # # Regular run, also for profiling
+    # main()
 end
