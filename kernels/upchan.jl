@@ -408,7 +408,7 @@ function upchan!(emitter)
     layout_Xreim_registers = delete!(copy(layout_X_registers), Cplx(:cplx, 1, C))
     apply!(emitter, :Xre => layout_Xreim_registers, :(Float16x2(real(X0), real(X1))))
     apply!(emitter, :Xim => layout_Xreim_registers, :(Float16x2(imag(X0), imag(X1))))
-    merge!(emitter, :X, [:Xim, :Xre], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    merge!(emitter, :X, [:Xre, :Xim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
     # Calculate FFT coefficients
     @assert U == 16
@@ -444,9 +444,9 @@ function upchan!(emitter)
     apply!(emitter, :Γ¹reim => layout_Γ¹reim_registers, :(Float16x2(-imag(Γ¹0), -imag(Γ¹1))))
     apply!(emitter, :Γ¹imre => layout_Γ¹reim_registers, :(Float16x2(imag(Γ¹0), imag(Γ¹1))))
     apply!(emitter, :Γ¹imim => layout_Γ¹reim_registers, :(Float16x2(real(Γ¹0), real(Γ¹1))))
-    merge!(emitter, :Γ¹re, [:Γ¹reim, :Γ¹rere], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
-    merge!(emitter, :Γ¹im, [:Γ¹imim, :Γ¹imre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
-    merge!(emitter, :Γ¹, [:Γ¹im, :Γ¹re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    merge!(emitter, :Γ¹re, [:Γ¹rere, :Γ¹reim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+    merge!(emitter, :Γ¹im, [:Γ¹imre, :Γ¹imim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+    merge!(emitter, :Γ¹, [:Γ¹re, :Γ¹im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
     @assert U == 16
     layout_Γ²reim_registers = Layout([
@@ -477,7 +477,7 @@ function upchan!(emitter)
     )
     apply!(emitter, :Γ²re => layout_Γ²reim_registers, :(Float16x2(real(Γ²0), real(Γ²1))))
     apply!(emitter, :Γ²im => layout_Γ²reim_registers, :(Float16x2(imag(Γ²0), imag(Γ²1))))
-    merge!(emitter, :Γ², [:Γ²im, :Γ²re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    merge!(emitter, :Γ², [:Γ²re, :Γ²im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
     @assert U == 16
     layout_Γ³reim_registers = Layout([
@@ -518,9 +518,9 @@ function upchan!(emitter)
     apply!(emitter, :Γ³reim => layout_Γ³reim_registers, :(Float16x2(-imag(Γ³0), -imag(Γ³1))))
     apply!(emitter, :Γ³imre => layout_Γ³reim_registers, :(Float16x2(imag(Γ³0), imag(Γ³1))))
     apply!(emitter, :Γ³imim => layout_Γ³reim_registers, :(Float16x2(real(Γ³0), real(Γ³1))))
-    merge!(emitter, :Γ³re, [:Γ³reim, :Γ³rere], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
-    merge!(emitter, :Γ³im, [:Γ³imim, :Γ³imre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
-    merge!(emitter, :Γ³, [:Γ³im, :Γ³re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    merge!(emitter, :Γ³re, [:Γ³rere, :Γ³reim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+    merge!(emitter, :Γ³im, [:Γ³imre, :Γ³imim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+    merge!(emitter, :Γ³, [:Γ³re, :Γ³im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
     # Why do we need this? `mma_row_col_m16n8k16_f16!` should skip this tag if not present.
     merge!(emitter, :Γ³, [:Γ³, :Γ³], Dish(:dish, 1, 2) => Register(:dish, 1, 2))
 
@@ -615,11 +615,11 @@ function upchan!(emitter)
                 end
 
                 # Step 5: Compute E3 by applying phases to E2
-                split!(emitter, [:E2im, :E2re], :E2, Cplx(:cplx, 1, C))
-                split!(emitter, [:Xim, :Xre], :X, Cplx(:cplx, 1, C))
+                split!(emitter, [:E2re, :E2im], :E2, Cplx(:cplx, 1, C))
+                split!(emitter, [:Xre, :Xim], :X, Cplx(:cplx, 1, C))
                 apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd(-$Xim * $E2im, $Xre, $E2re)))
                 apply!(emitter, :E3im, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xim * $E2re, $Xre, $E2im)))
-                merge!(emitter, :E3, [:E3im, :E3re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+                merge!(emitter, :E3, [:E3re, :E3im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
                 # Step 6: Compute E4 by FFTing E3
                 apply!(emitter, :XX, [:E3], (E3,) -> :($E3))
@@ -654,8 +654,8 @@ function upchan!(emitter)
                             Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
                             Freq(:freq, U, F) => Block(:block, (D ÷ 128) * P, F),
                         ])
-                        split!(emitter, [:XXim, :XXre], :XX, Cplx(:cplx, 1, C))
-                        merge!(emitter, :XX, [:XXim, :XXre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+                        split!(emitter, [:XXre, :XXim], :XX, Cplx(:cplx, 1, C))
+                        merge!(emitter, :XX, [:XXre, :XXim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
                         apply!(emitter, :WW => layout_WW_registers, :(zero(Float16x2)))
                         mma_row_col_m16n8k16_f16!(
                             emitter, :WW, :Γ¹ => (mma_is, mma_js), :XX => (mma_js, mma_ks), :WW => (mma_is, mma_ks)
@@ -663,8 +663,8 @@ function upchan!(emitter)
                     end
 
                     # Step 6.2: Z = exp(...) W
-                    split!(emitter, [:Γ²im, :Γ²re], :Γ², Cplx(:cplx, 1, C))
-                    split!(emitter, [:WWim, :WWre], :WW, Cplx(:cplx, 1, C))
+                    split!(emitter, [:Γ²re, :Γ²im], :Γ², Cplx(:cplx, 1, C))
+                    split!(emitter, [:WWre, :WWim], :WW, Cplx(:cplx, 1, C))
                     apply!(
                         emitter,
                         :ZZre,
@@ -677,7 +677,7 @@ function upchan!(emitter)
                         [:WWre, :WWim, :Γ²re, :Γ²im],
                         (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²im * $WWre, $Γ²re, $WWim)),
                     )
-                    merge!(emitter, :ZZ, [:ZZim, :ZZre], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+                    merge!(emitter, :ZZ, [:ZZre, :ZZim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
                     # Step 6.3: Length 2 FFT: Y = exp(...) Z
                     begin
@@ -689,8 +689,8 @@ function upchan!(emitter)
                         # spectator indices
                         mma_ks = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2)]
                         #
-                        split!(emitter, [:ZZim, :ZZre], :ZZ, Cplx(:cplx, 1, C))
-                        merge!(emitter, :ZZ, [:ZZim, :ZZre], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+                        split!(emitter, [:ZZre, :ZZim], :ZZ, Cplx(:cplx, 1, C))
+                        merge!(emitter, :ZZ, [:ZZre, :ZZim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
                         let
                             layout = copy(emitter.environment[:ZZ])
                             for dish in [1 << 5, 1 << 6]
@@ -939,8 +939,8 @@ if CUDA.functional()
         end
     end
 
-    # # Run test
-    # main(; run_selftest=true)
+    # Run test
+    main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)
