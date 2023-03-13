@@ -485,8 +485,7 @@ function do_first_fft!(emitter)
 
     select!(emitter, :E, :E′, Register(:time, idiv(Touter, 2), 2) => UnrolledLoop(:t_inner_hi, idiv(Touter, 2), 2))
 
-    apply!(emitter, :WE, [:E, :W], (E, W) -> :(swapped_complex_mul($W, $E)))
-    #CPLX apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
+    apply!(emitter, :WE, [:E, :W], (E, W) -> :(complex_mul($W, $E)))
 
     # Chapter 4.10 notation:
     #     G_mq = FT WE_mn
@@ -583,14 +582,11 @@ function do_first_fft!(emitter)
 
     # Second step
     # Section 3 `W` is called `V` here
-    split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
-    split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
-    #CPLX split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
-    #CPLX split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
+    split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
+    split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
     apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
     apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
-    merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
-    #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
+    merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
 
     # Third step
     let
@@ -630,10 +626,8 @@ function do_first_fft!(emitter)
 
         # (43)
         #TODO: Implement this cleaner, e.g. via a `rename!` function
-        split!(emitter, [:Vim, :Vre], :V, Cplx(:cplx, 1, 2))
-        merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
-        #CPLX split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
-        #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
+        split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
+        merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
         @assert trailing_zeros(Npad) ≥ 5
         mma_is = [BeamQ(:beamQ, 8, 2), BeamQ(:beamQ, 16, 2), BeamQ(:beamQ, 32, 2), Cplx(:cplx, 1, 2)]
         mma_js = [DishNlo(:dishNlo, 1, 2), DishNlo(:dishNlo, 2, 2), DishNlo(:dishNlo, 4, 2), Cplx(:cplx_in, 1, 2)]
@@ -839,14 +833,11 @@ function do_second_fft!(emitter)
 
     # Second step
     # Section 3 `W` is called `V` here
-    split!(emitter, [:Γ²im, :Γ²re], :Γ², Register(:cplx, 1, 2))
-    split!(emitter, [:Zim, :Zre], :Z, Register(:cplx, 1, 2))
-    #CPLX split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
-    #CPLX split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
+    split!(emitter, [:Γ²re, :Γ²im], :Γ², Register(:cplx, 1, 2))
+    split!(emitter, [:Zre, :Zim], :Z, Register(:cplx, 1, 2))
     apply!(emitter, :Vre, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zre, -$Γ²im * $Zim)))
     apply!(emitter, :Vim, [:Zre, :Zim, :Γ²re, :Γ²im], (Zre, Zim, Γ²re, Γ²im) -> :(muladd($Γ²re, $Zim, +$Γ²im * $Zre)))
-    merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
-    #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
+    merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx, 1, 2) => Register(:cplx, 1, 2))
 
     # Third step
     let
@@ -879,10 +870,8 @@ function do_second_fft!(emitter)
 
         # (43)
         #TODO: Implement this cleaner, e.g. via a `rename!` function
-        split!(emitter, [:Vim, :Vre], :V, Cplx(:cplx, 1, 2))
-        merge!(emitter, :V, [:Vim, :Vre], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
-        #CPLX split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
-        #CPLX merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
+        split!(emitter, [:Vre, :Vim], :V, Cplx(:cplx, 1, 2))
+        merge!(emitter, :V, [:Vre, :Vim], Cplx(:cplx_in, 1, 2) => Register(:cplx_in, 1, 2))
         @assert trailing_zeros(Npad) ≥ 5
         mma_is = [BeamP(:beamP, 8, 2), BeamP(:beamP, 16, 2), BeamP(:beamP, 32, 2), Cplx(:cplx, 1, 2)]
         mma_js = [DishMlo(:dishMlo, 1, 2), DishMlo(:dishMlo, 2, 2), DishMlo(:dishMlo, 4, 2), Cplx(:cplx_in, 1, 2)]
@@ -893,10 +882,8 @@ function do_second_fft!(emitter)
     apply!(emitter, :Ẽ, [:Y], (Y,) -> :($Y))
 
     split!(emitter, [:Ẽp0, :Ẽp1], :Ẽ, Polr(:polr, 1, P))
-    split!(emitter, [:Ẽp0im, :Ẽp0re], :Ẽp0, Cplx(:cplx, 1, C))
-    split!(emitter, [:Ẽp1im, :Ẽp1re], :Ẽp1, Cplx(:cplx, 1, C))
-    #CPLX split!(emitter, [:Ẽp0re, :Ẽp0im], :Ẽp0, Cplx(:cplx, 1, C))
-    #CPLX split!(emitter, [:Ẽp1re, :Ẽp1im], :Ẽp1, Cplx(:cplx, 1, C))
+    split!(emitter, [:Ẽp0re, :Ẽp0im], :Ẽp0, Cplx(:cplx, 1, C))
+    split!(emitter, [:Ẽp1re, :Ẽp1im], :Ẽp1, Cplx(:cplx, 1, C))
 
     apply!(
         emitter,
@@ -949,7 +936,7 @@ function make_frb_kernel()
         )
         apply!(emitter, :Γ¹_re => layout_Γ¹_registers, :(Float16x2(Γ¹_re_im, Γ¹_re_re)))
         apply!(emitter, :Γ¹_im => layout_Γ¹_registers, :(Float16x2(Γ¹_im_im, Γ¹_im_re)))
-        merge!(emitter, :Γ¹, [:Γ¹_im, :Γ¹_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+        merge!(emitter, :Γ¹, [:Γ¹_re, :Γ¹_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
         # (41)
         @assert trailing_zeros(Npad) == 5
@@ -980,7 +967,7 @@ function make_frb_kernel()
         )
         apply!(emitter, :Γ²_re => layout_Γ²_registers, :(Float16x2(Γ²_d0_re, Γ²_d1_re)))
         apply!(emitter, :Γ²_im => layout_Γ²_registers, :(Float16x2(Γ²_d0_im, Γ²_d1_im)))
-        merge!(emitter, :Γ², [:Γ²_im, :Γ²_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+        merge!(emitter, :Γ², [:Γ²_re, :Γ²_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
         # (45) - (47)
         @assert trailing_zeros(Npad) == 5
@@ -1017,9 +1004,9 @@ function make_frb_kernel()
         apply!(emitter, :Γ³_re_im => layout_Γ³_registers, :(Float16x2(Γ³_d0_re_im, Γ³_d1_re_im)))
         apply!(emitter, :Γ³_im_re => layout_Γ³_registers, :(Float16x2(Γ³_d0_im_re, Γ³_d1_im_re)))
         apply!(emitter, :Γ³_im_im => layout_Γ³_registers, :(Float16x2(Γ³_d0_im_im, Γ³_d1_im_im)))
-        merge!(emitter, :Γ³_re, [:Γ³_re_im, :Γ³_re_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
-        merge!(emitter, :Γ³_im, [:Γ³_im_im, :Γ³_im_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
-        merge!(emitter, :Γ³, [:Γ³_im, :Γ³_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, 2))
+        merge!(emitter, :Γ³_re, [:Γ³_re_re, :Γ³_re_im], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+        merge!(emitter, :Γ³_im, [:Γ³_im_re, :Γ³_im_im], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+        merge!(emitter, :Γ³, [:Γ³_re, :Γ³_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, 2))
     end
 
     # # Section 3.3
@@ -1047,9 +1034,9 @@ function make_frb_kernel()
     #             end
     #         end,
     #     )
-    #     apply!(emitter, :aΓ¹_re => layout_aΓ¹_registers, :(Float16x2(aΓ¹_re_im, aΓ¹_re_re)))
-    #     apply!(emitter, :aΓ¹_im => layout_aΓ¹_registers, :(Float16x2(aΓ¹_im_im, aΓ¹_im_re)))
-    #     merge!(emitter, :aΓ¹, [:aΓ¹_im, :aΓ¹_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    #     apply!(emitter, :aΓ¹_re => layout_aΓ¹_registers, :(Float16x2(aΓ¹_re_re, aΓ¹_re_im)))
+    #     apply!(emitter, :aΓ¹_im => layout_aΓ¹_registers, :(Float16x2(aΓ¹_im_re, aΓ¹_im_im)))
+    #     merge!(emitter, :aΓ¹, [:aΓ¹_re, :aΓ¹_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
     # 
     #     # (41)
     #     @assert trailing_zeros(Npad) == 5
@@ -1080,7 +1067,7 @@ function make_frb_kernel()
     #     )
     #     apply!(emitter, :aΓ²_re => layout_aΓ²_registers, :(Float16x2(aΓ²_d0_re, aΓ²_d1_re)))
     #     apply!(emitter, :aΓ²_im => layout_aΓ²_registers, :(Float16x2(aΓ²_d0_im, aΓ²_d1_im)))
-    #     merge!(emitter, :aΓ², [:aΓ²_im, :aΓ²_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    #     merge!(emitter, :aΓ², [:aΓ²_re, :aΓ²_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
     # 
     #     # (45) - (47)
     #     @assert trailing_zeros(Npad) == 5
@@ -1114,9 +1101,9 @@ function make_frb_kernel()
     #     apply!(emitter, :aΓ³_re_im => layout_aΓ³_registers, :(Float16x2(aΓ³_d0_re_im, aΓ³_d1_re_im)))
     #     apply!(emitter, :aΓ³_im_re => layout_aΓ³_registers, :(Float16x2(aΓ³_d0_im_re, aΓ³_d1_im_re)))
     #     apply!(emitter, :aΓ³_im_im => layout_aΓ³_registers, :(Float16x2(aΓ³_d0_im_im, aΓ³_d1_im_im)))
-    #     merge!(emitter, :aΓ³_re, [:aΓ³_re_im, :aΓ³_re_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
-    #     merge!(emitter, :aΓ³_im, [:aΓ³_im_im, :aΓ³_im_re], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
-    #     merge!(emitter, :aΓ³, [:aΓ³_im, :aΓ³_re], Cplx(:cplx, 1, C) => Register(:cplx, 1, 2))
+    #     merge!(emitter, :aΓ³_re, [:aΓ³_re_re, :aΓ³_re_im], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+    #     merge!(emitter, :aΓ³_im, [:aΓ³_im_re, :aΓ³_im_im], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, 2))
+    #     merge!(emitter, :aΓ³, [:aΓ³_re, :aΓ³_im], Cplx(:cplx, 1, C) => Register(:cplx, 1, 2))
     # end
 
     let
@@ -1435,10 +1422,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 return c
             end
             uniform_factor() = (2 * rand(Float32) - 1)
-            c2t(c::Complex) = (imag(c), real(c))
-            t2c(t::NTuple{2}) = Complex(t[2], t[1])
-            #CPLX c2t(c::Complex) = (real(c), imag(c))
-            #CPLX t2c(t::NTuple{2}) = Complex(t[1], t[2])
+            c2t(c::Complex) = (real(c), imag(c))
+            t2c(t::NTuple{2}) = Complex(t[1], t[2])
             # Wvalue = 1 + 0im
             Wvalue = uniform_factor() * uniform_in_disk()
             # TODO: Set only on element of `W`, and this requires the dish gridding
