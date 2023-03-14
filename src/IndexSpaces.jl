@@ -461,6 +461,11 @@ function evaluate_partially(expr::Expr)
             args[1] ≡ :| && return args[2] | args[3]
             args[1] ≡ :⊻ && return args[2] ⊻ args[3]
         end
+        # Handle cancellative elements
+        args[1] ≡ :* && args[2] == 0 && return args[2]
+        args[1] ≡ :* && args[3] == 0 && return args[3]
+        args[1] ≡ :& && args[2] == 0 && return args[2]
+        args[1] ≡ :& && args[3] == 0 && return args[3]
         # Remove neutral elements
         args[1] ≡ :+ && args[2] == 0 && return args[3]
         args[1] ≡ :+ && args[3] == 0 && return args[2]
@@ -472,11 +477,6 @@ function evaluate_partially(expr::Expr)
         args[1] ≡ :| && args[3] == 0 && return args[2]
         args[1] ≡ :⊻ && args[2] == 0 && return args[3]
         args[1] ≡ :⊻ && args[3] == 0 && return args[2]
-        # Handle cancellative elements
-        args[1] ≡ :* && args[2] == 0 && return args[2]
-        args[1] ≡ :* && args[3] == 0 && return args[3]
-        args[1] ≡ :& && args[2] == 0 && return args[2]
-        args[1] ≡ :& && args[3] == 0 && return args[3]
     end
     return Expr(head, args...)
 end
@@ -487,9 +487,9 @@ end
 
 export Environment
 struct Environment
-    # Types, so to say
+    # Types of physical fields, so to say
     dict::Dict{Symbol,Layout{Physics,Machine}}
-    # Values, mainly from unrolled loops
+    # Values of indices, mainly from unrolled loops
     values::Dict{Symbol,Int32}
 end
 Environment() = Environment(Dict{Symbol,Layout{Physics,Machine}}(), Dict{Symbol,Int32}())
@@ -627,7 +627,8 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     is_memory = any(mach isa Memory for (phys, mach) in mem_layout.dict)
     @assert is_shared ⊻ is_memory
 
-    addr = 0i32
+    # addr = 0i32
+    addrs = Code[]
     for (phys, mach) in mem_layout.dict
         mach isa SIMD && continue
         # Ensure that we are mapping to memory
@@ -645,7 +646,15 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         machoff = Int32(mach.offset)
         # machlen = Int32(mach.length)
         machval = :($val * $machoff)
-        addr = :($addr + $machval)
+        # addr = :($addr + $machval)
+        push!(addrs, machval)
+    end
+    if length(addrs) == 0
+        addr = 0i32
+    elseif length(addrs) == 1
+        addr = addrs[1]
+    else
+        addr = :(+($(addrs...)))
     end
     return evaluate_partially(addr)::Code
 end
@@ -715,7 +724,14 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     index, loop = layout
 
     environment′ = copy(emitter.environment)
-    environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
+
+    # # Add loop index to all layouts
+    # for (name, layout) in environment′
+    #     layout = copy(layout)
+    #     @assert index ∉ layout
+    #     layout[index] = loop
+    #     environment′[name] = layout
+    # end
 
     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
@@ -744,6 +760,7 @@ export unrolled_loop!
 #     index, loop = layout
 # 
 #     environment′ = copy(emitter.environment)
+#     @assert index.name ∉ environment′   # (see below for a fix)
 #     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 # 
 #     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
@@ -780,9 +797,24 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},U
 
     for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
         environment′ = copy(emitter.environment)
-        environment′[index.name] = Layout{Physics,Machine}(Dict(index => unrolled_loop))
+
+        # # Add loop index to all layouts
+        # for (name, layout) in environment′
+        #     layout = copy(layout)
+        #     # The loop index may already exist. In this case, remove
+        #     # it, assuming that the loop "focusses" on a particular
+        #     # index value.
+        #     if index ∈ layout
+        #         delete!(layout, index)
+        #     end
+        #     @assert index ∉ layout
+        #     layout[index] = unrolled_loop
+        #     environment′[name] = layout
+        # end
+
         @assert unrolled_loop.name ∉ keys(environment′.values)
         environment′.values[unrolled_loop.name] = i
+
         emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
 
         body!(emitter′)
