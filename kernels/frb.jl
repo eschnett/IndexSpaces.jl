@@ -7,11 +7,14 @@ using IndexSpaces
 using Random
 using StaticArrays
 
+# const card = "A30"
+const card = "A40"
+
 if CUDA.functional()
     println("[Choosing CUDA device...]")
     CUDA.device!(0)
     println(name(device()))
-    @assert name(device()) == "NVIDIA A40"
+    @assert name(device()) == "NVIDIA $card"
 end
 
 idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
@@ -33,7 +36,7 @@ const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 256                   # use 84 for benchmarking
+const F = 56                    # benchmarking A30: 56; A40: 84
 
 const Touter = 48
 const Tinner = 4
@@ -85,7 +88,7 @@ const num_blocks_per_sm = B
 
 # Benchmark results:
 
-# Setup for full CHORD:
+# Setup for full CHORD on A40:
 #
 # benchmark-result:
 #   kernel: "frb"
@@ -113,6 +116,35 @@ const num_blocks_per_sm = B
 #     scaled-number-of-frequencies: 256
 #     dataframe-length: 56361.0
 #     dataframe-percent: 9.7
+
+# Setup for full CHORD on A30:
+#
+# benchmark-result:
+#   kernel: "frb"
+#   description: "FRB beamformer"
+#   design-parameters:
+#     beam-layout: [48, 48]
+#     dish-layout: [24, 24]
+#     downsampling-factor: 40
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 56
+#     number-of-polarizations: 2
+#     number-of-timesamples: 2064
+#     sampling-time-μsec: 27.30666666666667
+#   compile-parameters:
+#     minthreads: 768
+#     blocks_per_sm: 1
+#   call-parameters:
+#     threads: [32, 24]
+#     blocks: [56]
+#     shmem_bytes: 76896
+#   result-μsec:
+#     runtime: 2311.7
+#     scaled-runtime: 10568.0
+#     scaled-number-of-frequencies: 256
+#     dataframe-length: 56361.0
+#     dataframe-percent: 18.8
 
 # CHORD indices
 
@@ -1351,7 +1383,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     println("CHORD FRB beamformer")
 
     if output_kernel
-        open("output/frb.jl", "w") do fh
+        open("output-$card/frb.jl", "w") do fh
             println(fh, frb_kernel)
         end
     end
@@ -1558,13 +1590,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 end
 
 function fix_ptx_kernel()
-    ptx = read("output/frb.ptx", String)
+    ptx = read("output-$card/frb.ptx", String)
     ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
-    open("output/frb.ptx", "w") do fh
+    open("output-$card/frb.ptx", "w") do fh
         write(fh, ptx)
     end
     kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
-    open("output/frb.yaml", "w") do fh
+    open("output-$card/frb.yaml", "w") do fh
         print(
             fh,
             """
@@ -1631,13 +1663,13 @@ end
 if CUDA.functional()
     # Output kernel
     main(; output_kernel=true)
-    open("output/frb.ptx", "w") do fh
+    open("output-$card/frb.ptx", "w") do fh
         redirect_stdout(fh) do
             @device_code_ptx main(; compile_only=true)
         end
     end
     fix_ptx_kernel()
-    open("output/frb.sass", "w") do fh
+    open("output-$card/frb.sass", "w") do fh
         redirect_stdout(fh) do
             @device_code_sass main(; compile_only=true)
         end
