@@ -6,11 +6,14 @@ using CUDASIMDTypes
 using IndexSpaces
 using Random
 
+# const card = "A30"
+const card = "A40"
+
 if CUDA.functional()
     println("[Choosing CUDA device...]")
     CUDA.device!(0)
     println(name(device()))
-    @assert name(device()) == "NVIDIA A40"
+    @assert name(device()) == "NVIDIA $card"
 end
 
 idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
@@ -46,7 +49,7 @@ const setup = full_chord
     const B = 96
     const P = 2
     const F₀ = 16
-    const F = 16                # idiv(84, 2)
+    const F = 16      # idiv(56, 2)   # benchmarking A30: 56; A40: 84
 
     const T1_stride = 128
     const T2_stride = 32
@@ -124,7 +127,7 @@ const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_
 
 # Benchmark results:
 
-# Setup for full CHORD:
+# Setup for full CHORD on A40:
 #
 # benchmark-result:
 #   kernel: "bb"
@@ -152,7 +155,35 @@ const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_
 #     dataframe-length: 55705.6
 #     dataframe-percent: 4.7
 
-# Setup for CHORD pathfinder:
+# Setup for full CHORD on A30:
+#
+# benchmark-result:
+#   kernel: "bb"
+#   description: "baseband beamformer"
+#   design-parameters:
+#     number-of-beams: 96
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 28
+#     number-of-polarizations: 2
+#     number-of-timesamples: 32768
+#     sampling-time-μsec: 1.7066666666666668
+#     shift-parameter-σ: 3
+#   compile-parameters:
+#     minthreads: 768
+#     blocks_per_sm: 1
+#   call-parameters:
+#     threads: [32, 24]
+#     blocks: [56]
+#     shmem_bytes: 67712
+#   result-μsec:
+#     runtime: 8804.8
+#     scaled-runtime: 5031.3
+#     scaled-number-of-frequencies: 16
+#     dataframe-length: 55924.1
+#     dataframe-percent: 9.0
+
+# Setup for CHORD pathfinder on A40:
 #
 # benchmark-result:
 #   kernel: "bb"
@@ -788,7 +819,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     end
 
     if output_kernel
-        open("output/bb.jl", "w") do fh
+        open("output-$card/bb.jl", "w") do fh
             println(fh, bb_kernel)
         end
     end
@@ -814,13 +845,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     end
 
     if output_kernel
-        ptx = read("output/bb.ptx", String)
+        ptx = read("output-$card/bb.ptx", String)
         ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
-        open("output/bb.ptx", "w") do fh
+        open("output-$card/bb.ptx", "w") do fh
             write(fh, ptx)
         end
         kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
-        open("output/bb.yaml", "w") do fh
+        open("output-$card/bb.yaml", "w") do fh
             print(
                 fh,
                 """
@@ -1078,12 +1109,12 @@ end
 
 if CUDA.functional()
     # Output kernel
-    open("output/bb.ptx", "w") do fh
+    open("output-$card/bb.ptx", "w") do fh
         redirect_stdout(fh) do
             @device_code_ptx main(; compile_only=true)
         end
     end
-    open("output/bb.sass", "w") do fh
+    open("output-$card/bb.sass", "w") do fh
         redirect_stdout(fh) do
             @device_code_sass main(; compile_only=true)
         end
