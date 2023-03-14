@@ -14,10 +14,10 @@ Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
 
 const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
-const T = 32768
+const T = 512                   #TODO 32768
 const D = 512
-const P = 2
-const F = 16
+const P = 1                     #TODO 2
+const F = 2                     #TODO 16
 const U = 16
 const M = 4
 const K = 4
@@ -137,6 +137,7 @@ const layout_F_shared = Layout([
     Time(:time, 1, 2) => Shared(:shared, 65 * 4, 2),
     # eqn. (100)
     Time(:time, U, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     # sect. 5.2
     Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
@@ -157,6 +158,7 @@ const layout_F̄_shared = Layout([
     Freq(:freq, 2, 8) => Shared(:shared, 65, 8),
     # eqn. (102)
     Time(:time, U, Touter ÷ U) => Shared(:shared, Σ, Touter ÷ U),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     # Cplx(:cplx, 1, C) => Shared(:shared, Σ * (Touter ÷ U), 2),
     # sect. 5.2
     Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
@@ -224,6 +226,7 @@ const layout_E_registers = Layout([
     # one input tile: 128 dishes, 4 times
     # assign input tiles to warps
     Time(:time, U, Touter ÷ U) => Warp(:warp, 1, 16),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     # sect. 5.2
     Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
@@ -247,6 +250,7 @@ const layout_Ē_registers = Layout([
     # one input tile: 128 dishes, 4 times
     # assign input tiles to warps
     Time(:time, U, Touter ÷ U) => Warp(:warp, 1, 16),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     # sect. 5.2
     Dish(:dish, 128, D ÷ 128) => Block(:block, 1, D ÷ 128),
     Polr(:polr, 1, P) => Block(:block, D ÷ 128, P),
@@ -281,6 +285,7 @@ const layout_F_registers = Layout([
     Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
     Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
     Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
     Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
     Dish(:dish, 4, 2) => Warp(:warp, 1 << 0, 2),
@@ -313,6 +318,7 @@ const layout_F̄_registers = Layout([
     Freq(:freq, 4, 2) => Thread(:thread, 1 << 0, 2),
     Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
     Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+    Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
     Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
     Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
     Dish(:dish, 4, 2) => Warp(:warp, 1 << 0, 2),
@@ -644,6 +650,7 @@ function upchan!(emitter)
                             Freq(:freq, 4, 2) => Thread(:thread, 1 << 3, 2),
                             Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
                             Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+                            Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
                             Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
                             Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
                             Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
@@ -712,6 +719,7 @@ function upchan!(emitter)
                             Dish(:dish, 1 << 6, 2) => Thread(:thread, 1 << 3, 2),
                             Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
                             Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U),
+                            Time(:time, Touter, T ÷ Touter) => Loop(:t_outer, Touter, T ÷ Touter),
                             Dish(:dish, 1 << 2, 2) => Warp(:warp, 1 << 0, 2),
                             Dish(:dish, 1 << 3, 2) => Warp(:warp, 1 << 1, 2),
                             Dish(:dish, 1 << 4, 2) => Warp(:warp, 1 << 2, 2),
@@ -764,7 +772,7 @@ function upchan!(emitter)
                 )
 
                 return nothing
-            end# unrolled_loop!(Dish(:dish, D ÷ Dr, Dr) => UnrolledLoop(:dish, D ÷ Dr, Dr))
+            end # unrolled_loop!(Dish(:dish, D ÷ Dr, Dr) => UnrolledLoop(:dish, D ÷ Dr, Dr))
 
             return nothing
         end # loop!(Time(:time, U, Touter ÷ U) => Loop(:t_inner, U, Touter ÷ U))
@@ -817,7 +825,7 @@ println("[Creating upchan kernel...]")
 const upchan_kernel = make_upchan_kernel()
 println("[Done creating upchan kernel]")
 
-open("output/upchan.jl", "w") do fh
+open("output-A40/upchan.jl", "w") do fh
     println(fh, upchan_kernel)
 end
 
@@ -829,7 +837,7 @@ end
     return nothing
 end
 
-function main(; compile_only::Bool=false, silent::Bool=false)
+function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool=false)
     !silent && println("CHORD upchannelizer")
 
     !silent && println("Compiling kernel...")
@@ -850,17 +858,70 @@ function main(; compile_only::Bool=false, silent::Bool=false)
         return nothing
     end
 
+    !silent && println("Allocating input data...")
+    G_memory = Array{Float16x2}(undef, (F * U) ÷ 2)
+    W_memory = Array{Float16x2}(undef, (U ÷ 2) * M)
+    E_memory = Array{Int4x8}(undef, (D ÷ 4) * F * P * T)
+    Ẽ_wanted = Array{Int4x8}(undef, (D ÷ 4) * (F * U) * P * (T ÷ U))
+    info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
+
+    !silent && println("Setting up input data...")
+    map!(i -> zero(Float16x2), G_memory, G_memory)
+    map!(i -> zero(Float16x2), W_memory, W_memory)
+    map!(i -> zero(Int4x8), E_memory, E_memory)
+    map!(i -> zero(Int4x8), Ẽ_wanted, Ẽ_wanted)
+    map!(i -> zero(Int32), info_wanted, info_wanted)
+
+    !silent && println("Copying data from CPU to GPU...")
+    G_cuda = CuArray(G_memory)
+    W_cuda = CuArray(W_memory)
+    E_cuda = CuArray(E_memory)
+    Ẽ_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Ẽ_wanted))
+    info_cuda = CUDA.fill(-1i32, length(info_wanted))
+
+    !silent && println("Running kernel...")
+    kernel(G_cuda, W_cuda, E_cuda, Ẽ_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    synchronize()
+
+    !silent && println("Copying data back from GPU to CPU...")
+    Ẽ_memory = Array(Ẽ_cuda)
+    info_memory = Array(info_cuda)
+    @assert all(info_memory .== 0)
+
+    if run_selftest
+        println("Checking results...")
+        println("    Ẽ:")
+        did_test_Ẽ_memory = falses(length(Ẽ_memory))
+        for time in 0:U:(T - 1), polr in 0:(P - 1), freq in 0:(F * U - 1), dish in 0:(D - 1)
+            Ẽidx = dish ÷ 4 + (D ÷ 4) * freq + (D ÷ 4) * (F * U) * polr + (D ÷ 4) * (F * U) * P * (time ÷ U)
+            if dish % 4 == 0
+                @assert !did_test_Ẽ_memory[Ẽidx + 1]
+                did_test_Ẽ_memory[Ẽidx + 1] = true
+            end
+            have_value8 = convert(NTuple{8,Int32}, Ẽ_memory[Ẽidx + 1])
+            want_value8 = convert(NTuple{8,Int32}, Ẽ_wanted[Ẽidx + 1])
+            have_value = have_value8[2 * (dish % 4) + 0 + 1] + im * have_value8[2 * (dish % 4) + 1 + 1]
+            want_value = want_value8[2 * (dish % 4) + 0 + 1] + im * want_value8[2 * (dish % 4) + 1 + 1]
+            if have_value ≠ want_value
+                # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
+                println("        dish=$dish freq=$freq polr=$polr time=$time Ẽ=$have_value Ẽ₀=$want_value")
+                found_error = true
+            end
+        end
+        @assert all(did_test_Ẽ_memory)
+    end
+
     return nothing
 end
 
 function fix_ptx_kernel()
-    ptx = read("output/upchan.ptx", String)
+    ptx = read("output-A40/upchan.ptx", String)
     ptx = replace(ptx, r".extern .func ([^;]*);"s => s".func \1.noreturn\n{\n\ttrap;\n}")
-    open("output/upchan.ptx", "w") do fh
+    open("output-A40/upchan.ptx", "w") do fh
         write(fh, ptx)
     end
     kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
-    open("output/upchan.yaml", "w") do fh
+    open("output-A40/upchan.yaml", "w") do fh
         print(
             fh,
             """
@@ -926,14 +987,14 @@ end
 if CUDA.functional()
     # Output kernel
     println("Writing PTX code...")
-    open("output/upchan.ptx", "w") do fh
+    open("output-A40/upchan.ptx", "w") do fh
         redirect_stdout(fh) do
             @device_code_ptx main(; compile_only=true, silent=true)
         end
     end
     fix_ptx_kernel()
     println("Writing SASS code...")
-    open("output/upchan.sass", "w") do fh
+    open("output-A40/upchan.sass", "w") do fh
         redirect_stdout(fh) do
             @device_code_sass main(; compile_only=true, silent=true)
         end
