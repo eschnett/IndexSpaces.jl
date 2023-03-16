@@ -61,13 +61,13 @@ constexpr std::complex<T> convert(const std::complex<I> i) {
   return std::complex<T>(convert<I>(i.real()), convert<I>(i.imag()));
 }
 
-#if 0
+#if 1
 // Use 4-bit integers for E and Ebar
 
 using storage_t = int4x2_t;
 using value_t = int8_t;
 
-constexpr float maxabserr = 1.9f;
+constexpr float maxabserr = 0.8f;
 
 constexpr storage_t set_storage(const int8_t lo, const int8_t hi) {
   return set4(lo, hi);
@@ -165,8 +165,8 @@ static_assert(interp(table, 3.0f) == +3.0f);
 } // namespace
 
 template <typename T> constexpr T sinc(const T x) {
-  using std::fabs;
-  assert(x == T(0) || fabs(x) > T(1.0e-10));
+  using std::abs;
+  assert(x == T(0) || abs(x) > T(1.0e-10));
   return x == T(0) ? T(1) : sin(x) / x;
 }
 
@@ -239,6 +239,8 @@ void upchan_simple(const float16_t *__restrict__ const W,
 
 void driver(const float amp, const int bin, const float delta) {
   std::cout << "Initializing input...\n";
+  std::cout << "  amp=" << amp << " bin=" << bin << " delta=" << delta << "\n";
+
   std::vector<float16_t> W(M * U); // PFB weight function
   std::vector<float16_t> G(U);     // output gains
   std::vector<storage_t> E(C * D * F * P * (T + M * U - 1) /
@@ -296,8 +298,8 @@ void driver(const float amp, const int bin, const float delta) {
       {1.0, 0.000714811},
       {2.0, 0}, // not measured, down in the noise
   }};
-  using std::fabs;
-  const float att = interp(attenuation_factors, fabs(delta));
+  using std::abs;
+  const float att = interp(attenuation_factors, abs(delta));
 
   for (int t = 0; t < T + M * U - 1; ++t) {
     for (int p = 0; p < P; ++p) {
