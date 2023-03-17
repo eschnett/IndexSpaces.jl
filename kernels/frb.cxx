@@ -64,9 +64,7 @@ constexpr bool test_get4_set4() {
 static_assert(test_get4_set4());
 
 template <typename T> inline std::complex<T> cispi(const T x) {
-  // return exp(T(M_PI) * x * std::complex<T>(0, 1));
   return polar(T(1), T(M_PI) * x);
-  // return std::complex<T>(cos(T(M_PI) * x), sin(T(M_PI) * x));
 }
 
 using float16_t = _Float16;
@@ -93,8 +91,8 @@ using float16_t = _Float16;
 //   intent: out
 //   type: Float16
 //   indices: [beamP, beamQ, F, Tds]
-//   shape: [$(2*M), $(2*N), $F, $(cld(T, Tds))]
-//   strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*F)]
+//   shape: [$(2*M), $(2*N), $(cld(T, Tds)), $F]
+//   strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*cld(T,Tds))]
 void frb_simple(const int32_t *__restrict__ const S,
                 const float16_t *__restrict__ const W,
                 const int4x2_t *__restrict__ const E,
@@ -178,8 +176,8 @@ void frb_simple(const int32_t *__restrict__ const S,
       if (t_running == Tds) {
         for (int q = 0; q < 2 * N; ++q)
           for (int p = 0; p < 2 * M; ++p)
-            I[p + 2 * M * q + 2 * M * 2 * N * freq + 2 * M * 2 * N * F * tds] =
-                I1[p + 2 * M * q];
+            I[p + 2 * M * q + 2 * M * 2 * N * tds +
+              2 * M * 2 * N * cld(T, Tds) * freq] = I1[p + 2 * M * q];
         tds += 1;
         t_running = 0;
         for (int q = 0; q < 2 * N; ++q)
@@ -192,8 +190,8 @@ void frb_simple(const int32_t *__restrict__ const S,
     if (t_running != 0) {
       for (int q = 0; q < 2 * N; ++q)
         for (int p = 0; p < 2 * M; ++p)
-          I[p + 2 * M * q + 2 * M * 2 * N * freq + 2 * M * 2 * N * F * tds] =
-              I1[p + 2 * M * q];
+          I[p + 2 * M * q + 2 * M * 2 * N * tds +
+            2 * M * 2 * N * cld(T, Tds) * freq] = I1[p + 2 * M * q];
     }
 
   } // for freq
@@ -214,7 +212,7 @@ int main(int argc, char **argv) {
   std::vector<int32_t> S(M * N);
   std::vector<float16_t> W(C * M * N * F * P);
   std::vector<int4x2_t> E(C * D * F * P * T / 2);
-  std::vector<float16_t> I((2 * M) * (2 * N) * F * cld(T, Tds));
+  std::vector<float16_t> I((2 * M) * (2 * N) * cld(T, Tds) * F);
   // Dishes
   for (int d = 0; d < D; ++d)
     S.at(d) = d;
@@ -256,12 +254,12 @@ int main(int argc, char **argv) {
   std::cout << "Checking output...\n";
   int errorcount = 0;
   std::vector<bool> I1(I.size(), false);
-  for (int tds = 0; tds < cld(T, Tds); ++tds) {
-    for (int f = 0; f < F; ++f) {
+  for (int f = 0; f < F; ++f) {
+    for (int tds = 0; tds < cld(T, Tds); ++tds) {
       for (int q = 0; q < 2 * N; ++q) {
         for (int p = 0; p < 2 * M; ++p) {
-          const int iidx =
-              p + 2 * M * q + 2 * M * 2 * N * f + 2 * M * 2 * N * F * tds;
+          const int iidx = p + 2 * M * q + 2 * M * 2 * N * tds +
+                           2 * M * 2 * N * cld(T, Tds) * f;
           assert(!I1.at(iidx));
           I1.at(iidx) = true;
           const float Ival = I.at(iidx);
@@ -270,8 +268,9 @@ int main(int argc, char **argv) {
               std::cout << "  (More nonzero outputs omitted)\n";
               goto done;
             }
-            std::cout << "  Nonzero output: p=" << p << " q=" << q << " f=" << f
-                      << " tds=" << tds << "   I=" << Ival << "\n";
+            std::cout << "  Nonzero output: p=" << p << " q=" << q
+                      << " tds=" << tds << " f=" << f << "   I=" << Ival
+                      << "\n";
             ++errorcount;
           }
         }
