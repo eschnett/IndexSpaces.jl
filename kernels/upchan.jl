@@ -7,6 +7,32 @@ using IndexSpaces
 
 Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
 Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
+Base.round(::Type{T}, x::Complex) where {T} = Complex(round(T, x.re), round(T, x.im))
+
+linterp(x1, y1, x2, y2, x) = (x - x2) * y1 / (x1 - x2) + (x - x1) * y2 / (x2 - x1)
+@assert(linterp(1.0f0, 2.0f0, 3.0f0, 4.0f0, 1.0f0) == 2.0f0)
+@assert(linterp(1.0f0, 2.0f0, 3.0f0, 4.0f0, 3.0f0) == 4.0f0)
+@assert(linterp(1.0f0, 2.0f0, 3.0f0, 4.0f0, 2.0f0) == 3.0f0)
+
+function interp(table, x)
+    @assert !isempty(table)
+    @assert x ≥ table[begin].first
+    @assert x ≤ table[end].first
+    for n in 1:(length(table) - 1)
+        if x ≤ table[n + 1].first
+            return linterp(table[n].first, table[n].second, table[n + 1].first, table[n + 1].second, x)
+        end
+    end
+    @assert false
+end
+let
+    table = [1.0f0 => +1.0f0, 2.0f0 => -1.0f0, 3.0f0 => +3.0f0]
+    @assert(interp(table, 1.0f0) == +1.0f0)
+    @assert(interp(table, 1.5f0) == +0.0f0)
+    @assert(interp(table, 2.0f0) == -1.0f0)
+    @assert(interp(table, 2.5f0) == +1.0f0)
+    @assert(interp(table, 3.0f0) == +3.0f0)
+end
 
 # CHORD Setup
 
@@ -14,10 +40,10 @@ Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
 
 const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
-const T = 512                   #TODO 32768
+const T = 32768
 const D = 512
-const P = 1                     #TODO 2
-const F = 2                     #TODO 16
+const P = 2
+const F = 16
 const U = 16
 const M = 4
 const K = 4
@@ -35,7 +61,7 @@ const Packed = true
 const num_simd_bits = 32
 const num_threads = 32
 const num_warps = W
-const num_blocks = D * P * F ÷ 128
+const num_blocks = (D ÷ 128) * P * F
 const num_blocks_per_sm = B
 
 # CHORD indices
@@ -859,56 +885,107 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
     end
 
     !silent && println("Allocating input data...")
-    G_memory = Array{Float16x2}(undef, (F * U) ÷ 2)
-    W_memory = Array{Float16x2}(undef, (U ÷ 2) * M)
-    E_memory = Array{Int4x8}(undef, (D ÷ 4) * F * P * T)
-    Ẽ_wanted = Array{Int4x8}(undef, (D ÷ 4) * (F * U) * P * (T ÷ U))
+    G_memory = Array{Float16}(undef, F * U)
+    W_memory = Array{Float16}(undef, U * M)
+    E_memory = Array{Int4x2}(undef, D * F * P * T)
+    Ē_wanted = Array{Complex{Float32}}(undef, D * (F * U) * P * (T ÷ U))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     !silent && println("Setting up input data...")
-    map!(i -> zero(Float16x2), G_memory, G_memory)
-    map!(i -> zero(Float16x2), W_memory, W_memory)
-    map!(i -> zero(Int4x8), E_memory, E_memory)
-    map!(i -> zero(Int4x8), Ẽ_wanted, Ẽ_wanted)
+
+    for freq in 0:(F * U - 1)
+        G_memory[freq + 1] = 1
+    end
+
+    for s in 0:(M * U - 1)
+        # sinc-Hanning weight function, eqn. (11), with `N=U`
+        W_memory[s + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc((s - (M * U - 1) / 2.0f0) / U)
+    end
+    W_memory /= sum(W_memory)
+
+    amp = 7.5f0                 # amplitude
+    bin = 0                       # frequency bin
+    delta = 0.0f0                 # frequency offset
+    test_freq = bin - (U - 1) / 2.0f0 + delta
+    attenuation_factors = Pair{Float32,Float32}[
+        0 => 1.00007,
+        0.0001 => 1.00007,
+        0.001 => 1.00005,
+        0.01 => 0.999116,
+        0.1 => 0.910357,
+        0.2 => 0.680212,
+        0.3 => 0.402912,
+        0.4 => 0.172467,
+        0.5 => 0.0374226,
+        1.0 => 0.000714811,
+        2.0 => 0, # not measured, down in the noise
+    ]
+    att = interp(attenuation_factors, delta)
+
+    # map!(i -> zero(Int4x2), E_memory, E_memory)
+    for time in 0:(T - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
+        Eidx = dish + D * freq + D * F * polr + D * F * P * time
+        E1 = amp * cispi(2 * ((1.0f0 * time / U * test_freq) % 1.0f0))
+        E1 = clamp(round(Int, E1), -7, +7)
+        E_memory[Eidx + 1] = Int4x2(E1.re, E1.im)
+    end
+
+    # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
+    for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
+        Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
+        Ē1 = fbar == bin ? att * amp * cispi(2 * (((tbar + M / 2.0f0) * (0.5f0 + delta)) % 1.0f0)) : 0
+        Ē_wanted[Ēidx + 1] = Ē1
+    end
+
     map!(i -> zero(Int32), info_wanted, info_wanted)
+
+    G_memory = reinterpret(Float16x2, G_memory)
+    W_memory = reinterpret(Float16x2, W_memory)
+    E_memory = reinterpret(Int4x8, E_memory)
 
     !silent && println("Copying data from CPU to GPU...")
     G_cuda = CuArray(G_memory)
     W_cuda = CuArray(W_memory)
     E_cuda = CuArray(E_memory)
-    Ẽ_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), length(Ẽ_wanted))
+    Ē_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), (C ÷ 2) * (D ÷ 4) * (F * U) * P * (T ÷ U))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
 
     !silent && println("Running kernel...")
-    kernel(G_cuda, W_cuda, E_cuda, Ẽ_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    kernel(G_cuda, W_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
     synchronize()
 
     !silent && println("Copying data back from GPU to CPU...")
-    Ẽ_memory = Array(Ẽ_cuda)
+    Ē_memory = Array(Ē_cuda)
     info_memory = Array(info_cuda)
     @assert all(info_memory .== 0)
 
+    Ē_memory = reinterpret(Int4x2, Ē_memory)
+
     if run_selftest
         println("Checking results...")
-        println("    Ẽ:")
-        did_test_Ẽ_memory = falses(length(Ẽ_memory))
-        for time in 0:U:(T - 1), polr in 0:(P - 1), freq in 0:(F * U - 1), dish in 0:(D - 1)
-            Ẽidx = dish ÷ 4 + (D ÷ 4) * freq + (D ÷ 4) * (F * U) * polr + (D ÷ 4) * (F * U) * P * (time ÷ U)
-            if dish % 4 == 0
-                @assert !did_test_Ẽ_memory[Ẽidx + 1]
-                did_test_Ẽ_memory[Ẽidx + 1] = true
-            end
-            have_value8 = convert(NTuple{8,Int32}, Ẽ_memory[Ẽidx + 1])
-            want_value8 = convert(NTuple{8,Int32}, Ẽ_wanted[Ẽidx + 1])
-            have_value = have_value8[2 * (dish % 4) + 0 + 1] + im * have_value8[2 * (dish % 4) + 1 + 1]
-            want_value = want_value8[2 * (dish % 4) + 0 + 1] + im * want_value8[2 * (dish % 4) + 1 + 1]
+        num_errors = 0
+        println("    Ē:")
+        did_test_Ē_memory = falses(length(Ē_memory))
+        # for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
+        for polr in 0:(P - 1), dish in 0:(D - 1), fbar in 0:(F * U - 1), tbar in 0:(T ÷ U - 1)
+            Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
+            @assert !did_test_Ē_memory[Ēidx + 1]
+            did_test_Ē_memory[Ēidx + 1] = true
+            have_value = Complex(convert(NTuple{2,Int32}, Ē_memory[Ēidx + 1])...)
+            want_value = Ē_wanted[Ēidx + 1]
             if have_value ≠ want_value
-                # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
-                println("        dish=$dish freq=$freq polr=$polr time=$time Ẽ=$have_value Ẽ₀=$want_value")
-                found_error = true
+                if dish == 0 && polr == 0 && tbar ≥ M
+                    num_errors += 1
+                    if num_errors ≤ 100
+                        # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
+                        println("        dish=$dish fbar=$fbar polr=$polr tbar=$tbar Ē=$have_value Ē₀=$want_value")
+                    end
+                end
             end
         end
-        @assert all(did_test_Ẽ_memory)
+        @assert all(did_test_Ē_memory)
+        println("Found $num_errors errors")
+        @assert num_errors == 0
     end
 
     return nothing
