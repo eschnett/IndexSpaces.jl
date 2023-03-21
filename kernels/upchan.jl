@@ -34,16 +34,22 @@ let
     @assert(interp(table, 3.0f0) == +3.0f0)
 end
 
+# Un-normalized `sinc` function, without `π`
+sinc′(x) = x == 0 ? one(x) : sin(x) / x
+
 # CHORD Setup
 
 # Compile-time constants
 
 const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
-const T = 32768
+const T = 256 #TODO 32768
 const D = 512
 const P = 2
-const F = 16
+const F₀ = 16
+# const F = 16
+const F = 2
+# const F = 84 ÷ (D ÷ 128)
 const U = 16
 const M = 4
 const K = 4
@@ -63,6 +69,36 @@ const num_threads = 32
 const num_warps = W
 const num_blocks = (D ÷ 128) * P * F
 const num_blocks_per_sm = B
+
+# Benchmark results:
+
+# Setup for full CHORD on A40:
+#
+# benchmark-result:
+#   kernel: "upchan"
+#   description: "Upchannelizer"
+#   design-parameters:
+#     number-of-complex-components: 2
+#     number-of-dishes: 512
+#     number-of-frequencies: 21
+#     number-of-polarizations: 2
+#     number-of-taps: 4
+#     number-of-timesamples: 32768
+#     sampling-time-μsec: 1.7066666666666668
+#     upchannelization-factor: 16
+#   compile-parameters:
+#     minthreads: 512
+#     blocks_per_sm: 2
+#   call-parameters:
+#     threads: [32, 16]
+#     blocks: [168]
+#     shmem_bytes: 69888
+#   result-μsec:
+#     runtime: 2742.1
+#     scaled-runtime: 2089.2
+#     scaled-number-of-frequencies: 16
+#     dataframe-length: 55924.1
+#     dataframe-percent: 3.7
 
 # CHORD indices
 
@@ -94,6 +130,7 @@ const Repl = Index{Physics,ReplTag}
 const layout_W_memory = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     # TODO: Choose a convenient layout and shuffle when loading
+    # TODO: Calculate on the GPU
     #TODO Time(:time, 1, 2) => SIMD(:simd, 16, 2),
     #TODO Time(:time, 2, (U ÷ 2) * M) => Memory(:memory, 1, (U ÷ 2) * M),
     Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
@@ -431,8 +468,8 @@ function upchan!(emitter)
                 thread2 = (thread ÷ 4i32) % 2i32
                 time0 = 1i32 * thread2 + 2i32 * thread0 + 4i32 * thread1
                 time1 = time0 + 8i32
-                X0 = cispi(Float32(time0 * (U - 1i32)) / U)
-                X1 = cispi(Float32(time1 * (U - 1i32)) / U)
+                X0 = cispi((time0 * (U - 1i32) / Float32(U)) % 2.0f0)
+                X1 = cispi((time1 * (U - 1i32) / Float32(U)) % 2.0f0)
                 (X0, X1)
             end
         end,
@@ -467,7 +504,9 @@ function upchan!(emitter)
                 timehi0 = 1i32 * thread0 + 2i32 * thread1
                 timehi1 = timehi0 + 4i32
                 freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
-                Γ¹0, Γ¹1 = (cispi(-2 * timehi0 * freqlo / Float32(2^8)), cispi(-2 * timehi1 * freqlo / Float32(2^8)))
+                Γ¹0, Γ¹1 = (
+                    cispi((-2 * timehi0 * freqlo / Float32(2^8)) % 2.0f0), cispi((-2 * timehi1 * freqlo / Float32(2^8)) % 2.0f0)
+                )
                 (Γ¹0, Γ¹1)
             end
         end,
@@ -502,7 +541,10 @@ function upchan!(emitter)
                 timelo0 = 0i32
                 timelo1 = 1i32
                 freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
-                (Γ²0, Γ²1) = (cispi(-2 * timelo0 * freqlo / Float32(2^16)), cispi(-2 * timelo1 * freqlo / Float32(2^16)))
+                (Γ²0, Γ²1) = (
+                    cispi((-2 * timelo0 * freqlo / Float32(2^16)) % 2.0f0),
+                    cispi((-2 * timelo1 * freqlo / Float32(2^16)) % 2.0f0),
+                )
                 (Γ²0, Γ²1)
             end
         end,
@@ -540,7 +582,8 @@ function upchan!(emitter)
                 dish = 1i32 * thread4 + 2i32 * thread3
                 delta = dish == dish_in
                 Γ³0, Γ³1 = (
-                    delta * cispi(-2 * timelo0 * freqlo / Float32(2^1)), delta * cispi(-2 * timelo1 * freqlo / Float32(2^1))
+                    delta * cispi((-2 * timelo0 * freqlo / Float32(2^1)) % 2.0f0),
+                    delta * cispi((-2 * timelo1 * freqlo / Float32(2^1)) % 2.0f0),
                 )
                 (Γ³0, Γ³1)
             end
@@ -614,6 +657,7 @@ function upchan!(emitter)
                 # m = M-1
                 split!(emitter, [Symbol(:W_m, m) for m in 0:(M - 1)], :Wpfb, Register(:mtaps, 1, M))
                 apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($W * $E))
+                #TODO apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($E))
                 # m ∈ 0:M-2
                 # NOTE: For some reason, this `unrolled_loop!`
                 # construct calls `widen2!` on all mtaps, not just the
@@ -649,8 +693,8 @@ function upchan!(emitter)
                 # Step 5: Compute E3 by applying phases to E2
                 split!(emitter, [:E2re, :E2im], :E2, Cplx(:cplx, 1, C))
                 split!(emitter, [:Xre, :Xim], :X, Cplx(:cplx, 1, C))
-                apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd(-$Xim * $E2im, $Xre, $E2re)))
-                apply!(emitter, :E3im, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xim * $E2re, $Xre, $E2im)))
+                apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xre, $E2re, -$Xim * $E2im)))
+                apply!(emitter, :E3im, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xre, $E2im, $Xim * $E2re)))
                 merge!(emitter, :E3, [:E3re, :E3im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
                 # Step 6: Compute E4 by FFTing E3
@@ -702,13 +746,13 @@ function upchan!(emitter)
                         emitter,
                         :ZZre,
                         [:WWre, :WWim, :Γ²re, :Γ²im],
-                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd(-$Γ²im * $WWim, $Γ²re, $WWre)),
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²re, $WWre, -$Γ²im * $WWim)),
                     )
                     apply!(
                         emitter,
                         :ZZim,
                         [:WWre, :WWim, :Γ²re, :Γ²im],
-                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²im * $WWre, $Γ²re, $WWim)),
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²re, $WWim, $Γ²im * $WWre)),
                     )
                     merge!(emitter, :ZZ, [:ZZre, :ZZim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
@@ -790,6 +834,13 @@ function upchan!(emitter)
                 for m in 0:(M - 3)
                     apply!(emitter, Symbol(:F_ringbuf_m, m), [Symbol(:F_ringbuf_m, m + 1)], (F,) -> :($F))
                 end
+                apply!(
+                    emitter,
+                    Symbol(:F_ringbuf_m, M - 2),
+                    [Symbol(:F_ringbuf_m, M - 2), :F_in],
+                    (F_ringbuf, F) -> :($F);
+                    ignore=[Time(:time, 16, 16)],
+                )
                 merge!(
                     emitter,
                     :F_ringbuf,
@@ -863,7 +914,7 @@ end
     return nothing
 end
 
-function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool=false)
+function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false, silent::Bool=false)
     !silent && println("CHORD upchannelizer")
 
     !silent && println("Compiling kernel...")
@@ -899,13 +950,13 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
 
     for s in 0:(M * U - 1)
         # sinc-Hanning weight function, eqn. (11), with `N=U`
-        W_memory[s + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc((s - (M * U - 1) / 2.0f0) / U)
+        W_memory[s + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc′((s - (M * U - 1) / 2.0f0) / U)
     end
     W_memory /= sum(W_memory)
 
     amp = 7.5f0                 # amplitude
-    bin = 0                       # frequency bin
-    delta = 0.0f0                 # frequency offset
+    bin = 0                     # frequency bin
+    delta = 0.0f0               # frequency offset
     test_freq = bin - (U - 1) / 2.0f0 + delta
     attenuation_factors = Pair{Float32,Float32}[
         0 => 1.00007,
@@ -925,7 +976,11 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
     # map!(i -> zero(Int4x2), E_memory, E_memory)
     for time in 0:(T - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
         Eidx = dish + D * freq + D * F * polr + D * F * P * time
-        E1 = amp * cispi(2 * ((1.0f0 * time / U * test_freq) % 1.0f0))
+        if polr == 0 && freq == 0 && dish == 0
+            E1 = amp * cispi((2 * time / Float32(U) * test_freq) % 2.0f0)
+        else
+            E1 = 0.0f0 + 0im
+        end
         E1 = clamp(round(Int, E1), -7, +7)
         E_memory[Eidx + 1] = Int4x2(E1.re, E1.im)
     end
@@ -933,7 +988,7 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
     # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
     for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
         Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
-        Ē1 = fbar == bin ? att * amp * cispi(2 * (((tbar + M / 2.0f0) * (0.5f0 + delta)) % 1.0f0)) : 0
+        Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
         Ē_wanted[Ēidx + 1] = Ē1
     end
 
@@ -950,9 +1005,67 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
     Ē_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), (C ÷ 2) * (D ÷ 4) * (F * U) * P * (T ÷ U))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
 
+    @assert sizeof(G_cuda) < 2^32
+    @assert sizeof(W_cuda) < 2^32
+    @assert sizeof(E_cuda) < 2^32
+    @assert sizeof(Ē_cuda) < 2^32
+
     !silent && println("Running kernel...")
     kernel(G_cuda, W_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
     synchronize()
+
+    if nruns > 0
+        !silent && println("Benchmarking...")
+        stats = @timed begin
+            for run in 1:nruns
+                kernel(
+                    G_cuda,
+                    W_cuda,
+                    E_cuda,
+                    Ē_cuda,
+                    info_cuda;
+                    threads=(num_threads, num_warps),
+                    blocks=num_blocks,
+                    shmem=shmem_bytes,
+                )
+            end
+            synchronize()
+        end
+        # All times in μsec
+        runtime = stats.time / nruns * 1.0e+6
+        num_frequencies_scaled = F₀
+        runtime_scaled = runtime / F * num_frequencies_scaled
+        dataframe_length = T * sampling_time_μsec
+        fraction = runtime_scaled / dataframe_length
+        round1(x) = round(x; digits=1)
+        println("""
+        benchmark-result:
+          kernel: "upchan"
+          description: "Upchannelizer"
+          design-parameters:
+            number-of-complex-components: $C
+            number-of-dishes: $D
+            number-of-frequencies: $F
+            number-of-polarizations: $P
+            number-of-taps: $M
+            number-of-timesamples: $T
+            sampling-time-μsec: $sampling_time_μsec
+            upchannelization-factor: $U
+          compile-parameters:
+            minthreads: $(num_threads * num_warps)
+            blocks_per_sm: $num_blocks_per_sm
+          call-parameters:
+            threads: [$num_threads, $num_warps]
+            blocks: [$num_blocks]
+            shmem_bytes: $shmem_bytes
+          result-μsec:
+            runtime: $(round1(runtime))
+            scaled-runtime: $(round1(runtime_scaled))
+            scaled-number-of-frequencies: $num_frequencies_scaled
+            dataframe-length: $(round1(dataframe_length))
+            dataframe-percent: $(round1(fraction * 100))
+        """)
+    end
 
     !silent && println("Copying data back from GPU to CPU...")
     Ē_memory = Array(Ē_cuda)
@@ -974,7 +1087,7 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
             have_value = Complex(convert(NTuple{2,Int32}, Ē_memory[Ēidx + 1])...)
             want_value = Ē_wanted[Ēidx + 1]
             if have_value ≠ want_value
-                if dish == 0 && polr == 0 && tbar ≥ M
+                if dish == 0 && polr == 0
                     num_errors += 1
                     if num_errors ≤ 100
                         # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
@@ -988,6 +1101,7 @@ function main(; compile_only::Bool=false, run_selftest::Bool=false, silent::Bool
         @assert num_errors == 0
     end
 
+    !silent && println("Done.")
     return nothing
 end
 
@@ -1062,20 +1176,20 @@ function fix_ptx_kernel()
 end
 
 if CUDA.functional()
-    # Output kernel
-    println("Writing PTX code...")
-    open("output-A40/upchan.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main(; compile_only=true, silent=true)
-        end
-    end
-    fix_ptx_kernel()
-    println("Writing SASS code...")
-    open("output-A40/upchan.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main(; compile_only=true, silent=true)
-        end
-    end
+    # # Output kernel
+    # println("Writing PTX code...")
+    # open("output-A40/upchan.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true, silent=true)
+    #     end
+    # end
+    # fix_ptx_kernel()
+    # println("Writing SASS code...")
+    # open("output-A40/upchan.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(; compile_only=true, silent=true)
+    #     end
+    # end
 
     # Run test
     main(; run_selftest=true)
