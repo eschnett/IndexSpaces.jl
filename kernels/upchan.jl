@@ -5,6 +5,9 @@ using CUDA
 using CUDASIMDTypes
 using IndexSpaces
 
+bitsign(b::Bool) = b ? -1 : +1
+bitsign(i::Integer) = bitsign(isodd(i))
+
 Base.clamp(x::Complex, a, b) = Complex(clamp(x.re, a, b), clamp(x.im, a, b))
 Base.clamp(x::Complex, ab::UnitRange) = clamp(x, ab.start, ab.stop)
 Base.round(::Type{T}, x::Complex) where {T} = Complex(round(T, x.re), round(T, x.im))
@@ -468,8 +471,8 @@ function upchan!(emitter)
                 thread2 = (thread ÷ 4i32) % 2i32
                 time0 = 1i32 * thread2 + 2i32 * thread0 + 4i32 * thread1
                 time1 = time0 + 8i32
-                X0 = cispi((time0 * (U - 1i32) / Float32(U)) % 2.0f0)
-                X1 = cispi((time1 * (U - 1i32) / Float32(U)) % 2.0f0)
+                X0 = cispi((time0 * $(Int32(U - 1)) / Float32(U)) % 2.0f0)
+                X1 = cispi((time1 * $(Int32(U - 1)) / Float32(U)) % 2.0f0)
                 (X0, X1)
             end
         end,
@@ -656,7 +659,7 @@ function upchan!(emitter)
                 # Step 4: Compute E2 from E
                 # m = M-1
                 split!(emitter, [Symbol(:W_m, m) for m in 0:(M - 1)], :Wpfb, Register(:mtaps, 1, M))
-                apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($W * $E))
+                apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($(isodd(M - 1) ? :(-$W) : :(+$W)) * $E))
                 #TODO apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($E))
                 # m ∈ 0:M-2
                 # NOTE: For some reason, this `unrolled_loop!`
@@ -687,7 +690,12 @@ function upchan!(emitter)
                         SIMD(:simd, 8, 2) => Register(:dish, 1, 2);
                         newtype=FloatValue,
                     )
-                    apply!(emitter, :E2, [:E2, Symbol(:E_ringbuf_m, m), Symbol(:W_m, m)], (E2, E, W) -> :(muladd($W, $E, $E2)))
+                    apply!(
+                        emitter,
+                        :E2,
+                        [:E2, Symbol(:E_ringbuf_m, m), Symbol(:W_m, m)],
+                        (E2, E, W) -> :(muladd($(isodd(m) ? :(-$W) : :(+$W)), $E, $E2)),
+                    )
                 end
 
                 # Step 5: Compute E3 by applying phases to E2
@@ -888,7 +896,8 @@ function make_upchan_kernel()
     # Emit code
     stmts = clean_code(
         quote
-            @fastmath @inbounds begin
+            #TODO @fastmath @inbounds begin
+            begin
                 $(emitter.init_statements...)
                 $(emitter.statements...)
             end
@@ -950,7 +959,13 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
 
     for s in 0:(M * U - 1)
         # sinc-Hanning weight function, eqn. (11), with `N=U`
-        W_memory[s + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc′((s - (M * U - 1) / 2.0f0) / U)
+        time = s % U
+        mtap = s ÷ U
+        @assert 0 ≤ mtap < M
+        Widx = (time ÷ 8 % 2) + 2 * (time % 8) + 16 * (time ÷ 16) + U * mtap
+        @assert 0 ≤ Widx < length(W_memory)
+
+        W_memory[Widx + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc′((s - (M * U - 1) / 2.0f0) / U)
     end
     W_memory /= sum(W_memory)
 
@@ -988,7 +1003,11 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
     for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
         Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
-        Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
+        if polr == 0 && fbar == 0 && dish == 0
+            Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
+        else
+            Ē1 = 0.0f0 + 0im
+        end
         Ē_wanted[Ēidx + 1] = Ē1
     end
 
@@ -1087,11 +1106,13 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
             have_value = Complex(convert(NTuple{2,Int32}, Ē_memory[Ēidx + 1])...)
             want_value = Ē_wanted[Ēidx + 1]
             if have_value ≠ want_value
-                if dish == 0 && polr == 0
+                if true || (dish == 0 && polr == 0)
                     num_errors += 1
                     if num_errors ≤ 100
                         # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
                         println("        dish=$dish fbar=$fbar polr=$polr tbar=$tbar Ē=$have_value Ē₀=$want_value")
+                    elseif num_errors == 101
+                        println("        [skipping further error output]")
                     end
                 end
             end
@@ -1176,20 +1197,20 @@ function fix_ptx_kernel()
 end
 
 if CUDA.functional()
-    # # Output kernel
-    # println("Writing PTX code...")
-    # open("output-A40/upchan.ptx", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_ptx main(; compile_only=true, silent=true)
-    #     end
-    # end
-    # fix_ptx_kernel()
-    # println("Writing SASS code...")
-    # open("output-A40/upchan.sass", "w") do fh
-    #     redirect_stdout(fh) do
-    #         @device_code_sass main(; compile_only=true, silent=true)
-    #     end
-    # end
+    # Output kernel
+    println("Writing PTX code...")
+    open("output-A40/upchan.ptx", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_ptx main(; compile_only=true, silent=true)
+        end
+    end
+    fix_ptx_kernel()
+    println("Writing SASS code...")
+    open("output-A40/upchan.sass", "w") do fh
+        redirect_stdout(fh) do
+            @device_code_sass main(; compile_only=true, silent=true)
+        end
+    end
 
     # Run test
     main(; run_selftest=true)
