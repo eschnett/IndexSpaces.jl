@@ -660,7 +660,6 @@ function upchan!(emitter)
                 # m = M-1
                 split!(emitter, [Symbol(:W_m, m) for m in 0:(M - 1)], :Wpfb, Register(:mtaps, 1, M))
                 apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($(isodd(M - 1) ? :(-$W) : :(+$W)) * $E))
-                #TODO apply!(emitter, :E2, [:E, Symbol(:W_m, M - 1)], (E, W) -> :($E))
                 # m ∈ 0:M-2
                 # NOTE: For some reason, this `unrolled_loop!`
                 # construct calls `widen2!` on all mtaps, not just the
@@ -699,6 +698,7 @@ function upchan!(emitter)
                 end
 
                 # Step 5: Compute E3 by applying phases to E2
+                # TODO: Combine `W` and `X` into a single factor (only for small `M`?)
                 split!(emitter, [:E2re, :E2im], :E2, Cplx(:cplx, 1, C))
                 split!(emitter, [:Xre, :Xim], :X, Cplx(:cplx, 1, C))
                 apply!(emitter, :E3re, [:E2re, :E2im, :Xre, :Xim], (E2re, E2im, Xre, Xim) -> :(muladd($Xre, $E2re, -$Xim * $E2im)))
@@ -820,6 +820,7 @@ function upchan!(emitter)
                 end
 
                 # Step 7: Compute E5 by applying gains to E4
+                # TODO: Combine gains and last FFT step
                 apply!(emitter, :E5, [:E4, :Gains], (E4, G) -> :($G * $E4))
 
                 # Step 8: Compute F̄_out by quantizing E5
@@ -1004,7 +1005,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
         Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
         if polr == 0 && fbar == 0 && dish == 0
-            Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
+            Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar - (M - 1) + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
         else
             Ē1 = 0.0f0 + 0im
         end
@@ -1197,20 +1198,20 @@ function fix_ptx_kernel()
 end
 
 if CUDA.functional()
-    # Output kernel
-    println("Writing PTX code...")
-    open("output-A40/upchan.ptx", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_ptx main(; compile_only=true, silent=true)
-        end
-    end
-    fix_ptx_kernel()
-    println("Writing SASS code...")
-    open("output-A40/upchan.sass", "w") do fh
-        redirect_stdout(fh) do
-            @device_code_sass main(; compile_only=true, silent=true)
-        end
-    end
+    # # Output kernel
+    # println("Writing PTX code...")
+    # open("output-A40/upchan.ptx", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_ptx main(; compile_only=true, silent=true)
+    #     end
+    # end
+    # fix_ptx_kernel()
+    # println("Writing SASS code...")
+    # open("output-A40/upchan.sass", "w") do fh
+    #     redirect_stdout(fh) do
+    #         @device_code_sass main(; compile_only=true, silent=true)
+    #     end
+    # end
 
     # Run test
     main(; run_selftest=true)
