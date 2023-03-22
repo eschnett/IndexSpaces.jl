@@ -498,6 +498,10 @@ function upchan!(emitter)
         emitter.statements,
         quote
             (Γ¹0, Γ¹1) = let
+                k = 4
+                @assert U == 2^k
+                m = 3
+                n = 1
                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
                 thread0 = (thread ÷ 1i32) % 2i32
                 thread1 = (thread ÷ 2i32) % 2i32
@@ -508,7 +512,7 @@ function upchan!(emitter)
                 timehi1 = timehi0 + 4i32
                 freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
                 Γ¹0, Γ¹1 = (
-                    cispi((-2 * timehi0 * freqlo / Float32(2^8)) % 2.0f0), cispi((-2 * timehi1 * freqlo / Float32(2^8)) % 2.0f0)
+                    cispi((-2 * timehi0 * freqlo / Float32(2^m)) % 2.0f0), cispi((-2 * timehi1 * freqlo / Float32(2^m)) % 2.0f0)
                 )
                 (Γ¹0, Γ¹1)
             end
@@ -535,6 +539,10 @@ function upchan!(emitter)
         emitter.statements,
         quote
             (Γ²0, Γ²1) = let
+                k = 4
+                @assert U == 2^k
+                m = 3
+                n = 1
                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
                 thread0 = (thread ÷ 1i32) % 2i32
                 thread1 = (thread ÷ 2i32) % 2i32
@@ -545,8 +553,8 @@ function upchan!(emitter)
                 timelo1 = 1i32
                 freqlo = 1i32 * thread2 + 2i32 * thread3 + 4i32 * thread4
                 (Γ²0, Γ²1) = (
-                    cispi((-2 * timelo0 * freqlo / Float32(2^16)) % 2.0f0),
-                    cispi((-2 * timelo1 * freqlo / Float32(2^16)) % 2.0f0),
+                    cispi((-2 * timelo0 * freqlo / Float32(2^(m + n))) % 2.0f0),
+                    cispi((-2 * timelo1 * freqlo / Float32(2^(m + n))) % 2.0f0),
                 )
                 (Γ²0, Γ²1)
             end
@@ -571,6 +579,10 @@ function upchan!(emitter)
         emitter.statements,
         quote
             (Γ³0, Γ³1) = let
+                k = 4
+                @assert U == 2^k
+                m = 3
+                n = 1
                 thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
                 thread0 = (thread ÷ 1i32) % 2i32
                 thread1 = (thread ÷ 2i32) % 2i32
@@ -585,8 +597,8 @@ function upchan!(emitter)
                 dish = 1i32 * thread4 + 2i32 * thread3
                 delta = dish == dish_in
                 Γ³0, Γ³1 = (
-                    delta * cispi((-2 * timelo0 * freqlo / Float32(2^1)) % 2.0f0),
-                    delta * cispi((-2 * timelo1 * freqlo / Float32(2^1)) % 2.0f0),
+                    delta * cispi((-2 * timelo0 * freqlo / Float32(2^n)) % 2.0f0),
+                    delta * cispi((-2 * timelo1 * freqlo / Float32(2^n)) % 2.0f0),
                 )
                 (Γ³0, Γ³1)
             end
@@ -992,7 +1004,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     # map!(i -> zero(Int4x2), E_memory, E_memory)
     for time in 0:(T - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
         Eidx = dish + D * freq + D * F * polr + D * F * P * time
-        if polr == 0 && freq == 0 && dish == 0
+        if polr == 0 && dish == 0 && freq == 0
             E1 = amp * cispi((2 * time / Float32(U) * test_freq) % 2.0f0)
         else
             E1 = 0.0f0 + 0im
@@ -1004,7 +1016,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
     for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
         Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
-        if polr == 0 && fbar == 0 && dish == 0
+        if polr == 0 && dish == 0
             Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar - (M - 1) + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
         else
             Ē1 = 0.0f0 + 0im
