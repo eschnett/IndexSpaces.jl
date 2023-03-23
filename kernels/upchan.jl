@@ -38,7 +38,12 @@ let
 end
 
 # Un-normalized `sinc` function, without `π`
-sinc′(x) = x == 0 ? one(x) : sin(x) / x
+@fastmath @inline sinc′(x) = x == 0 ? one(x) : sin(x) / x
+
+# sinc-Hanning weight function, eqn. (11), with `N=U`
+@fastmath @inline function Wkernel(s, M, U)
+    return cospi((s - Int32(M * U - 1) / 2.0f0) / Int32(M * U + 1))^2 * sinc′((s - Int32(M * U - 1) / 2.0f0) / Int32(U))
+end
 
 # CHORD Setup
 
@@ -128,19 +133,6 @@ const Repl = Index{Physics,ReplTag}
 # Layouts
 
 # Global memory layouts
-
-const layout_W_memory = Layout([
-    FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    # TODO: Choose a convenient layout and shuffle when loading
-    # TODO: Calculate on the GPU
-    #TODO Time(:time, 1, 2) => SIMD(:simd, 16, 2),
-    #TODO Time(:time, 2, (U ÷ 2) * M) => Memory(:memory, 1, (U ÷ 2) * M),
-    Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
-    Time(:time, 1, 8) => Memory(:memory, 1, 8),
-    # Time(:time, 16, U * M ÷ 16) => Memory(:memory, 8, U * M ÷ 16),
-    Time(:time, 16, U ÷ 16) => Memory(:memory, 8, U ÷ 16),
-    MTaps(:mtaps, 1, M) => Memory(:memory, 8 * (U ÷ 16), M),
-])
 
 const layout_G_memory = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
@@ -455,8 +447,41 @@ function upchan!(emitter)
     # Load gains
     load!(emitter, :Gains => layout_G_registers, :G_memory => layout_G_memory)
 
-    # Load weights
-    load!(emitter, :Wpfb => layout_W_registers, :W_memory => layout_W_memory)
+    # Calculate weights
+    # sinc-Hanning weight function, eqn. (11), with `N=U`
+    @assert U == 16
+    layout_Wm_registers = Layout([
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        Time(:time, 8, 2) => SIMD(:simd, 16, 2),
+        Time(:time, 4, 2) => Thread(:thread, 1 << 1, 2),
+        Time(:time, 2, 2) => Thread(:thread, 1 << 0, 2),
+        Time(:time, 1, 2) => Thread(:thread, 1 << 2, 2),
+        # Thread(:thread, 1 << 4, 2),
+        # Thread(:thread, 1 << 3, 2),
+    ])
+    for m in 0:(M - 1)
+        Wsum1 = inv(sum(Wkernel(s, M, U) for s in 0:(M * U - 1)))
+        push!(
+            emitter.statements,
+            quote
+                ($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m))) = let
+                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                    thread0 = (thread ÷ 1i32) % 2i32
+                    thread1 = (thread ÷ 2i32) % 2i32
+                    thread2 = (thread ÷ 4i32) % 2i32
+                    time0 = 1i32 * thread2 + 2i32 * thread0 + 4i32 * thread1
+                    time1 = time0 + 8i32
+                    s0 = time0 + $(Int32(m * U))
+                    s1 = time1 + $(Int32(m * U))
+                    W0 = $Wsum1 * Wkernel(s0, $M, $U)
+                    W1 = $Wsum1 * Wkernel(s1, $M, $U)
+                    (W0, W1)
+                end
+            end,
+        )
+        apply!(emitter, Symbol(:Wpfb_m, m) => layout_Wm_registers, :(Float16x2($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m)))))
+    end
+    merge!(emitter, :Wpfb, [Symbol(:Wpfb_m, m) for m in 0:(M - 1)], MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M))
 
     # Calculate extra phases
     # eqn. (88), (125), (139)
@@ -926,7 +951,7 @@ open("output-A40/upchan.jl", "w") do fh
     println(fh, upchan_kernel)
 end
 
-@eval function upchan(G_memory, W_memory, E_memory, Ē_memory, info_memory)
+@eval function upchan(G_memory, E_memory, Ē_memory, info_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     F_shared = reinterpret(Int4x8, shmem)
     F̄_shared = reinterpret(Int4x8, shmem)
@@ -947,7 +972,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm upchan(
-        CUDA.zeros(Float16x2, 0), CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
+        CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
@@ -957,7 +982,6 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
 
     !silent && println("Allocating input data...")
     G_memory = Array{Float16}(undef, F * U)
-    W_memory = Array{Float16}(undef, U * M)
     E_memory = Array{Int4x2}(undef, D * F * P * T)
     Ē_wanted = Array{Complex{Float32}}(undef, D * (F * U) * P * (T ÷ U))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
@@ -967,18 +991,6 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     for freq in 0:(F * U - 1)
         G_memory[freq + 1] = 1
     end
-
-    for s in 0:(M * U - 1)
-        # sinc-Hanning weight function, eqn. (11), with `N=U`
-        time = s % U
-        mtap = s ÷ U
-        @assert 0 ≤ mtap < M
-        Widx = (time ÷ 8 % 2) + 2 * (time % 8) + 16 * (time ÷ 16) + U * mtap
-        @assert 0 ≤ Widx < length(W_memory)
-
-        W_memory[Widx + 1] = cospi((s - (M * U - 1) / 2.0f0) / (M * U + 1))^2 * sinc′((s - (M * U - 1) / 2.0f0) / U)
-    end
-    W_memory /= sum(W_memory)
 
     amp = 7.5f0                 # amplitude
     bin = 0                     # frequency bin
@@ -1025,39 +1037,27 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     map!(i -> zero(Int32), info_wanted, info_wanted)
 
     G_memory = reinterpret(Float16x2, G_memory)
-    W_memory = reinterpret(Float16x2, W_memory)
     E_memory = reinterpret(Int4x8, E_memory)
 
     !silent && println("Copying data from CPU to GPU...")
     G_cuda = CuArray(G_memory)
-    W_cuda = CuArray(W_memory)
     E_cuda = CuArray(E_memory)
     Ē_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), (C ÷ 2) * (D ÷ 4) * (F * U) * P * (T ÷ U))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
 
     @assert sizeof(G_cuda) < 2^32
-    @assert sizeof(W_cuda) < 2^32
     @assert sizeof(E_cuda) < 2^32
     @assert sizeof(Ē_cuda) < 2^32
 
     !silent && println("Running kernel...")
-    kernel(G_cuda, W_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    kernel(G_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
     synchronize()
 
     if nruns > 0
         !silent && println("Benchmarking...")
         stats = @timed begin
             for run in 1:nruns
-                kernel(
-                    G_cuda,
-                    W_cuda,
-                    E_cuda,
-                    Ē_cuda,
-                    info_cuda;
-                    threads=(num_threads, num_warps),
-                    blocks=num_blocks,
-                    shmem=shmem_bytes,
-                )
+                kernel(G_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
             end
             synchronize()
         end
@@ -1174,12 +1174,6 @@ function fix_ptx_kernel()
           indices: [F̄]
           shape: [$(F*U)]
           strides: [1]
-        - name: "W"
-          intent: in
-          type: Float16
-          indices: [U, M]
-          shape: [$U, $M]
-          strides: [1, $U]
         - name: "E"
           intent: in
           type: Int4

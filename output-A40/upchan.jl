@@ -1,5 +1,5 @@
 @fastmath @inbounds(
-    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:911 =#
+    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:936 =#
         info = 1
         info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) % 16) * 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 128) % 128) * 512) + 0 + 0x01] =
             info
@@ -7,10 +7,66 @@
         F_ringbuf_mtaps1 = zero(Int4x8)
         F_ringbuf_mtaps2 = zero(Int4x8)
         Gains = G_memory[((((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 2) * 4 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2) * 8) + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 2) % 2) * 2) ÷ 2) % 128 + 0x01]
-        Wpfb_mtaps0 = W_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) % 8 + 0x01]
-        Wpfb_mtaps1 = W_memory[(8 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) % 8) + 0x01]
-        Wpfb_mtaps2 = W_memory[(16 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) % 8) + 0x01]
-        Wpfb_mtaps3 = W_memory[(24 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 4) % 2 + (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 4) * 2) % 8) + 0x01]
+        (Wpfb0_m0, Wpfb1_m0) = let
+            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+            thread0 = (thread ÷ (1i32)) % (2i32)
+            thread1 = (thread ÷ (2i32)) % (2i32)
+            thread2 = (thread ÷ (4i32)) % (2i32)
+            time0 = (1i32) * thread2 + (2i32) * thread0 + (4i32) * thread1
+            time1 = time0 + 8i32
+            s0 = time0 + 0
+            s1 = time1 + 0
+            W0 = 0.033601265f0 * Wkernel(s0, 4, 16)
+            W1 = 0.033601265f0 * Wkernel(s1, 4, 16)
+            (W0, W1)
+        end
+        Wpfb_m0 = Float16x2(Wpfb0_m0, Wpfb1_m0)
+        (Wpfb0_m1, Wpfb1_m1) = let
+            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+            thread0 = (thread ÷ (1i32)) % (2i32)
+            thread1 = (thread ÷ (2i32)) % (2i32)
+            thread2 = (thread ÷ (4i32)) % (2i32)
+            time0 = (1i32) * thread2 + (2i32) * thread0 + (4i32) * thread1
+            time1 = time0 + 8i32
+            s0 = time0 + 16
+            s1 = time1 + 16
+            W0 = 0.033601265f0 * Wkernel(s0, 4, 16)
+            W1 = 0.033601265f0 * Wkernel(s1, 4, 16)
+            (W0, W1)
+        end
+        Wpfb_m1 = Float16x2(Wpfb0_m1, Wpfb1_m1)
+        (Wpfb0_m2, Wpfb1_m2) = let
+            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+            thread0 = (thread ÷ (1i32)) % (2i32)
+            thread1 = (thread ÷ (2i32)) % (2i32)
+            thread2 = (thread ÷ (4i32)) % (2i32)
+            time0 = (1i32) * thread2 + (2i32) * thread0 + (4i32) * thread1
+            time1 = time0 + 8i32
+            s0 = time0 + 32
+            s1 = time1 + 32
+            W0 = 0.033601265f0 * Wkernel(s0, 4, 16)
+            W1 = 0.033601265f0 * Wkernel(s1, 4, 16)
+            (W0, W1)
+        end
+        Wpfb_m2 = Float16x2(Wpfb0_m2, Wpfb1_m2)
+        (Wpfb0_m3, Wpfb1_m3) = let
+            thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
+            thread0 = (thread ÷ (1i32)) % (2i32)
+            thread1 = (thread ÷ (2i32)) % (2i32)
+            thread2 = (thread ÷ (4i32)) % (2i32)
+            time0 = (1i32) * thread2 + (2i32) * thread0 + (4i32) * thread1
+            time1 = time0 + 8i32
+            s0 = time0 + 48
+            s1 = time1 + 48
+            W0 = 0.033601265f0 * Wkernel(s0, 4, 16)
+            W1 = 0.033601265f0 * Wkernel(s1, 4, 16)
+            (W0, W1)
+        end
+        Wpfb_m3 = Float16x2(Wpfb0_m3, Wpfb1_m3)
+        Wpfb_mtaps0 = Wpfb_m0
+        Wpfb_mtaps1 = Wpfb_m1
+        Wpfb_mtaps2 = Wpfb_m2
+        Wpfb_mtaps3 = Wpfb_m3
         (X0, X1) = let
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
@@ -28,7 +84,7 @@
         X_cplx1 = Xim
         (Γ¹0, Γ¹1) = let
             k = 4
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:501 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:526 =#
             m = 3
             n = 1
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
@@ -59,7 +115,7 @@
         Γ¹_cplx1_cplx_in1 = Γ¹im_cplx_in1
         (Γ²0, Γ²1) = let
             k = 4
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:542 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:567 =#
             m = 3
             n = 1
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
@@ -83,7 +139,7 @@
         Γ²_cplx1 = Γ²im
         (Γ³0, Γ³1) = let
             k = 4
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:582 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:607 =#
             m = 3
             n = 1
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
