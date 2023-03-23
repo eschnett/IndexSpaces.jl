@@ -46,12 +46,11 @@ sinc′(x) = x == 0 ? one(x) : sin(x) / x
 
 const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
-const T = 256 #TODO 32768
+const T = 32768
 const D = 512
 const P = 2
 const F₀ = 16
-# const F = 16
-const F = 2
+const F = 16
 # const F = 84 ÷ (D ÷ 128)
 const U = 16
 const M = 4
@@ -97,8 +96,8 @@ const num_blocks_per_sm = B
 #     blocks: [168]
 #     shmem_bytes: 69888
 #   result-μsec:
-#     runtime: 2742.1
-#     scaled-runtime: 2089.2
+#     runtime: 2724.4
+#     scaled-runtime: 2075.7
 #     scaled-number-of-frequencies: 16
 #     dataframe-length: 55924.1
 #     dataframe-percent: 3.7
@@ -860,7 +859,7 @@ function upchan!(emitter)
                     Symbol(:F_ringbuf_m, M - 2),
                     [Symbol(:F_ringbuf_m, M - 2), :F_in],
                     (F_ringbuf, F) -> :($F);
-                    ignore=[Time(:time, 16, 16)],
+                    ignore=[Time(:time, U, T ÷ U)],
                 )
                 merge!(
                     emitter,
@@ -909,8 +908,7 @@ function make_upchan_kernel()
     # Emit code
     stmts = clean_code(
         quote
-            #TODO @fastmath @inbounds begin
-            begin
+            @fastmath @inbounds begin
                 $(emitter.init_statements...)
                 $(emitter.statements...)
             end
@@ -984,7 +982,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
 
     amp = 7.5f0                 # amplitude
     bin = 0                     # frequency bin
-    delta = 0.0f0               # frequency offset
+    delta = 0.1f0            # frequency offset
     test_freq = bin - (U - 1) / 2.0f0 + delta
     attenuation_factors = Pair{Float32,Float32}[
         0 => 1.00007,
@@ -1016,7 +1014,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
     for tbar in 0:(T ÷ U - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
         Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
-        if polr == 0 && dish == 0
+        if polr == 0 && dish == 0 && fbar ÷ U == 0
             Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar - (M - 1) + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
         else
             Ē1 = 0.0f0 + 0im
@@ -1118,15 +1116,13 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
             did_test_Ē_memory[Ēidx + 1] = true
             have_value = Complex(convert(NTuple{2,Int32}, Ē_memory[Ēidx + 1])...)
             want_value = Ē_wanted[Ēidx + 1]
-            if have_value ≠ want_value
-                if true || (dish == 0 && polr == 0)
-                    num_errors += 1
-                    if num_errors ≤ 100
-                        # if !isapprox(have_value, want_value; atol=10 * eps(Float16), rtol=10 * eps(Float16))
-                        println("        dish=$dish fbar=$fbar polr=$polr tbar=$tbar Ē=$have_value Ē₀=$want_value")
-                    elseif num_errors == 101
-                        println("        [skipping further error output]")
-                    end
+            err = have_value - want_value
+            if abs(err) > 0.8f0
+                num_errors += 1
+                if num_errors ≤ 100
+                    println("        dish=$dish fbar=$fbar polr=$polr tbar=$tbar Ē=$have_value Ē₀=$want_value ΔĒ=$(abs(err))")
+                elseif num_errors == 101
+                    println("        [skipping further error output]")
                 end
             end
         end

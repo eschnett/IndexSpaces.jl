@@ -11,111 +11,15 @@ Running kernel...
 Copying data back from GPU to CPU...
 Checking results...
     Ē:
-        dish=0 fbar=0 polr=0 tbar=4 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=5 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=6 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=7 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=8 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=9 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=10 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=11 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=12 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=13 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=14 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=15 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=16 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=17 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=18 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=19 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=20 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=21 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=22 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=23 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=24 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=25 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=26 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=27 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=28 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=29 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=30 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=31 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=32 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=33 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=34 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=35 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=36 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=37 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=38 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=39 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=40 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=41 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=42 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=43 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=44 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=45 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=46 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=47 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=48 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=49 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=50 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=51 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=52 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=53 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=54 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=55 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=56 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=57 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=58 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=59 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=60 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=61 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=62 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=63 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=64 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=65 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=66 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=67 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=68 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=69 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=70 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=71 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=72 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=73 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=74 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=75 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=76 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=77 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=78 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=79 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=80 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=81 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=82 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=83 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=84 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=85 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=86 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=87 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=88 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=89 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=90 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=91 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=92 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=93 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=94 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=95 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=96 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=97 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=98 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=99 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=100 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=101 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=102 Ē=0 + 0im Ē₀=7.500525f0 + 0.0f0im
-        dish=0 fbar=0 polr=0 tbar=103 Ē=0 + 0im Ē₀=-7.500525f0 + 0.0f0im
-Found 2044 errors
+        dish=0 fbar=0 polr=0 tbar=0 Ē=-1 + 0im Ē₀=-5.5237064f0 + 4.013209f0im ΔĒ=6.047294
+        dish=0 fbar=0 polr=0 tbar=1 Ē=3 + 1im Ē₀=6.8276777f0 + 0.0f0im ΔĒ=3.9561493
+        dish=0 fbar=1 polr=0 tbar=1 Ē=0 - 1im Ē₀=0.0f0 + 0.0f0im ΔĒ=1.0
+        dish=0 fbar=15 polr=0 tbar=1 Ē=0 + 1im Ē₀=0.0f0 + 0.0f0im ΔĒ=1.0
+Found 4 errors
 ERROR: LoadError: AssertionError: num_errors == 0
 Stacktrace:
- [1] main(; compile_only::Bool, run_selftest::Bool, silent::Bool)
-   @ Main ~/src/jl/IndexSpaces/kernels/upchan.jl:988
+ [1] main(; compile_only::Bool, nruns::Int64, run_selftest::Bool, silent::Bool)
+   @ Main ~/src/jl/IndexSpaces/kernels/upchan.jl:1131
  [2] top-level scope
-   @ ~/src/jl/IndexSpaces/kernels/upchan.jl:1081
-in expression starting at /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1064
+   @ ~/src/jl/IndexSpaces/kernels/upchan.jl:1225
+in expression starting at /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1208
