@@ -44,12 +44,12 @@ const setup = full_chord
     # Full CHORD
     const sampling_time_μsec = 4096 / (2 * 1200)
     const C = 2
-    const T = 32768
+    const T = 16384             # 32768
     const D = 512
     const B = 96
     const P = 2
     const F₀ = 16
-    const F = 16      # idiv(56, 2)   # benchmarking A30: 56; A40: 84
+    const F = 16       # idiv(56, 2)   # benchmarking A30: 56; A40: 84
 
     const T1_stride = 128
     const T2_stride = 32

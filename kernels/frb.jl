@@ -30,7 +30,7 @@ idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # Full CHORD
 const sampling_time_μsec = 16 * 4096 / (2 * 1200)
 const C = 2
-const T = 2064
+const T = 1056                  # 2064
 const D = 512
 const M = 24
 const N = 24
@@ -961,7 +961,7 @@ function make_frb_kernel()
                     thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
                     c = thread % 4i32
                     v = thread ÷ 4i32
-                    Γ¹ = cispi((c * v) % 8 / 4.0f0)
+                    Γ¹ = cispi(((c * v) % 8 / 4.0f0) % 2.0f0)
                     (+Γ¹.re, -Γ¹.im, +Γ¹.im, +Γ¹.re)
                 end
             end,
@@ -991,8 +991,8 @@ function make_frb_kernel()
                     d0 = (thread % 4i32) * 2i32 + 0i32
                     d1 = (thread % 4i32) * 2i32 + 1i32
                     v = thread ÷ 4i32
-                    Γ²_d0 = d0 < $N4 ? cispi((d0 * v) % $(Int32(2 * N)) / $(Float32(N))) : Complex(0.0f0)
-                    Γ²_d1 = d1 < $N4 ? cispi((d1 * v) % $(Int32(2 * N)) / $(Float32(N))) : Complex(0.0f0)
+                    Γ²_d0 = d0 < $N4 ? cispi(((d0 * v) % $(Int32(2 * N)) / $(Float32(N))) % 2.0f0) : Complex(0.0f0)
+                    Γ²_d1 = d1 < $N4 ? cispi(((d1 * v) % $(Int32(2 * N)) / $(Float32(N))) % 2.0f0) : Complex(0.0f0)
                     (Γ²_d0.re, Γ²_d0.im, Γ²_d1.re, Γ²_d1.im)
                 end
             end,
@@ -1026,8 +1026,8 @@ function make_frb_kernel()
                     d0 = (thread % 4i32) * 2i32 + 0i32
                     d1 = (thread % 4i32) * 2i32 + 1i32
                     u = thread ÷ 4i32
-                    Γ³_d0 = d0 < $N4 && u < $N4 ? cispi((d0 * u) % $N4 / $(Float32(N / 8))) : Complex(0.0f0)
-                    Γ³_d1 = d1 < $N4 && u < $N4 ? cispi((d1 * u) % $N4 / $(Float32(N / 8))) : Complex(0.0f0)
+                    Γ³_d0 = d0 < $N4 && u < $N4 ? cispi(((d0 * u) % $N4 / $(Float32(N / 8))) % 2.0f0) : Complex(0.0f0)
+                    Γ³_d1 = d1 < $N4 && u < $N4 ? cispi(((d1 * u) % $N4 / $(Float32(N / 8))) % 2.0f0) : Complex(0.0f0)
                     (+Γ³_d0.re, -Γ³_d0.im, +Γ³_d0.im, +Γ³_d0.re, +Γ³_d1.re, -Γ³_d1.im, +Γ³_d1.im, +Γ³_d1.re)
                 end
             end,
@@ -1480,7 +1480,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * cld(T, Tds) * freq
                 dishm, dishn = dish_grid[dish + 1]
                 # Eqn. (4)
-                Ẽvalue = cispi(2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) * Wvalue * Evalue
+                Ẽvalue = cispi((2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) % 2.0f0) * Wvalue * Evalue
                 Ivalue = abs2(Ẽvalue)
                 Ivalue2 = convert(NTuple{2,Float32}, I_wanted[Iidx + 1])
                 Ivalue2 = setindex(Ivalue2, Ivalue, beamp % 2 + 1)
