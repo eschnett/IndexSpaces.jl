@@ -180,6 +180,12 @@ end
 function Layout(pairs::AbstractVector{<:Pair{<:Index{Typ1},<:Index{Typ2}}}) where {Typ1,Typ2}
     dict = Dict{Index{Typ1},Index{Typ2}}()
     for (k, v) in pairs
+        if k ∈ keys(dict)
+            throw(ArgumentError("key $k exists already"))
+        end
+        if v ∈ values(dict)
+            throw(ArgumentError("value $v exists already"))
+        end
         @assert k ∉ keys(dict)
         @assert v ∉ values(dict)
         dict[k] = v
