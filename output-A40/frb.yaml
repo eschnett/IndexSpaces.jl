@@ -10,7 +10,7 @@ kernel-description:
     number-of-dishes: 512
     number-of-frequencies: 56
     number-of-polarizations: 2
-    number-of-timesamples: 2064
+    number-of-timesamples: 1056
     sampling-time-μsec: 27.30666666666667
   compile-parameters:
     minthreads: 768
@@ -19,7 +19,7 @@ kernel-description:
     threads: [32, 24]
     blocks: [56]
     shmem_bytes: 76896
-  kernel-name: "_Z15julia_frb_1084813CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE"
+  kernel-name: "_Z15julia_frb_1029313CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE"
   kernel-arguments:
     - name: "S"
       intent: in
@@ -37,14 +37,14 @@ kernel-description:
       intent: in
       type: Int4
       indices: [C, D, F, P, T]
-      shape: [2, 512, 56, 2, 2064]
+      shape: [2, 512, 56, 2, 1056]
       strides: [1, 2, 1024, 57344, 114688]
     - name: "I"
       intent: out
       type: Float16
       indices: [beamP, beamQ, Tds, F]
-      shape: [48, 48, 52, 56]
-      strides: [1, 48, 2304, 119808]
+      shape: [48, 48, 27, 56]
+      strides: [1, 48, 2304, 62208]
     - name: "info"
       intent: out
       type: Int32
