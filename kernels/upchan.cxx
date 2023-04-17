@@ -208,6 +208,7 @@ void upchan_simple(const float16_t *__restrict__ const W,
             std::complex<float> Ebar1 = 0.0f;
 
             for (int s = 0; s < M * U; ++s) {
+#error"look into the past instead"
               const int t = s + U * tbar;
 
               const float W1 = W[s];

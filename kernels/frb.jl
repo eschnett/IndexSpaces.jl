@@ -30,13 +30,13 @@ idiv(i::Integer, j::Integer) = (@assert iszero(i % j); i ÷ j)
 # Full CHORD
 const sampling_time_μsec = 16 * 4096 / (2 * 1200)
 const C = 2
-const T = 1056                  # 2064
+const T = 2064
 const D = 512
 const M = 24
 const N = 24
 const P = 2
 const F₀ = 256
-const F = 56                    # benchmarking A30: 56; A40: 84
+const F = 256                   # benchmarking A30: 56; A40: 84
 
 const Touter = 48
 const Tinner = 4
@@ -1674,12 +1674,12 @@ if CUDA.functional()
             @device_code_sass main(; compile_only=true)
         end
     end
-
+    
     # Run test
     main(; run_selftest=true)
 
     # # Run benchmark
-    # main(; nruns=100)
+    # main(; nruns=10000)
 
     # # Regular run, also for profiling
     # main()

@@ -7,12 +7,12 @@ Compiling kernel...
 Allocating input data...
 Setting up input data...
 dish = 249
-freq = 29
+freq = 137
 polr = 0
-time = 546
+time = 1068
 Wvalue = 0.36607796f0 - 0.7806393f0im
 Evalue = 2 + 7im
-dstime = 13
+dstime = 26
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -25,12 +25,12 @@ Allocating input data...
 Self-test iteration #1:
 Setting up input data...
 dish = 249
-freq = 29
+freq = 137
 polr = 0
-time = 546
+time = 1068
 Wvalue = 0.36607796f0 - 0.7806393f0im
 Evalue = 2 + 7im
-dstime = 13
+dstime = 26
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -38,13 +38,13 @@ Checking results...
     I:
 Self-test iteration #2:
 Setting up input data...
-dish = 69
-freq = 39
+dish = 94
+freq = 122
 polr = 0
-time = 1038
-Wvalue = -0.017679665f0 - 0.07402898f0im
-Evalue = -5 - 7im
-dstime = 25
+time = 1804
+Wvalue = -0.035860665f0 + 0.1579783f0im
+Evalue = -1 + 0im
+dstime = 45
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -52,13 +52,13 @@ Checking results...
     I:
 Self-test iteration #3:
 Setting up input data...
-dish = 326
-freq = 11
+dish = 501
+freq = 122
 polr = 1
-time = 923
-Wvalue = 0.4964291f0 + 0.16948603f0im
-Evalue = -6 + 6im
-dstime = 23
+time = 1704
+Wvalue = -0.06486827f0 - 0.06476007f0im
+Evalue = 7 - 3im
+dstime = 42
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -66,13 +66,13 @@ Checking results...
     I:
 Self-test iteration #4:
 Setting up input data...
-dish = 443
-freq = 55
+dish = 24
+freq = 169
 polr = 0
-time = 153
-Wvalue = 0.013335339f0 + 0.0051926626f0im
-Evalue = -5 - 5im
-dstime = 3
+time = 790
+Wvalue = 0.22144084f0 - 0.013671779f0im
+Evalue = 0 - 7im
+dstime = 19
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -80,13 +80,13 @@ Checking results...
     I:
 Self-test iteration #5:
 Setting up input data...
-dish = 310
-freq = 23
-polr = 1
-time = 21
-Wvalue = -0.00072253274f0 - 0.10677186f0im
-Evalue = 7 + 1im
-dstime = 0
+dish = 377
+freq = 21
+polr = 0
+time = 1532
+Wvalue = 0.08203726f0 + 0.024061527f0im
+Evalue = 6 + 3im
+dstime = 38
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -94,13 +94,13 @@ Checking results...
     I:
 Self-test iteration #6:
 Setting up input data...
-dish = 492
-freq = 25
-polr = 1
-time = 754
-Wvalue = -0.23372367f0 - 0.28525877f0im
-Evalue = -3 + 2im
-dstime = 18
+dish = 79
+freq = 216
+polr = 0
+time = 1569
+Wvalue = -0.14627357f0 - 0.31636235f0im
+Evalue = 3 - 4im
+dstime = 39
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -108,13 +108,13 @@ Checking results...
     I:
 Self-test iteration #7:
 Setting up input data...
-dish = 4
-freq = 29
+dish = 438
+freq = 79
 polr = 0
-time = 706
-Wvalue = -0.6405029f0 + 0.44668418f0im
-Evalue = -2 - 5im
-dstime = 17
+time = 351
+Wvalue = 0.088002644f0 - 0.2175489f0im
+Evalue = 4 + 6im
+dstime = 8
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -122,13 +122,13 @@ Checking results...
     I:
 Self-test iteration #8:
 Setting up input data...
-dish = 431
-freq = 6
-polr = 1
-time = 1051
-Wvalue = -0.122906916f0 - 0.032210395f0im
-Evalue = 4 + 5im
-dstime = 26
+dish = 392
+freq = 238
+polr = 0
+time = 1490
+Wvalue = -0.07078332f0 + 0.031972658f0im
+Evalue = 5 - 4im
+dstime = 37
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -136,13 +136,13 @@ Checking results...
     I:
 Self-test iteration #9:
 Setting up input data...
-dish = 313
-freq = 48
+dish = 223
+freq = 44
 polr = 0
-time = 993
-Wvalue = -0.13697161f0 - 0.39114696f0im
-Evalue = 2 - 7im
-dstime = 24
+time = 668
+Wvalue = -0.52659076f0 - 0.54174477f0im
+Evalue = -5 + 4im
+dstime = 16
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -150,13 +150,13 @@ Checking results...
     I:
 Self-test iteration #10:
 Setting up input data...
-dish = 5
-freq = 22
-polr = 0
-time = 403
-Wvalue = 0.003957305f0 - 0.39201403f0im
-Evalue = 7 - 5im
-dstime = 10
+dish = 31
+freq = 106
+polr = 1
+time = 1118
+Wvalue = 0.09314887f0 - 0.05993561f0im
+Evalue = 0 + 3im
+dstime = 27
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -164,13 +164,13 @@ Checking results...
     I:
 Self-test iteration #11:
 Setting up input data...
-dish = 6
-freq = 6
+dish = 390
+freq = 222
 polr = 1
-time = 679
-Wvalue = -0.061282706f0 - 0.01097996f0im
-Evalue = -1 - 4im
-dstime = 16
+time = 144
+Wvalue = -0.42312256f0 - 0.48589003f0im
+Evalue = 3 + 6im
+dstime = 3
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -178,13 +178,13 @@ Checking results...
     I:
 Self-test iteration #12:
 Setting up input data...
-dish = 90
-freq = 41
-polr = 0
-time = 677
-Wvalue = 0.85149986f0 - 0.24173726f0im
-Evalue = -3 + 6im
-dstime = 16
+dish = 142
+freq = 88
+polr = 1
+time = 1057
+Wvalue = 0.098216854f0 - 0.14132565f0im
+Evalue = 3 - 3im
+dstime = 26
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -192,13 +192,13 @@ Checking results...
     I:
 Self-test iteration #13:
 Setting up input data...
-dish = 124
-freq = 51
-polr = 1
-time = 415
-Wvalue = -0.83320975f0 - 0.2814991f0im
-Evalue = -3 + 5im
-dstime = 10
+dish = 494
+freq = 1
+polr = 0
+time = 927
+Wvalue = 0.1623417f0 + 0.3853382f0im
+Evalue = -5 + 5im
+dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -206,13 +206,13 @@ Checking results...
     I:
 Self-test iteration #14:
 Setting up input data...
-dish = 408
-freq = 7
+dish = 321
+freq = 180
 polr = 0
-time = 288
-Wvalue = 0.048453942f0 + 0.40953878f0im
-Evalue = -6 - 5im
-dstime = 7
+time = 327
+Wvalue = -0.16705112f0 + 0.6216657f0im
+Evalue = -7 - 7im
+dstime = 8
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -220,13 +220,13 @@ Checking results...
     I:
 Self-test iteration #15:
 Setting up input data...
-dish = 135
+dish = 190
 freq = 14
 polr = 0
-time = 848
-Wvalue = -0.88925844f0 - 0.33243257f0im
-Evalue = 7 - 3im
-dstime = 21
+time = 85
+Wvalue = 0.058301017f0 - 0.28460163f0im
+Evalue = 6 - 7im
+dstime = 2
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -234,13 +234,13 @@ Checking results...
     I:
 Self-test iteration #16:
 Setting up input data...
-dish = 19
-freq = 17
+dish = 44
+freq = 181
 polr = 0
-time = 518
-Wvalue = -0.0059774625f0 + 0.0061536734f0im
-Evalue = -6 + 0im
-dstime = 12
+time = 1817
+Wvalue = -0.08612984f0 - 0.0026292475f0im
+Evalue = 4 + 7im
+dstime = 45
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -248,13 +248,13 @@ Checking results...
     I:
 Self-test iteration #17:
 Setting up input data...
-dish = 38
-freq = 47
-polr = 1
-time = 505
-Wvalue = 0.21972078f0 - 0.19476055f0im
-Evalue = -5 - 1im
-dstime = 12
+dish = 133
+freq = 50
+polr = 0
+time = 410
+Wvalue = 0.70503885f0 - 0.4069402f0im
+Evalue = -7 + 2im
+dstime = 10
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -262,13 +262,13 @@ Checking results...
     I:
 Self-test iteration #18:
 Setting up input data...
-dish = 398
-freq = 18
-polr = 1
-time = 9
-Wvalue = 0.048563585f0 - 0.058633994f0im
-Evalue = -2 + 2im
-dstime = 0
+dish = 508
+freq = 51
+polr = 0
+time = 1746
+Wvalue = -0.07771763f0 + 0.013480611f0im
+Evalue = 3 - 7im
+dstime = 43
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -276,13 +276,13 @@ Checking results...
     I:
 Self-test iteration #19:
 Setting up input data...
-dish = 434
-freq = 38
+dish = 343
+freq = 126
 polr = 0
-time = 410
-Wvalue = -0.113800295f0 - 0.5192574f0im
-Evalue = -2 + 3im
-dstime = 10
+time = 620
+Wvalue = -0.51639163f0 + 0.51591104f0im
+Evalue = -7 + 6im
+dstime = 15
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -290,13 +290,13 @@ Checking results...
     I:
 Self-test iteration #20:
 Setting up input data...
-dish = 217
-freq = 39
-polr = 0
-time = 360
-Wvalue = 0.13096291f0 + 0.7617541f0im
-Evalue = 0 - 2im
-dstime = 9
+dish = 376
+freq = 255
+polr = 1
+time = 725
+Wvalue = 0.26789758f0 - 0.16304721f0im
+Evalue = 1 - 4im
+dstime = 18
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -304,13 +304,13 @@ Checking results...
     I:
 Self-test iteration #21:
 Setting up input data...
-dish = 251
-freq = 7
+dish = 488
+freq = 87
 polr = 0
-time = 572
-Wvalue = 0.010968361f0 + 0.12676415f0im
-Evalue = -5 + 6im
-dstime = 14
+time = 922
+Wvalue = -0.13363057f0 + 0.08357549f0im
+Evalue = -3 + 7im
+dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -318,13 +318,13 @@ Checking results...
     I:
 Self-test iteration #22:
 Setting up input data...
-dish = 73
-freq = 37
+dish = 144
+freq = 151
 polr = 1
-time = 839
-Wvalue = 0.12216603f0 + 0.28983545f0im
-Evalue = 0 - 6im
-dstime = 20
+time = 26
+Wvalue = -0.06329116f0 - 0.06856521f0im
+Evalue = -6 - 1im
+dstime = 0
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -332,13 +332,13 @@ Checking results...
     I:
 Self-test iteration #23:
 Setting up input data...
-dish = 427
-freq = 46
-polr = 1
-time = 777
-Wvalue = -0.043027353f0 + 0.016969671f0im
-Evalue = 1 + 7im
-dstime = 19
+dish = 452
+freq = 194
+polr = 0
+time = 1908
+Wvalue = 0.27491438f0 - 0.07214603f0im
+Evalue = 6 - 3im
+dstime = 47
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -346,13 +346,13 @@ Checking results...
     I:
 Self-test iteration #24:
 Setting up input data...
-dish = 179
-freq = 49
+dish = 497
+freq = 149
 polr = 1
-time = 667
-Wvalue = -0.47671944f0 + 0.23500708f0im
-Evalue = 4 + 4im
-dstime = 16
+time = 1694
+Wvalue = 0.3229152f0 - 0.41369197f0im
+Evalue = -4 + 5im
+dstime = 42
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -360,13 +360,13 @@ Checking results...
     I:
 Self-test iteration #25:
 Setting up input data...
-dish = 379
-freq = 24
-polr = 1
-time = 28
-Wvalue = -0.027548142f0 + 0.3998407f0im
-Evalue = 2 + 1im
-dstime = 0
+dish = 302
+freq = 220
+polr = 0
+time = 921
+Wvalue = 0.20589519f0 + 0.12083762f0im
+Evalue = 4 - 6im
+dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -374,13 +374,13 @@ Checking results...
     I:
 Self-test iteration #26:
 Setting up input data...
-dish = 78
-freq = 13
-polr = 1
-time = 203
-Wvalue = -0.014650839f0 - 0.050460946f0im
-Evalue = -6 + 4im
-dstime = 5
+dish = 359
+freq = 121
+polr = 0
+time = 1246
+Wvalue = -0.014907262f0 + 0.0018497907f0im
+Evalue = 7 - 4im
+dstime = 31
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -388,13 +388,13 @@ Checking results...
     I:
 Self-test iteration #27:
 Setting up input data...
-dish = 170
-freq = 21
-polr = 1
-time = 742
-Wvalue = 0.6174151f0 - 0.1933859f0im
-Evalue = -5 + 2im
-dstime = 18
+dish = 175
+freq = 82
+polr = 0
+time = 1651
+Wvalue = -0.007349653f0 + 0.21603537f0im
+Evalue = -3 - 1im
+dstime = 41
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -402,13 +402,13 @@ Checking results...
     I:
 Self-test iteration #28:
 Setting up input data...
-dish = 166
-freq = 40
+dish = 233
+freq = 167
 polr = 0
-time = 982
-Wvalue = 0.05542828f0 - 0.0486346f0im
-Evalue = -2 - 4im
-dstime = 24
+time = 617
+Wvalue = 0.7484029f0 - 0.2776945f0im
+Evalue = 0 - 5im
+dstime = 15
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -416,13 +416,13 @@ Checking results...
     I:
 Self-test iteration #29:
 Setting up input data...
-dish = 131
-freq = 32
-polr = 1
-time = 720
-Wvalue = -0.13848528f0 - 0.017565407f0im
-Evalue = 4 - 6im
-dstime = 18
+dish = 143
+freq = 95
+polr = 0
+time = 175
+Wvalue = -0.2344105f0 + 0.31144387f0im
+Evalue = -1 - 3im
+dstime = 4
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -430,13 +430,13 @@ Checking results...
     I:
 Self-test iteration #30:
 Setting up input data...
-dish = 360
-freq = 54
+dish = 422
+freq = 250
 polr = 0
-time = 416
-Wvalue = 0.20792921f0 - 0.21283521f0im
-Evalue = -7 + 7im
-dstime = 10
+time = 47
+Wvalue = -0.1624025f0 + 0.40929845f0im
+Evalue = 4 - 6im
+dstime = 1
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -444,12 +444,12 @@ Checking results...
     I:
 Self-test iteration #31:
 Setting up input data...
-dish = 237
-freq = 27
-polr = 1
-time = 238
-Wvalue = 0.1253563f0 + 0.374849f0im
-Evalue = -3 + 4im
+dish = 474
+freq = 66
+polr = 0
+time = 234
+Wvalue = 0.11348227f0 + 0.07906351f0im
+Evalue = -2 + 3im
 dstime = 5
 Copying data from CPU to GPU...
 Running kernel...
@@ -458,13 +458,13 @@ Checking results...
     I:
 Self-test iteration #32:
 Setting up input data...
-dish = 479
-freq = 41
-polr = 0
-time = 164
-Wvalue = 0.0055528395f0 - 0.017625077f0im
-Evalue = 2 - 6im
-dstime = 4
+dish = 465
+freq = 24
+polr = 1
+time = 1064
+Wvalue = -0.33493632f0 + 0.7505789f0im
+Evalue = 1 + 7im
+dstime = 26
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -472,13 +472,13 @@ Checking results...
     I:
 Self-test iteration #33:
 Setting up input data...
-dish = 120
-freq = 51
-polr = 1
-time = 783
-Wvalue = 0.36187556f0 + 0.15263672f0im
-Evalue = 4 + 2im
-dstime = 19
+dish = 102
+freq = 192
+polr = 0
+time = 81
+Wvalue = -0.062374413f0 + 0.017015267f0im
+Evalue = 3 + 5im
+dstime = 2
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -486,13 +486,13 @@ Checking results...
     I:
 Self-test iteration #34:
 Setting up input data...
-dish = 111
-freq = 25
-polr = 1
-time = 206
-Wvalue = 0.40568617f0 - 0.0393354f0im
-Evalue = -6 + 5im
-dstime = 5
+dish = 50
+freq = 211
+polr = 0
+time = 682
+Wvalue = -0.6051028f0 - 0.48686147f0im
+Evalue = -6 + 4im
+dstime = 17
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -500,13 +500,13 @@ Checking results...
     I:
 Self-test iteration #35:
 Setting up input data...
-dish = 6
-freq = 42
-polr = 1
-time = 625
-Wvalue = 0.08669895f0 - 0.2042756f0im
-Evalue = 1 - 1im
-dstime = 15
+dish = 4
+freq = 89
+polr = 0
+time = 175
+Wvalue = -0.2838652f0 - 0.06287249f0im
+Evalue = 7 + 5im
+dstime = 4
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -514,13 +514,13 @@ Checking results...
     I:
 Self-test iteration #36:
 Setting up input data...
-dish = 462
-freq = 41
+dish = 292
+freq = 240
 polr = 1
-time = 955
-Wvalue = 0.36259618f0 - 0.040575895f0im
-Evalue = 0 + 0im
-dstime = 23
+time = 13
+Wvalue = -0.111461f0 - 0.10889436f0im
+Evalue = -7 - 7im
+dstime = 0
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -528,13 +528,13 @@ Checking results...
     I:
 Self-test iteration #37:
 Setting up input data...
-dish = 329
-freq = 9
-polr = 0
-time = 915
-Wvalue = 0.02567561f0 + 0.08709604f0im
-Evalue = 2 + 0im
-dstime = 22
+dish = 61
+freq = 252
+polr = 1
+time = 924
+Wvalue = 0.05002933f0 + 0.8811201f0im
+Evalue = 4 - 5im
+dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -542,13 +542,13 @@ Checking results...
     I:
 Self-test iteration #38:
 Setting up input data...
-dish = 324
-freq = 31
+dish = 270
+freq = 218
 polr = 1
-time = 749
-Wvalue = -0.012307993f0 + 0.39152095f0im
-Evalue = 6 + 2im
-dstime = 18
+time = 407
+Wvalue = 0.07916075f0 + 0.5448785f0im
+Evalue = -6 - 6im
+dstime = 10
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -556,13 +556,13 @@ Checking results...
     I:
 Self-test iteration #39:
 Setting up input data...
-dish = 85
-freq = 42
+dish = 93
+freq = 96
 polr = 0
-time = 162
-Wvalue = -0.24833743f0 - 0.8358513f0im
-Evalue = 6 - 5im
-dstime = 4
+time = 447
+Wvalue = -0.04303104f0 + 0.07205401f0im
+Evalue = -7 - 6im
+dstime = 11
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -570,13 +570,13 @@ Checking results...
     I:
 Self-test iteration #40:
 Setting up input data...
-dish = 285
-freq = 13
-polr = 0
-time = 89
-Wvalue = -0.013127021f0 - 0.0018028592f0im
-Evalue = 4 + 3im
-dstime = 2
+dish = 267
+freq = 155
+polr = 1
+time = 52
+Wvalue = -0.23879953f0 + 0.1383101f0im
+Evalue = 2 - 3im
+dstime = 1
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -584,13 +584,13 @@ Checking results...
     I:
 Self-test iteration #41:
 Setting up input data...
-dish = 200
-freq = 42
-polr = 0
-time = 1007
-Wvalue = 0.24108979f0 + 0.33540416f0im
-Evalue = 1 - 7im
-dstime = 25
+dish = 320
+freq = 49
+polr = 1
+time = 432
+Wvalue = 0.5307792f0 - 0.31612617f0im
+Evalue = -6 + 1im
+dstime = 10
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -598,13 +598,13 @@ Checking results...
     I:
 Self-test iteration #42:
 Setting up input data...
-dish = 155
-freq = 42
-polr = 0
-time = 1019
-Wvalue = 0.1462518f0 + 0.12919699f0im
-Evalue = -4 + 4im
-dstime = 25
+dish = 256
+freq = 68
+polr = 1
+time = 318
+Wvalue = -0.23489843f0 - 0.3138938f0im
+Evalue = -4 - 2im
+dstime = 7
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -612,13 +612,13 @@ Checking results...
     I:
 Self-test iteration #43:
 Setting up input data...
-dish = 409
-freq = 38
-polr = 1
-time = 410
-Wvalue = 0.6277333f0 + 0.222703f0im
-Evalue = 0 + 7im
-dstime = 10
+dish = 222
+freq = 27
+polr = 0
+time = 1776
+Wvalue = 0.09677274f0 - 0.13687783f0im
+Evalue = 1 - 2im
+dstime = 44
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -626,13 +626,13 @@ Checking results...
     I:
 Self-test iteration #44:
 Setting up input data...
-dish = 48
-freq = 31
+dish = 83
+freq = 232
 polr = 1
-time = 354
-Wvalue = -0.3317149f0 + 0.5136723f0im
-Evalue = 7 - 3im
-dstime = 8
+time = 1017
+Wvalue = -0.007004454f0 + 0.06682137f0im
+Evalue = -1 - 2im
+dstime = 25
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -640,13 +640,13 @@ Checking results...
     I:
 Self-test iteration #45:
 Setting up input data...
-dish = 151
+dish = 430
 freq = 40
 polr = 0
-time = 690
-Wvalue = -0.21367313f0 - 0.5201239f0im
-Evalue = -6 + 6im
-dstime = 17
+time = 1760
+Wvalue = -0.009343318f0 - 0.003110035f0im
+Evalue = 6 + 0im
+dstime = 44
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -654,13 +654,13 @@ Checking results...
     I:
 Self-test iteration #46:
 Setting up input data...
-dish = 3
-freq = 27
-polr = 0
-time = 205
-Wvalue = -0.06802399f0 + 0.2578287f0im
-Evalue = 5 - 1im
-dstime = 5
+dish = 67
+freq = 12
+polr = 1
+time = 695
+Wvalue = 0.38980368f0 - 0.3683535f0im
+Evalue = 2 - 2im
+dstime = 17
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -668,13 +668,13 @@ Checking results...
     I:
 Self-test iteration #47:
 Setting up input data...
-dish = 73
-freq = 17
+dish = 200
+freq = 133
 polr = 1
-time = 721
-Wvalue = -0.24424012f0 - 0.40450254f0im
-Evalue = -7 - 6im
-dstime = 18
+time = 233
+Wvalue = 0.041014504f0 - 0.13316582f0im
+Evalue = 1 - 2im
+dstime = 5
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -682,13 +682,13 @@ Checking results...
     I:
 Self-test iteration #48:
 Setting up input data...
-dish = 352
-freq = 11
+dish = 317
+freq = 159
 polr = 1
-time = 335
-Wvalue = 0.018226001f0 - 0.046194993f0im
-Evalue = 2 - 4im
-dstime = 8
+time = 227
+Wvalue = -0.027421786f0 - 0.55693203f0im
+Evalue = -6 - 7im
+dstime = 5
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -696,13 +696,13 @@ Checking results...
     I:
 Self-test iteration #49:
 Setting up input data...
-dish = 239
-freq = 42
+dish = 369
+freq = 44
 polr = 0
-time = 962
-Wvalue = 0.33528098f0 - 0.29149732f0im
-Evalue = 1 - 6im
-dstime = 24
+time = 1968
+Wvalue = 0.35569188f0 - 0.022346519f0im
+Evalue = -4 - 2im
+dstime = 49
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -710,13 +710,13 @@ Checking results...
     I:
 Self-test iteration #50:
 Setting up input data...
-dish = 133
-freq = 42
-polr = 0
-time = 260
-Wvalue = 0.13566649f0 - 0.6619654f0im
-Evalue = -7 + 3im
-dstime = 6
+dish = 85
+freq = 144
+polr = 1
+time = 1374
+Wvalue = -0.0663685f0 + 0.5150743f0im
+Evalue = 5 - 1im
+dstime = 34
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -724,13 +724,13 @@ Checking results...
     I:
 Self-test iteration #51:
 Setting up input data...
-dish = 452
-freq = 33
+dish = 159
+freq = 97
 polr = 0
-time = 833
-Wvalue = -0.12832657f0 + 0.13315341f0im
-Evalue = 7 + 2im
-dstime = 20
+time = 130
+Wvalue = 0.21522544f0 + 0.12670344f0im
+Evalue = 3 - 6im
+dstime = 3
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -738,13 +738,13 @@ Checking results...
     I:
 Self-test iteration #52:
 Setting up input data...
-dish = 418
-freq = 52
-polr = 0
-time = 918
-Wvalue = -0.06438927f0 - 0.17029864f0im
-Evalue = 1 - 2im
-dstime = 22
+dish = 182
+freq = 74
+polr = 1
+time = 1182
+Wvalue = 0.018034464f0 + 0.023557996f0im
+Evalue = 0 + 3im
+dstime = 29
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -752,13 +752,13 @@ Checking results...
     I:
 Self-test iteration #53:
 Setting up input data...
-dish = 130
-freq = 36
-polr = 1
-time = 1039
-Wvalue = 0.42745066f0 - 0.3330377f0im
-Evalue = 0 - 1im
-dstime = 25
+dish = 249
+freq = 71
+polr = 0
+time = 610
+Wvalue = -0.010616554f0 - 0.0045774207f0im
+Evalue = -3 + 1im
+dstime = 15
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -766,13 +766,13 @@ Checking results...
     I:
 Self-test iteration #54:
 Setting up input data...
-dish = 458
-freq = 13
+dish = 236
+freq = 134
 polr = 0
-time = 724
-Wvalue = 0.105373494f0 + 0.16129431f0im
-Evalue = 1 - 3im
-dstime = 18
+time = 909
+Wvalue = 0.013066789f0 + 0.21425088f0im
+Evalue = -6 - 4im
+dstime = 22
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -780,13 +780,13 @@ Checking results...
     I:
 Self-test iteration #55:
 Setting up input data...
-dish = 353
-freq = 38
-polr = 0
-time = 549
-Wvalue = -0.01725229f0 - 0.09459181f0im
-Evalue = 0 - 1im
-dstime = 13
+dish = 261
+freq = 118
+polr = 1
+time = 1925
+Wvalue = 0.3741643f0 - 0.026385833f0im
+Evalue = -4 - 4im
+dstime = 48
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -794,13 +794,13 @@ Checking results...
     I:
 Self-test iteration #56:
 Setting up input data...
-dish = 395
-freq = 46
-polr = 1
-time = 164
-Wvalue = 0.35176113f0 - 0.14001507f0im
-Evalue = -2 + 1im
-dstime = 4
+dish = 407
+freq = 220
+polr = 0
+time = 1602
+Wvalue = 0.17149186f0 + 0.48776832f0im
+Evalue = -7 + 7im
+dstime = 40
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -808,13 +808,13 @@ Checking results...
     I:
 Self-test iteration #57:
 Setting up input data...
-dish = 420
-freq = 9
-polr = 0
-time = 459
-Wvalue = 0.120816626f0 - 0.009100378f0im
-Evalue = -7 - 7im
-dstime = 11
+dish = 496
+freq = 218
+polr = 1
+time = 1292
+Wvalue = 0.031674903f0 - 0.06716297f0im
+Evalue = 7 - 5im
+dstime = 32
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -822,13 +822,13 @@ Checking results...
     I:
 Self-test iteration #58:
 Setting up input data...
-dish = 207
-freq = 40
+dish = 238
+freq = 186
 polr = 0
-time = 737
-Wvalue = 0.06218977f0 + 0.13220909f0im
-Evalue = 3 + 0im
-dstime = 18
+time = 1948
+Wvalue = -0.5476314f0 - 0.13966173f0im
+Evalue = -4 + 3im
+dstime = 48
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -836,13 +836,13 @@ Checking results...
     I:
 Self-test iteration #59:
 Setting up input data...
-dish = 447
-freq = 6
-polr = 0
-time = 915
-Wvalue = 0.10270862f0 - 0.14753328f0im
-Evalue = -6 + 2im
-dstime = 22
+dish = 314
+freq = 64
+polr = 1
+time = 473
+Wvalue = 0.1545314f0 + 0.0948308f0im
+Evalue = -3 - 7im
+dstime = 11
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -850,13 +850,13 @@ Checking results...
     I:
 Self-test iteration #60:
 Setting up input data...
-dish = 120
-freq = 25
-polr = 0
-time = 17
-Wvalue = -0.39879403f0 - 0.091739506f0im
-Evalue = -7 - 1im
-dstime = 0
+dish = 309
+freq = 174
+polr = 1
+time = 1436
+Wvalue = -0.21889567f0 + 0.3282319f0im
+Evalue = 7 + 0im
+dstime = 35
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -864,13 +864,13 @@ Checking results...
     I:
 Self-test iteration #61:
 Setting up input data...
-dish = 93
-freq = 48
+dish = 44
+freq = 209
 polr = 1
-time = 7
-Wvalue = -0.04810796f0 + 0.023133257f0im
-Evalue = -7 - 7im
-dstime = 0
+time = 1299
+Wvalue = -0.05074393f0 + 0.030127646f0im
+Evalue = 7 + 3im
+dstime = 32
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -878,13 +878,13 @@ Checking results...
     I:
 Self-test iteration #62:
 Setting up input data...
-dish = 175
-freq = 19
+dish = 361
+freq = 62
 polr = 0
-time = 89
-Wvalue = -0.005140123f0 - 0.5324983f0im
-Evalue = 1 - 3im
-dstime = 2
+time = 1112
+Wvalue = 0.016422987f0 - 0.012102139f0im
+Evalue = -2 - 7im
+dstime = 27
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -892,13 +892,13 @@ Checking results...
     I:
 Self-test iteration #63:
 Setting up input data...
-dish = 273
-freq = 48
+dish = 18
+freq = 163
 polr = 1
-time = 227
-Wvalue = -0.02876341f0 - 0.014482065f0im
-Evalue = -6 + 4im
-dstime = 5
+time = 884
+Wvalue = 0.012945919f0 + 0.7739341f0im
+Evalue = -3 - 4im
+dstime = 22
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -906,13 +906,13 @@ Checking results...
     I:
 Self-test iteration #64:
 Setting up input data...
-dish = 140
-freq = 37
-polr = 0
-time = 182
-Wvalue = -0.36923295f0 - 0.1462343f0im
-Evalue = 3 + 7im
-dstime = 4
+dish = 82
+freq = 182
+polr = 1
+time = 466
+Wvalue = 0.13202308f0 - 0.3910367f0im
+Evalue = 6 - 6im
+dstime = 11
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -920,13 +920,13 @@ Checking results...
     I:
 Self-test iteration #65:
 Setting up input data...
-dish = 182
-freq = 36
+dish = 235
+freq = 78
 polr = 0
-time = 584
-Wvalue = -0.3872625f0 + 0.3395071f0im
-Evalue = 7 - 6im
-dstime = 14
+time = 973
+Wvalue = 0.13559361f0 - 0.2287737f0im
+Evalue = 7 + 2im
+dstime = 24
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -934,13 +934,13 @@ Checking results...
     I:
 Self-test iteration #66:
 Setting up input data...
-dish = 190
-freq = 42
-polr = 1
-time = 1030
-Wvalue = 0.24941137f0 - 0.06752768f0im
-Evalue = 5 + 7im
-dstime = 25
+dish = 212
+freq = 152
+polr = 0
+time = 1888
+Wvalue = 0.32505548f0 - 0.32794514f0im
+Evalue = 1 - 5im
+dstime = 47
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -948,13 +948,13 @@ Checking results...
     I:
 Self-test iteration #67:
 Setting up input data...
-dish = 446
-freq = 33
+dish = 215
+freq = 188
 polr = 0
-time = 601
-Wvalue = 0.23015942f0 + 0.4315959f0im
-Evalue = 7 + 2im
-dstime = 15
+time = 931
+Wvalue = -0.47396898f0 - 0.012327997f0im
+Evalue = 0 + 1im
+dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -962,13 +962,13 @@ Checking results...
     I:
 Self-test iteration #68:
 Setting up input data...
-dish = 252
-freq = 33
+dish = 26
+freq = 48
 polr = 1
-time = 168
-Wvalue = -0.19406615f0 - 0.1254519f0im
-Evalue = -1 - 7im
-dstime = 4
+time = 1399
+Wvalue = 0.0133510735f0 + 0.23282138f0im
+Evalue = -2 - 5im
+dstime = 34
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -976,13 +976,13 @@ Checking results...
     I:
 Self-test iteration #69:
 Setting up input data...
-dish = 167
-freq = 54
-polr = 1
-time = 23
-Wvalue = 0.047713425f0 - 0.43365723f0im
-Evalue = -3 - 4im
-dstime = 0
+dish = 388
+freq = 178
+polr = 0
+time = 2047
+Wvalue = -0.0054826858f0 + 0.5672822f0im
+Evalue = 4 + 2im
+dstime = 51
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -990,13 +990,13 @@ Checking results...
     I:
 Self-test iteration #70:
 Setting up input data...
-dish = 434
-freq = 30
-polr = 1
-time = 463
-Wvalue = 0.101922624f0 - 0.072011866f0im
-Evalue = -3 + 0im
-dstime = 11
+dish = 237
+freq = 187
+polr = 0
+time = 1891
+Wvalue = -0.009966397f0 - 0.00028061518f0im
+Evalue = 0 + 3im
+dstime = 47
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1004,12 +1004,12 @@ Checking results...
     I:
 Self-test iteration #71:
 Setting up input data...
-dish = 196
-freq = 48
-polr = 0
-time = 946
-Wvalue = 0.07581402f0 - 0.13151832f0im
-Evalue = 4 + 2im
+dish = 319
+freq = 188
+polr = 1
+time = 958
+Wvalue = -0.16177163f0 - 0.048015974f0im
+Evalue = -2 - 7im
 dstime = 23
 Copying data from CPU to GPU...
 Running kernel...
@@ -1018,13 +1018,13 @@ Checking results...
     I:
 Self-test iteration #72:
 Setting up input data...
-dish = 445
-freq = 11
-polr = 1
-time = 951
-Wvalue = 0.04817162f0 - 0.37817055f0im
-Evalue = -2 - 2im
-dstime = 23
+dish = 133
+freq = 74
+polr = 0
+time = 1498
+Wvalue = -0.20101038f0 - 0.12838851f0im
+Evalue = 3 + 2im
+dstime = 37
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1032,13 +1032,13 @@ Checking results...
     I:
 Self-test iteration #73:
 Setting up input data...
-dish = 363
-freq = 48
+dish = 85
+freq = 44
 polr = 1
-time = 168
-Wvalue = 0.09127257f0 + 0.06692531f0im
-Evalue = -3 - 4im
-dstime = 4
+time = 1186
+Wvalue = -0.011008109f0 + 0.02706894f0im
+Evalue = 1 + 7im
+dstime = 29
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1046,13 +1046,13 @@ Checking results...
     I:
 Self-test iteration #74:
 Setting up input data...
-dish = 348
-freq = 49
-polr = 1
-time = 933
-Wvalue = -0.0015240385f0 - 0.12611194f0im
-Evalue = -2 + 2im
-dstime = 23
+dish = 82
+freq = 75
+polr = 0
+time = 40
+Wvalue = 0.021237964f0 - 0.025601575f0im
+Evalue = 5 + 1im
+dstime = 1
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1060,13 +1060,13 @@ Checking results...
     I:
 Self-test iteration #75:
 Setting up input data...
-dish = 104
-freq = 47
-polr = 0
-time = 821
-Wvalue = -0.28645426f0 + 0.266116f0im
-Evalue = -2 - 5im
-dstime = 20
+dish = 40
+freq = 220
+polr = 1
+time = 869
+Wvalue = 0.41987443f0 - 0.7950191f0im
+Evalue = -3 + 4im
+dstime = 21
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1074,13 +1074,13 @@ Checking results...
     I:
 Self-test iteration #76:
 Setting up input data...
-dish = 341
-freq = 19
+dish = 262
+freq = 56
 polr = 0
-time = 887
-Wvalue = 0.10355236f0 - 0.15213853f0im
-Evalue = -5 + 0im
-dstime = 22
+time = 514
+Wvalue = 0.09038561f0 - 0.0015317257f0im
+Evalue = 0 + 6im
+dstime = 12
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1088,13 +1088,13 @@ Checking results...
     I:
 Self-test iteration #77:
 Setting up input data...
-dish = 235
-freq = 7
+dish = 93
+freq = 202
 polr = 0
-time = 645
-Wvalue = -0.04087382f0 - 0.06224362f0im
-Evalue = -5 + 6im
-dstime = 16
+time = 469
+Wvalue = 0.3647915f0 - 0.015065662f0im
+Evalue = 6 + 5im
+dstime = 11
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1102,13 +1102,13 @@ Checking results...
     I:
 Self-test iteration #78:
 Setting up input data...
-dish = 117
-freq = 45
+dish = 24
+freq = 117
 polr = 0
-time = 426
-Wvalue = -0.02252787f0 + 0.6265304f0im
-Evalue = -4 + 4im
-dstime = 10
+time = 1730
+Wvalue = -0.11395079f0 - 0.21362607f0im
+Evalue = 2 - 5im
+dstime = 43
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1116,13 +1116,13 @@ Checking results...
     I:
 Self-test iteration #79:
 Setting up input data...
-dish = 147
-freq = 25
+dish = 69
+freq = 31
 polr = 0
-time = 96
-Wvalue = -0.08431182f0 + 0.07226746f0im
-Evalue = 7 + 0im
-dstime = 2
+time = 1874
+Wvalue = 0.02840816f0 + 0.20445193f0im
+Evalue = 0 + 0im
+dstime = 46
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1130,13 +1130,13 @@ Checking results...
     I:
 Self-test iteration #80:
 Setting up input data...
-dish = 456
-freq = 40
+dish = 438
+freq = 112
 polr = 1
-time = 776
-Wvalue = 0.48760656f0 - 0.07083833f0im
-Evalue = 0 - 5im
-dstime = 19
+time = 694
+Wvalue = 0.5673619f0 + 0.4230724f0im
+Evalue = -1 + 6im
+dstime = 17
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1144,13 +1144,13 @@ Checking results...
     I:
 Self-test iteration #81:
 Setting up input data...
-dish = 233
-freq = 16
+dish = 375
+freq = 142
 polr = 0
-time = 843
-Wvalue = -0.2389775f0 + 0.13953982f0im
-Evalue = 3 + 5im
-dstime = 21
+time = 1417
+Wvalue = 0.11849197f0 - 0.18866636f0im
+Evalue = -6 + 1im
+dstime = 35
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1158,13 +1158,13 @@ Checking results...
     I:
 Self-test iteration #82:
 Setting up input data...
-dish = 189
-freq = 9
+dish = 110
+freq = 241
 polr = 1
-time = 741
-Wvalue = -0.19563133f0 - 0.25901788f0im
-Evalue = -4 - 4im
-dstime = 18
+time = 1614
+Wvalue = -0.015931683f0 - 0.0017256944f0im
+Evalue = 2 - 5im
+dstime = 40
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1172,13 +1172,13 @@ Checking results...
     I:
 Self-test iteration #83:
 Setting up input data...
-dish = 306
-freq = 38
-polr = 0
-time = 999
-Wvalue = -0.13240068f0 - 0.03950853f0im
-Evalue = 3 + 0im
-dstime = 24
+dish = 109
+freq = 36
+polr = 1
+time = 1126
+Wvalue = 0.3276096f0 + 0.34041005f0im
+Evalue = 7 + 3im
+dstime = 28
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1186,13 +1186,13 @@ Checking results...
     I:
 Self-test iteration #84:
 Setting up input data...
-dish = 475
-freq = 2
+dish = 201
+freq = 132
 polr = 0
-time = 1020
-Wvalue = -0.13194686f0 - 0.13377337f0im
-Evalue = -1 - 2im
-dstime = 25
+time = 1244
+Wvalue = -0.3402888f0 - 0.04985141f0im
+Evalue = 2 + 0im
+dstime = 31
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1200,13 +1200,13 @@ Checking results...
     I:
 Self-test iteration #85:
 Setting up input data...
-dish = 381
-freq = 22
+dish = 434
+freq = 58
 polr = 0
-time = 711
-Wvalue = -0.13887171f0 - 0.21884826f0im
-Evalue = -4 - 5im
-dstime = 17
+time = 38
+Wvalue = 0.041266683f0 + 0.32791993f0im
+Evalue = -5 + 3im
+dstime = 0
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1214,13 +1214,13 @@ Checking results...
     I:
 Self-test iteration #86:
 Setting up input data...
-dish = 274
-freq = 55
+dish = 8
+freq = 107
 polr = 0
-time = 1000
-Wvalue = 0.23724033f0 + 0.18627058f0im
-Evalue = -7 + 1im
-dstime = 25
+time = 806
+Wvalue = -0.5449194f0 + 0.10114293f0im
+Evalue = -2 - 5im
+dstime = 20
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1228,13 +1228,13 @@ Checking results...
     I:
 Self-test iteration #87:
 Setting up input data...
-dish = 93
-freq = 6
+dish = 132
+freq = 110
 polr = 0
-time = 470
-Wvalue = 0.06794671f0 - 0.10222925f0im
-Evalue = -7 - 7im
-dstime = 11
+time = 1738
+Wvalue = -0.044059467f0 + 0.048180062f0im
+Evalue = 2 - 4im
+dstime = 43
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1242,13 +1242,13 @@ Checking results...
     I:
 Self-test iteration #88:
 Setting up input data...
-dish = 391
-freq = 4
+dish = 290
+freq = 97
 polr = 0
-time = 1015
-Wvalue = 0.052926853f0 - 0.0032777176f0im
-Evalue = -7 - 4im
-dstime = 25
+time = 1440
+Wvalue = 0.08722712f0 + 0.39195895f0im
+Evalue = -3 + 1im
+dstime = 36
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1256,13 +1256,13 @@ Checking results...
     I:
 Self-test iteration #89:
 Setting up input data...
-dish = 139
-freq = 4
+dish = 314
+freq = 146
 polr = 1
-time = 362
-Wvalue = -0.3370981f0 + 0.6248503f0im
-Evalue = -5 - 5im
-dstime = 9
+time = 427
+Wvalue = 0.021196501f0 - 0.430688f0im
+Evalue = -6 + 1im
+dstime = 10
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1270,13 +1270,13 @@ Checking results...
     I:
 Self-test iteration #90:
 Setting up input data...
-dish = 337
-freq = 6
+dish = 10
+freq = 48
 polr = 0
-time = 326
-Wvalue = 0.24972482f0 + 0.0010770257f0im
-Evalue = 3 - 2im
-dstime = 8
+time = 1642
+Wvalue = 0.15072215f0 + 0.083419405f0im
+Evalue = 2 + 5im
+dstime = 41
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1284,13 +1284,13 @@ Checking results...
     I:
 Self-test iteration #91:
 Setting up input data...
-dish = 123
-freq = 6
+dish = 506
+freq = 70
 polr = 0
-time = 711
-Wvalue = 0.027036939f0 - 0.12849723f0im
-Evalue = 5 + 7im
-dstime = 17
+time = 1328
+Wvalue = 0.31377545f0 + 0.068693034f0im
+Evalue = 1 + 7im
+dstime = 33
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1298,13 +1298,13 @@ Checking results...
     I:
 Self-test iteration #92:
 Setting up input data...
-dish = 268
-freq = 31
+dish = 307
+freq = 120
 polr = 1
-time = 87
-Wvalue = -0.28053465f0 + 0.12793967f0im
-Evalue = 5 + 7im
-dstime = 2
+time = 1402
+Wvalue = 0.013337564f0 + 0.46230862f0im
+Evalue = -5 - 6im
+dstime = 35
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1312,13 +1312,13 @@ Checking results...
     I:
 Self-test iteration #93:
 Setting up input data...
-dish = 181
-freq = 30
-polr = 1
-time = 489
-Wvalue = -0.27829587f0 - 0.1994388f0im
-Evalue = -2 - 5im
-dstime = 12
+dish = 509
+freq = 3
+polr = 0
+time = 289
+Wvalue = -0.74969745f0 - 0.45360038f0im
+Evalue = -2 + 0im
+dstime = 7
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1326,13 +1326,13 @@ Checking results...
     I:
 Self-test iteration #94:
 Setting up input data...
-dish = 242
-freq = 51
-polr = 0
-time = 984
-Wvalue = -0.14332424f0 + 0.20533557f0im
-Evalue = 7 + 5im
-dstime = 24
+dish = 494
+freq = 100
+polr = 1
+time = 1851
+Wvalue = 0.1314712f0 - 0.2108385f0im
+Evalue = -7 - 2im
+dstime = 46
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1340,13 +1340,13 @@ Checking results...
     I:
 Self-test iteration #95:
 Setting up input data...
-dish = 318
-freq = 11
-polr = 1
-time = 262
-Wvalue = 0.29771116f0 + 0.33948645f0im
-Evalue = -1 - 2im
-dstime = 6
+dish = 473
+freq = 108
+polr = 0
+time = 181
+Wvalue = -0.07268033f0 + 0.3842287f0im
+Evalue = 2 + 5im
+dstime = 4
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1354,13 +1354,13 @@ Checking results...
     I:
 Self-test iteration #96:
 Setting up input data...
-dish = 216
-freq = 17
-polr = 1
-time = 873
-Wvalue = -0.011551555f0 + 0.116499886f0im
-Evalue = -7 + 2im
-dstime = 21
+dish = 488
+freq = 243
+polr = 0
+time = 491
+Wvalue = 0.23561832f0 + 0.106074005f0im
+Evalue = -4 + 2im
+dstime = 12
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1368,13 +1368,13 @@ Checking results...
     I:
 Self-test iteration #97:
 Setting up input data...
-dish = 187
-freq = 29
+dish = 246
+freq = 42
 polr = 0
-time = 873
-Wvalue = 0.05088872f0 - 0.09441432f0im
-Evalue = -6 - 7im
-dstime = 21
+time = 1628
+Wvalue = 0.108523935f0 - 0.10831979f0im
+Evalue = -5 + 5im
+dstime = 40
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1382,13 +1382,13 @@ Checking results...
     I:
 Self-test iteration #98:
 Setting up input data...
-dish = 158
-freq = 11
-polr = 1
-time = 357
-Wvalue = 0.1942183f0 - 0.041502163f0im
-Evalue = 4 - 4im
-dstime = 8
+dish = 467
+freq = 246
+polr = 0
+time = 109
+Wvalue = 0.03947877f0 + 0.055513483f0im
+Evalue = 2 - 6im
+dstime = 2
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1396,13 +1396,13 @@ Checking results...
     I:
 Self-test iteration #99:
 Setting up input data...
-dish = 102
-freq = 14
-polr = 1
-time = 946
-Wvalue = -0.06385146f0 + 0.015415355f0im
-Evalue = 4 + 1im
-dstime = 23
+dish = 427
+freq = 65
+polr = 0
+time = 1293
+Wvalue = 0.1243333f0 - 0.10934557f0im
+Evalue = 5 + 3im
+dstime = 32
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...
@@ -1410,13 +1410,13 @@ Checking results...
     I:
 Self-test iteration #100:
 Setting up input data...
-dish = 423
-freq = 26
-polr = 0
-time = 260
-Wvalue = -0.20599046f0 - 0.016618669f0im
-Evalue = -5 + 2im
-dstime = 6
+dish = 233
+freq = 170
+polr = 1
+time = 552
+Wvalue = -0.024556918f0 + 0.09380169f0im
+Evalue = 6 + 4im
+dstime = 13
 Copying data from CPU to GPU...
 Running kernel...
 Copying data back from GPU to CPU...

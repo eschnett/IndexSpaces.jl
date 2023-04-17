@@ -44,12 +44,13 @@ const setup = full_chord
     # Full CHORD
     const sampling_time_μsec = 4096 / (2 * 1200)
     const C = 2
-    const T = 16384             # 32768
+    const T = 32768
     const D = 512
     const B = 96
     const P = 2
     const F₀ = 16
-    const F = 16       # idiv(56, 2)   # benchmarking A30: 56; A40: 84
+    const F = 16
+    # const F = idiv(84, 2)       # benchmarking A30: 56; A40: 84
 
     const T1_stride = 128
     const T2_stride = 32
@@ -138,8 +139,8 @@ const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_
 #     number-of-dishes: 512
 #     number-of-frequencies: 42
 #     number-of-polarizations: 2
-#     number-of-timesamples: 32768
-#     sampling-time: 1.7
+#     number-of-timesamples: 16384
+#     sampling-time-μsec: 1.7066666666666668
 #     shift-parameter-σ: 3
 #   compile-parameters:
 #     minthreads: 768
@@ -149,11 +150,11 @@ const kernel_setup = KernelSetup(num_threads, num_warps, num_blocks, num_blocks_
 #     blocks: [84]
 #     shmem_bytes: 67712
 #   result-μsec:
-#     runtime: 6800.2
-#     scaled-runtime: 2590.6
+#     runtime: 3653.0
+#     scaled-runtime: 1391.6
 #     scaled-number-of-frequencies: 16
-#     dataframe-length: 55705.6
-#     dataframe-percent: 4.7
+#     dataframe-length: 27962.0
+#     dataframe-percent: 5.0
 
 # Setup for full CHORD on A30:
 #
@@ -988,6 +989,15 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 @assert false
             end
         end
+    elseif input ≡ :random2
+        Random.seed!(0)
+
+        # Choose all s
+        s_memory .= rand((σ + 1):(σ + 10), F * P * B)
+
+        # Choose A and E
+        A_memory .= rand(Int8x4, length(A_memory))
+        E_memory .= rand(Int4x8, length(E_memory))
 
     else
         @assert false
@@ -1027,6 +1037,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     synchronize()
 
     if nruns > 0
+        println("Starting $nruns benchmark runs...")
         stats = @timed begin
             for run in 1:nruns
                 kernel(
@@ -1042,6 +1053,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             end
             synchronize()
         end
+        println("Finished benchmark runs in $(stats.time) seconds.")
         # All times in μsec
         runtime = stats.time / nruns * 1.0e+6
         num_frequencies_scaled = F₀
@@ -1122,12 +1134,12 @@ if CUDA.functional()
     # This call needs to happen after generating PTX code since it
     # modifies the generated PTX code
     main(; output_kernel=true)
-
+    
     # Run test
     main(; run_selftest=true)
 
     # # Run benchmark
-    # main(; nruns=100)
+    # main(; nruns=10000)
 
     # # Regular run, also for profiling
     # main()

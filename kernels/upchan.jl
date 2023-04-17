@@ -53,7 +53,7 @@ end
 
 const sampling_time_μsec = 4096 / (2 * 1200)
 const C = 2
-const T = 16384                 # 32768
+const T = 32768
 const D = 512
 const P = 2
 const F₀ = 16
