@@ -1674,7 +1674,7 @@ if CUDA.functional()
             @device_code_sass main(; compile_only=true)
         end
     end
-    
+
     # Run test
     main(; run_selftest=true)
 

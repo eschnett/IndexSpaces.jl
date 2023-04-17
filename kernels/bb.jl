@@ -92,6 +92,11 @@ else
     @assert false
 end
 
+const Bt = 16                   # distribute time samples over that many blocks
+
+@assert T % Bt == 0
+@assert T % Bt % T1_stride == 0
+
 const Bp = idiv(P, Wp)
 
 @assert T % T1_stride == 0
@@ -108,7 +113,7 @@ const Bp = idiv(P, Wp)
 const num_simd_bits = 32
 const num_threads = 32
 const num_warps = Wb * Wd * Wp
-const num_blocks = Bp * F
+const num_blocks = Bt * Bp * F
 const num_blocks_per_sm = 32 ÷ num_warps
 
 const cacheline_length = 32     # counting in UInt32
@@ -228,7 +233,7 @@ function make_bb_kernel()
 
     loopT3 = Loop(:T3, 8, idiv(T2_stride, 8)) # 8 time samples enter the tensor core mma
     loopT2 = Loop(:T2, T2_stride, idiv(T1_stride, T2_stride))
-    loopT1 = Loop(:T1, T1_stride, idiv(T, T1_stride))
+    loopT1 = Loop(:T1, T1_stride, idiv(idiv(T, Bt), T1_stride))
 
     loopD = UnrolledLoop(:D, 4, idiv(D, 16 * Wd)) # 16 dishes enter the tensor core mma
 
@@ -287,7 +292,7 @@ function make_bb_kernel()
     time34 = Time(:time, 8, 4)
     time4 = Time(:time, 16, 2)
     time56 = Time(:time, 32, 4)
-    time7etc = Time(:time, 128, idiv(T, 128))
+    time7etc = Time(:time, 128, idiv(idiv(T, Bt), 128))
 
     # # Physics quantities
     # E = Quantity(:E, [cplx, dish, freq, polr, time, int4value])
@@ -374,9 +379,10 @@ function make_bb_kernel()
             time01234 => Shared(:shared, idiv(D, 4) + 1, 32),
             time56 => loopT2,
             time7etc => loopT1,
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Shared(:shared, (idiv(D, 4) + 1) * 32, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -390,10 +396,11 @@ function make_bb_kernel()
             time01234 => Shared(:shared, B + 4, 32),
             time56 => loopT2,
             time7etc => loopT1,
+            Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
             Dish(:dish, idiv(D, Wd), Wd) => Shared(:shared, (B + 4) * 32, Wd),
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Shared(:shared, (B + 4) * 32 * Wd, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -422,8 +429,9 @@ function make_bb_kernel()
                     Register(:time, 4 * num_time_warps_for_Ecopy, num_time_registers_for_Ecopy),
                 time56 => loopT2,
                 time7etc => loopT1,
-                Polr(:polr, 1, P) => Block(:block, 1, Bp),
-                freq => Block(:block, Bp, F),
+                Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
+                Polr(:polr, 1, P) => Block(:block, Bt, Bp),
+                freq => Block(:block, Bt * Bp, F),
             ),
         )
     elseif D == 64
@@ -444,8 +452,9 @@ function make_bb_kernel()
                 time4 => Warp(:warp, 1, Wb),
                 time56 => loopT2,
                 time7etc => loopT1,
+                Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
                 Polr(:polr, 1, P) => Warp(:warp, Wb, Wp),
-                freq => Block(:block, Bp, F),
+                freq => Block(:block, Bt * Bp, F),
             ),
         )
     else
@@ -466,9 +475,10 @@ function make_bb_kernel()
             time34 => loopT3,
             time56 => loopT2,
             time7etc => loopT1,
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Warp(:warp, Wd * Wb, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -488,9 +498,9 @@ function make_bb_kernel()
             beam012 => Thread(:thread, 4, 8), # mma output m, bits 012
             Beam(:beam, 8, loopB.length) => Register(:beam, 8, loopB.length),
             Beam(:beam, 8 * loopB.length, Wb) => Warp(:warp, Wd, Wb),
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Warp(:warp, Wd * Wb, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -505,11 +515,12 @@ function make_bb_kernel()
             time34 => Register(:time, 8, 4),
             time56 => loopT2,
             time7etc => loopT1,
+            Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
             beam01 => Thread(:thread, 8, 4),
             beam2etc => Warp(:warp, 1, Wd * Wb * Wp),
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Register(:polr, Bp, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -520,9 +531,9 @@ function make_bb_kernel()
             int32value => SIMD(:simd, 1, 32),
             beam01 => Thread(:thread, 8, 4),
             beam2etc => Warp(:warp, 1, idiv(B, 4)),
-            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
             Polr(:polr, Bp, Wp) => Register(:polr, Bp, Wp),
-            freq => Block(:block, Bp, F),
+            freq => Block(:block, Bt * Bp, F),
         ),
     )
 
@@ -570,9 +581,9 @@ function make_bb_kernel()
                 beam12 => Thread(:thread, 8, 4), # final
                 beam3 => Register(:beam, 8, 2),  # final
                 beam4etc => Warp(:warp, 4, Wb),
-                Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+                Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
                 Polr(:polr, Bp, Wp) => Warp(:warp, Wd, Wp),
-                freq => Block(:block, P, F),
+                freq => Block(:block, Bt * P, F),
             ),
         )
 
@@ -595,9 +606,9 @@ function make_bb_kernel()
                 beam0 => Register(:dish, 8, 2),  # want thread2
                 beam12 => Thread(:thread, 8, 4), # final
                 beam3 => Warp(:warp, Wd, Wb),
-                Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+                Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
                 Polr(:polr, Bp, Wp) => Warp(:warp, Wd * Wb, Wp),
-                freq => Block(:block, Bp, F),
+                freq => Block(:block, Bt * Bp, F),
             ),
         )
 
@@ -636,12 +647,13 @@ function make_bb_kernel()
                             time34 => loopT3,
                             time56 => loopT2,
                             time7etc => loopT1,
+                            Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
                             beam012 => Thread(:thread, 4, 8), # mma output 012
                             Beam(:beam, 8, loopB.length) => loopB,
                             Beam(:beam, 8 * loopB.length, Wb) => Warp(:warp, Wd, Wb),
-                            Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+                            Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
                             Polr(:polr, Bp, Wp) => Warp(:warp, Wd * Wb, Wp),
-                            freq => Block(:block, Bp, F),
+                            freq => Block(:block, Bt * Bp, F),
                         ),
                     )
 
@@ -731,9 +743,10 @@ function make_bb_kernel()
                     time34 => Register(:time, 8, 4),
                     time56 => loopT2,
                     time7etc => loopT1,
-                    Polr(:polr, 1, Bp) => Block(:block, 1, Bp),
+                    Time(:time, idiv(T, Bt), Bt) => Block(:block, 1, Bt),
+                    Polr(:polr, 1, Bp) => Block(:block, Bt, Bp),
                     Polr(:polr, Bp, Wp) => Register(:polr, Bp, Wp),
-                    freq => Block(:block, Bp, F),
+                    freq => Block(:block, Bt * Bp, F),
                 ),
             )
 
@@ -1134,7 +1147,7 @@ if CUDA.functional()
     # This call needs to happen after generating PTX code since it
     # modifies the generated PTX code
     main(; output_kernel=true)
-    
+
     # Run test
     main(; run_selftest=true)
 
