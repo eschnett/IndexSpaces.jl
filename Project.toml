@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CUDASIMDTypes = "ba1ee33b-8807-41fd-9812-6d5f2ce04139"
+Mustache = "ffc61752-8dc7-55ee-8c37-f3e9cdd09e70"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 

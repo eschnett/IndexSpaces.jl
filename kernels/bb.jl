@@ -4,6 +4,7 @@
 using CUDA
 using CUDASIMDTypes
 using IndexSpaces
+using Mustache
 using Random
 
 # const card = "A30"
@@ -925,6 +926,33 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         """,
             )
         end
+        cxx = read("kernels/kotekan_template.cxx", String)
+        cxx = Mustache.render(
+            cxx,
+            Dict(
+                "B" => B,
+                "C" => C,
+                "D" => D,
+                "F" => F,
+                "P" => P,
+                "T" => T,
+                "sampling_time_μsec" => sampling_time_μsec,
+                "σ" => σ,
+                "minthreads" => num_threads * num_warps,
+                "num_blocks_per_sm" => num_blocks_per_sm,
+                "num_threads" => num_threads,
+                "num_warps" => num_warps,
+                "num_blocks" => num_blocks,
+                "shmem_bytes" => shmem_bytes,
+                "kernel_name" => kernel_name,
+                "A_length" => "$(8 * C * D * B * P * F ÷ 8)L",
+                "E_length" => "$(4 * C * D * F * P * T ÷ 8)L",
+                "s_length" => "$(32 * B * P * F ÷ 8)L",
+                "J_length" => "$(4 * C * T * P * F * B ÷ 8)L",
+                "info_length" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)L",
+            ),
+        )
+        write("output-$card/bb.cxx", cxx)
     end
 
     println("Allocating input data...")
