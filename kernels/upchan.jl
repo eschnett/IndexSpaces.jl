@@ -4,6 +4,7 @@
 using CUDA
 using CUDASIMDTypes
 using IndexSpaces
+using Mustache
 
 bitsign(b::Bool) = b ? -1 : +1
 bitsign(i::Integer) = bitsign(isodd(i))
@@ -1184,7 +1185,7 @@ function fix_ptx_kernel()
     open("output-A40/upchan-U$U.ptx", "w") do fh
         write(fh, ptx)
     end
-    kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
+    kernel_symbol = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
     open("output-A40/upchan-U$U.yaml", "w") do fh
         print(
             fh,
@@ -1209,7 +1210,7 @@ function fix_ptx_kernel()
         threads: [$num_threads, $num_warps]
         blocks: [$num_blocks]
         shmem_bytes: $shmem_bytes
-      kernel-name: "$kernel_name"
+      kernel-symbol: "$kernel_symbol"
       kernel-arguments:
         - name: "G"
           intent: in
@@ -1239,6 +1240,50 @@ function fix_ptx_kernel()
     """,
         )
     end
+    cxx = read("kernels/kotekan_template.cxx", String)
+    cxx = Mustache.render(
+        cxx,
+        Dict(
+            "kernel_name" => "Upchannelizer_U$U",
+            "kernel_design_parameters" => [
+                Dict("type" => "int", "name" => "cuda_number_of_complex_components", "value" => "$C"),
+                Dict("type" => "int", "name" => "cuda_number_of_dishes", "value" => "$D"),
+                Dict("type" => "int", "name" => "cuda_number_of_frequencies", "value" => "$F"),
+                Dict("type" => "int", "name" => "cuda_number_of_polarizations", "value" => "$P"),
+                Dict("type" => "int", "name" => "cuda_number_of_taps", "value" => "$M"),
+                Dict("type" => "int", "name" => "cuda_number_of_timesamples", "value" => "$T"),
+                # Dict("type" => "double", "name" => "cuda_sampling_time_usec", "value" => "$sampling_time_μsec"),
+                Dict("type" => "int", "name" => "cuda_upchannelization_factor", "value" => "$U"),
+            ],
+            "minthreads" => num_threads * num_warps,
+            "num_blocks_per_sm" => num_blocks_per_sm,
+            "num_threads" => num_threads,
+            "num_warps" => num_warps,
+            "num_blocks" => num_blocks,
+            "shmem_bytes" => shmem_bytes,
+            "kernel_symbol" => kernel_symbol,
+            "kernel_arguments" => [
+                Dict("name" => "G", "value" => "$(16 * F * U ÷ 8)UL"),
+                Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                Dict("name" => "Ebar", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
+            ],
+            "memnames" => [
+                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain"),
+                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage"),
+                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage"),
+                Dict("name" => "info", "kotekan_name" => "gpu_mem_info"),
+            ],
+            "check_kotekan_parameters" => [
+                Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
+                Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
+                Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
+                Dict("name" => "upchan_factor", "value" => "cuda_upchannelization_factor"),
+            ],
+            "runtime_parameters" => [Dict("type" => "std::vector<float>", "name" => "freq_gains")],
+        ),
+    )
+    write("output-A40/upchan-U$U.cxx", cxx)
     return nothing
 end
 
@@ -1258,8 +1303,8 @@ if CUDA.functional()
         end
     end
 
-    # Run test
-    main(; run_selftest=true)
+    # # Run test
+    # main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=100)

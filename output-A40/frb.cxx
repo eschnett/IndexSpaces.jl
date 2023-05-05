@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief CUDA BasebandBeamformer kernel
+ * @brief CUDA  kernel
  *
  * This file has been generated automatically.
  * Do not modify this C++ file, your changes will be lost.
@@ -22,11 +22,11 @@ using kotekan::Config;
 /**
  * @class cuda
  */
-class cudaBasebandBeamformer : public cudaCommand {
+class cuda : public cudaCommand {
 public:
-    cudaBasebandBeamformer(Config & config, const std::string& unique_name,
+    cuda(Config & config, const std::string& unique_name,
                         bufferContainer& host_buffers, cudaDeviceInterface& device);
-    ~cudaBasebandBeamformer();
+    ~cuda();
     cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit)
         override;
 
@@ -46,13 +46,16 @@ private:
     using kernel_arg = CuDeviceArray<int32_t, 1>;
 
     // Kernel design parameters:
-    static constexpr int cuda_number_of_beams = 96;
+    static constexpr int cuda_beam_layout_M = 48;
+    static constexpr int cuda_beam_layout_N = 48;
+    static constexpr int cuda_dish_layout_M = 24;
+    static constexpr int cuda_dish_layout_N = 24;
+    static constexpr int cuda_downsampling_factor = 40;
     static constexpr int cuda_number_of_complex_components = 2;
     static constexpr int cuda_number_of_dishes = 512;
-    static constexpr int cuda_number_of_frequencies = 16;
+    static constexpr int cuda_number_of_frequencies = 256;
     static constexpr int cuda_number_of_polarizations = 2;
-    static constexpr int cuda_number_of_timesamples = 32768;
-    static constexpr int cuda_shift_parameter_sigma = 3;
+    static constexpr int cuda_number_of_timesamples = 2064;
 
     // Kernel compile parameters:
     static constexpr int minthreads = 768;
@@ -61,45 +64,49 @@ private:
     // Kernel call parameters:
     static constexpr int threads_x = 32;
     static constexpr int threads_y = 24;
-    static constexpr int blocks = 512;
-    static constexpr int shmem_bytes = 67712;
+    static constexpr int blocks = 256;
+    static constexpr int shmem_bytes = 76896;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z13julia_bb_363513CuDeviceArrayI6Int8x4Li1ELi1EES_I6Int4x8Li1ELi1EES_I5Int32Li1ELi1EES_IS1_Li1ELi1EES_IS2_Li1ELi1EE";
+    const char* const kernel_symbol = "_Z15julia_frb_1030913CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE";
 
     // Kernel arguments:
-    static constexpr std::size_t A_length = 3145728UL;
-    static constexpr std::size_t E_length = 536870912UL;
-    static constexpr std::size_t s_length = 12288UL;
-    static constexpr std::size_t J_length = 100663296UL;
-    static constexpr std::size_t info_length = 1572864UL;
+    static constexpr std::size_t S_length = 2304UL;
+    static constexpr std::size_t W_length = 1179648UL;
+    static constexpr std::size_t E_length = 541065216UL;
+    static constexpr std::size_t I_length = 239616UL;
+    static constexpr std::size_t info_length = 786432UL;
 
     // Runtime parameters:
 
     // GPU memory:
-    const std::string A_memname;
+    const std::string S_memname;
+    const std::string W_memname;
     const std::string E_memname;
-    const std::string s_memname;
-    const std::string J_memname;
+    const std::string I_memname;
     const std::string info_memname;
 };
 
-REGISTER_CUDA_COMMAND(cudaBasebandBeamformer);
+REGISTER_CUDA_COMMAND(cuda);
 
-cudaBasebandBeamformer::cudaBasebandBeamformer(Config& config, const std::string& unique_name,
+cuda::cuda(Config& config, const std::string& unique_name,
                                              bufferContainer& host_buffers,
                                              cudaDeviceInterface& device) :
-    cudaCommand(config, unique_name, host_buffers, device, "BasebandBeamformer", "BasebandBeamformer.ptx")
-    , A_memname(config.get<std::string>(unique_name, "gpu_mem_phase"))
+    cudaCommand(config, unique_name, host_buffers, device, "", ".ptx")
+    , S_memname(config.get<std::string>(unique_name, "gpu_mem_dishlayout"))
+    , W_memname(config.get<std::string>(unique_name, "gpu_mem_phase"))
     , E_memname(config.get<std::string>(unique_name, "gpu_mem_voltage"))
-    , s_memname(config.get<std::string>(unique_name, "gpu_mem_output_scaling"))
-    , J_memname(config.get<std::string>(unique_name, "gpu_mem_formed_beams"))
+    , I_memname(config.get<std::string>(unique_name, "gpu_mem_beamgrid"))
     , info_memname(config.get<std::string>(unique_name, "gpu_mem_info"))
 {
-    const int num_elements = config.get<int>(unique_name, "num_elements");
-    if (num_elements != (cuda_number_of_dishes * cuda_number_of_polarizations))
+    const int num_dishes = config.get<int>(unique_name, "num_dishes");
+    if (num_dishes != (cuda_number_of_dishes))
       throw std::runtime_error(
-        "The num_elements config setting must be " + std::to_string(cuda_number_of_dishes * cuda_number_of_polarizations) + " for the CUDA Baseband Beamformer");
+        "The num_dishes config setting must be " + std::to_string(cuda_number_of_dishes) + " for the CUDA Baseband Beamformer");
+    const int dish_grid_size = config.get<int>(unique_name, "dish_grid_size");
+    if (dish_grid_size != (cuda_dish_layout_M))
+      throw std::runtime_error(
+        "The dish_grid_size config setting must be " + std::to_string(cuda_dish_layout_M) + " for the CUDA Baseband Beamformer");
     const int num_local_freq = config.get<int>(unique_name, "num_local_freq");
     if (num_local_freq != (cuda_number_of_frequencies))
       throw std::runtime_error(
@@ -108,10 +115,10 @@ cudaBasebandBeamformer::cudaBasebandBeamformer(Config& config, const std::string
     if (samples_per_data_set != (cuda_number_of_timesamples))
       throw std::runtime_error(
         "The samples_per_data_set config setting must be " + std::to_string(cuda_number_of_timesamples) + " for the CUDA Baseband Beamformer");
-    const int num_beams = config.get<int>(unique_name, "num_beams");
-    if (num_beams != (cuda_number_of_beams))
+    const int time_downsampling = config.get<int>(unique_name, "time_downsampling");
+    if (time_downsampling != (cuda_downsampling_factor))
       throw std::runtime_error(
-        "The num_beams config setting must be " + std::to_string(cuda_number_of_beams) + " for the CUDA Baseband Beamformer");
+        "The time_downsampling config setting must be " + std::to_string(cuda_downsampling_factor) + " for the CUDA Baseband Beamformer");
 
 
     set_command_type(gpuCommandType::KERNEL);
@@ -122,32 +129,32 @@ cudaBasebandBeamformer::cudaBasebandBeamformer(Config& config, const std::string
     build_ptx({kernel_symbol}, opts);
 }
 
-cudaBasebandBeamformer::~cudaBasebandBeamformer() {}
+cuda::~cuda() {}
 
-cudaEvent_t cudaBasebandBeamformer::execute(const int gpu_frame_id,
+cudaEvent_t cuda::execute(const int gpu_frame_id,
                                            const std::vector<cudaEvent_t>& /*pre_events*/,
                                            bool* const /*quit*/) {
     pre_execute(gpu_frame_id);
 
-    void* const A_memory = device.get_gpu_memory_array(A_memname, gpu_frame_id, A_length);
+    void* const S_memory = device.get_gpu_memory_array(S_memname, gpu_frame_id, S_length);
+    void* const W_memory = device.get_gpu_memory_array(W_memname, gpu_frame_id, W_length);
     void* const E_memory = device.get_gpu_memory_array(E_memname, gpu_frame_id, E_length);
-    void* const s_memory = device.get_gpu_memory_array(s_memname, gpu_frame_id, s_length);
-    void* const J_memory = device.get_gpu_memory_array(J_memname, gpu_frame_id, J_length);
+    void* const I_memory = device.get_gpu_memory_array(I_memname, gpu_frame_id, I_length);
     void* const info_memory = device.get_gpu_memory_array(info_memname, gpu_frame_id, info_length);
 
     record_start_event(gpu_frame_id);
 
     const char* exc_arg = "exception";
-    kernel_arg A_arg(A_memory, A_length);
+    kernel_arg S_arg(S_memory, S_length);
+    kernel_arg W_arg(W_memory, W_length);
     kernel_arg E_arg(E_memory, E_length);
-    kernel_arg s_arg(s_memory, s_length);
-    kernel_arg J_arg(J_memory, J_length);
+    kernel_arg I_arg(I_memory, I_length);
     kernel_arg info_arg(info_memory, info_length);
     void* args[] = {&exc_arg
-        , &A_arg
+        , &S_arg
+        , &W_arg
         , &E_arg
-        , &s_arg
-        , &J_arg
+        , &I_arg
         , &info_arg
     };
 

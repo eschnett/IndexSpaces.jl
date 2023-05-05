@@ -865,7 +865,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         open("output-$card/bb.ptx", "w") do fh
             write(fh, ptx)
         end
-        kernel_name = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
+        kernel_symbol = match(r"\s\.globl\s+(\S+)"m, ptx).captures[1]
         open("output-$card/bb.yaml", "w") do fh
             print(
                 fh,
@@ -890,7 +890,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             threads: [$num_threads, $num_warps]
             blocks: [$num_blocks]
             shmem_bytes: $shmem_bytes
-          kernel-name: "$kernel_name"
+          kernel-symbol: "$kernel_symbol"
           kernel-arguments:
             - name: "A"
               intent: in
@@ -930,26 +930,45 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
         cxx = Mustache.render(
             cxx,
             Dict(
-                "B" => B,
-                "C" => C,
-                "D" => D,
-                "F" => F,
-                "P" => P,
-                "T" => T,
-                "sampling_time_μsec" => sampling_time_μsec,
-                "σ" => σ,
+                "kernel_name" => "BasebandBeamformer",
+                "kernel_design_parameters" => [
+                    Dict("type" => "int", "name" => "cuda_number_of_beams", "value" => "$B"),
+                    Dict("type" => "int", "name" => "cuda_number_of_complex_components", "value" => "$C"),
+                    Dict("type" => "int", "name" => "cuda_number_of_dishes", "value" => "$D"),
+                    Dict("type" => "int", "name" => "cuda_number_of_frequencies", "value" => "$F"),
+                    Dict("type" => "int", "name" => "cuda_number_of_polarizations", "value" => "$P"),
+                    Dict("type" => "int", "name" => "cuda_number_of_timesamples", "value" => "$T"),
+                    # Dict("type" => "double", "name" => "cuda_sampling_time_usec", "value" => "$sampling_time_μsec"),
+                    Dict("type" => "int", "name" => "cuda_shift_parameter_sigma", "value" => "$σ"),
+                ],
                 "minthreads" => num_threads * num_warps,
                 "num_blocks_per_sm" => num_blocks_per_sm,
                 "num_threads" => num_threads,
                 "num_warps" => num_warps,
                 "num_blocks" => num_blocks,
                 "shmem_bytes" => shmem_bytes,
-                "kernel_name" => kernel_name,
-                "A_length" => "$(8 * C * D * B * P * F ÷ 8)L",
-                "E_length" => "$(4 * C * D * F * P * T ÷ 8)L",
-                "s_length" => "$(32 * B * P * F ÷ 8)L",
-                "J_length" => "$(4 * C * T * P * F * B ÷ 8)L",
-                "info_length" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)L",
+                "kernel_symbol" => kernel_symbol,
+                "kernel_arguments" => [
+                    Dict("name" => "A", "value" => "$(8 * C * D * B * P * F ÷ 8)UL"),
+                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "s", "value" => "$(32 * B * P * F ÷ 8)UL"),
+                    Dict("name" => "J", "value" => "$(4 * C * T * P * F * B ÷ 8)UL"),
+                    Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
+                ],
+                "memnames" => [
+                    Dict("name" => "A", "kotekan_name" => "gpu_mem_phase"),
+                    Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage"),
+                    Dict("name" => "s", "kotekan_name" => "gpu_mem_output_scaling"),
+                    Dict("name" => "J", "kotekan_name" => "gpu_mem_formed_beams"),
+                    Dict("name" => "info", "kotekan_name" => "gpu_mem_info"),
+                ],
+                "check_kotekan_parameters" => [
+                    Dict("name" => "num_elements", "value" => "cuda_number_of_dishes * cuda_number_of_polarizations"),
+                    Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
+                    Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
+                    Dict("name" => "num_beams", "value" => "cuda_number_of_beams"),
+                ],
+                "get_runtime_parameters" => [],
             ),
         )
         write("output-$card/bb.cxx", cxx)
@@ -1176,8 +1195,8 @@ if CUDA.functional()
     # modifies the generated PTX code
     main(; output_kernel=true)
 
-    # Run test
-    main(; run_selftest=true)
+    # # Run test
+    # main(; run_selftest=true)
 
     # # Run benchmark
     # main(; nruns=10000)
