@@ -20,12 +20,13 @@ using kotekan::bufferContainer;
 using kotekan::Config;
 
 /**
- * @class cuda
+ * @class cudaBasebandBeamformer
+ * @brief cudaCommand for BasebandBeamformer
  */
 class cudaBasebandBeamformer : public cudaCommand {
 public:
     cudaBasebandBeamformer(Config & config, const std::string& unique_name,
-                        bufferContainer& host_buffers, cudaDeviceInterface& device);
+                          bufferContainer& host_buffers, cudaDeviceInterface& device);
     ~cudaBasebandBeamformer();
     cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit)
         override;

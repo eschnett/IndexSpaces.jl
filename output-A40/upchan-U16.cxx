@@ -20,12 +20,13 @@ using kotekan::bufferContainer;
 using kotekan::Config;
 
 /**
- * @class cuda
+ * @class cudaUpchannelizer_U16
+ * @brief cudaCommand for Upchannelizer_U16
  */
 class cudaUpchannelizer_U16 : public cudaCommand {
 public:
     cudaUpchannelizer_U16(Config & config, const std::string& unique_name,
-                        bufferContainer& host_buffers, cudaDeviceInterface& device);
+                          bufferContainer& host_buffers, cudaDeviceInterface& device);
     ~cudaUpchannelizer_U16();
     cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit)
         override;

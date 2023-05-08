@@ -21,11 +21,12 @@ using kotekan::Config;
 
 /**
  * @class cuda
+ * @brief cudaCommand for 
  */
 class cuda : public cudaCommand {
 public:
     cuda(Config & config, const std::string& unique_name,
-                        bufferContainer& host_buffers, cudaDeviceInterface& device);
+                          bufferContainer& host_buffers, cudaDeviceInterface& device);
     ~cuda();
     cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit)
         override;
