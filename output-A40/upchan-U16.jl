@@ -1,10 +1,10 @@
 @fastmath @inbounds(
-    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:998 =#
+    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1211 =#
         info = 1
         info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) % 16) * 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 128) % 128) * 512) + 0 + 0x01] =
             info
         Tactual = Tactual_memory[0 + 0x01]
-        if !(Tactual % 256 == 0i32)
+        if !(0i32 ≤ Tactual < 32768 && Tactual % 256 == 0i32)
             info = 2
             info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) % 16) * 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 128) % 128) * 512) + 0 + 0x01] =
                 info
@@ -76,11 +76,11 @@
         X_cplx1 = Xim
         (Γ¹0, Γ¹1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:544 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:545 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:547 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:548 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:548 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:549 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -91,7 +91,8 @@
             timehi1 = timehi0 + 4i32
             freqlo = (1i32) * thread2 + (2i32) * thread3 + (4i32) * thread4
             (Γ¹0, Γ¹1) = (
-                cispi(((-2 * timehi0 * freqlo) / Float32(2^m)) % 2.0f0), cispi(((-2 * timehi1 * freqlo) / Float32(2^m)) % 2.0f0)
+                cispi((((-2i32) * timehi0 * freqlo) / Float32(2^m)) % 2.0f0),
+                cispi((((-2i32) * timehi1 * freqlo) / Float32(2^m)) % 2.0f0),
             )
             (Γ¹0, Γ¹1)
         end
@@ -109,11 +110,11 @@
         Γ¹_cplx1_cplx_in1 = Γ¹im_cplx_in1
         (Γ²0, Γ²1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:588 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:590 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:591 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:592 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:593 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:594 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -130,12 +131,12 @@
                 timelo0 = (2i32) * thread1 + (1i32) * thread0
                 timelo1 = timelo0 + 4i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:609 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:611 =#
             end
             freqlo = (1i32) * thread2 + (2i32) * thread3 + (4i32) * thread4
             (Γ²0, Γ²1) = (
-                cispi(((-2 * timelo0 * freqlo) / Float32(2^(m + n))) % 2.0f0),
-                cispi(((-2 * timelo1 * freqlo) / Float32(2^(m + n))) % 2.0f0),
+                cispi((((-2i32) * timelo0 * freqlo) / Float32(2^(m + n))) % 2.0f0),
+                cispi((((-2i32) * timelo1 * freqlo) / Float32(2^(m + n))) % 2.0f0),
             )
             (Γ²0, Γ²1)
         end
@@ -145,11 +146,11 @@
         Γ²_cplx1 = Γ²im
         (Γ³0, Γ³1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:644 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:646 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:647 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:648 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:649 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:650 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -166,7 +167,7 @@
                 timelo0 = (2i32) * thread1 + (1i32) * thread0
                 timelo1 = timelo0 + 4i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:665 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:667 =#
             end
             if U == 16
                 freqhi = (1i32) * thread2
@@ -181,12 +182,12 @@
                 dish_in = 0i32
                 dish = 0i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:680 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:682 =#
             end
             delta = dish == dish_in
             (Γ³0, Γ³1) = (
-                delta * cispi(((-2 * timelo0 * freqhi) / Float32(2^n)) % 2.0f0),
-                delta * cispi(((-2 * timelo1 * freqhi) / Float32(2^n)) % 2.0f0),
+                delta * cispi((((-2i32) * timelo0 * freqhi) / Float32(2^n)) % 2.0f0),
+                delta * cispi((((-2i32) * timelo1 * freqhi) / Float32(2^n)) % 2.0f0),
             )
             (Γ³0, Γ³1)
         end
