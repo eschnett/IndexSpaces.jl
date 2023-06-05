@@ -18,6 +18,7 @@ julia -e 'using JuliaFormatter; JuliaFormatter.format_file("/Users/eschnett/src/
 
 # Copy kernel to Kotekan
 cp output-A40/bb.cxx ~/src/kotekan/lib/cuda/cudaBasebandBeamformer.cpp
+cp output-A40/bb.jl ~/src/kotekan/lib/cuda/kernels/BasebandBeamformer.jl
 cp output-A40/bb.ptx ~/src/kotekan/lib/cuda/kernels/BasebandBeamformer.ptx
 cp output-A40/bb.yaml ~/src/kotekan/lib/cuda/kernels/BasebandBeamformer.yaml
 
@@ -25,10 +26,10 @@ cp output-A40/bb.yaml ~/src/kotekan/lib/cuda/kernels/BasebandBeamformer.yaml
 clang-format -i ~/src/kotekan/lib/cuda/cudaBasebandBeamformer.cpp
 
 # Sync Kotekan to Blue
-(cd ~/src/kotekan && rsync -Paz --exclude .git --exclude build ~/src/kotekan blue.lwlab:src)
+(cd ~/src/kotekan && rsync -Paz --exclude .git --exclude cmake-build ~/src/kotekan blue.lwlab:src)
 
 # Build Kotekan on Blue
-ssh blue.lwlab 'cd src/kotekan && cmake --build build'
+ssh blue.lwlab 'cd src/kotekan && cmake --build cmake-build --target kotekan/kotekan'
 
 # Run Kotekan on Blue
-ssh blue.lwlab 'cd src/kotekan && cd build/kotekan && ./kotekan -c ../../config/tests/mvp.yaml'
+ssh blue.lwlab 'cd src/kotekan && ./cmake-build/kotekan/kotekan --bind-address 0:23000 --config config/tests/mvp.yaml'

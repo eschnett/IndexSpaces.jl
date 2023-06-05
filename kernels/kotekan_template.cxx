@@ -9,6 +9,8 @@
 #include "cudaCommand.hpp"
 #include "cudaDeviceInterface.hpp"
 
+#include <bufferContainer.hpp>
+
 #include <fmt.hpp>
 
 #include <array>
@@ -27,21 +29,25 @@ class cuda{{{kernel_name}}} : public cudaCommand {
 public:
     cuda{{{kernel_name}}}(Config & config, const std::string& unique_name,
                           bufferContainer& host_buffers, cudaDeviceInterface& device);
-    ~cuda{{{kernel_name}}}();
-    cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit)
-        override;
+    virtual ~cuda{{{kernel_name}}}();
+    
+    // int wait_on_precondition(int gpu_frame_id) override;
+    cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit) override;
+    // void finalize_frame(int gpu_frame_id) override;
 
 private:
 
     // Julia's `CuDevArray` type
-    template<typename T, int64_t N>
+    template<typename T, std::int64_t N>
     struct CuDeviceArray {
         T* ptr;
-        int64_t maxsize; // bytes
-        int64_t dims[N]; // elements
-        int64_t len;     // elements
+        std::int64_t maxsize; // bytes
+        std::int64_t dims[N]; // elements
+        std::int64_t len;     // elements
         CuDeviceArray(void* const ptr, const std::size_t bytes) :
-            ptr(static_cast<T*>(ptr)), maxsize(bytes), dims{int64_t(maxsize / sizeof(T))},
+            ptr(static_cast<T*>(ptr)),
+            maxsize(bytes),
+            dims{std::int64_t(maxsize / sizeof(T))},
             len(maxsize / sizeof(T)) {}
     };
     using kernel_arg = CuDeviceArray<int32_t, 1>;
@@ -62,7 +68,7 @@ private:
     static constexpr int shmem_bytes = {{{shmem_bytes}}};
 
     // Kernel name:
-    const char* const kernel_symbol = "{{{kernel_symbol}}}";
+    const char* const kernel_symbol = "{{kernel_symbol}}";
 
     // Kernel arguments:
     {{#kernel_arguments}}
@@ -82,12 +88,13 @@ private:
 
 REGISTER_CUDA_COMMAND(cuda{{{kernel_name}}});
 
-cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config, const std::string& unique_name,
+cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
+                                             const std::string& unique_name,
                                              bufferContainer& host_buffers,
                                              cudaDeviceInterface& device) :
     cudaCommand(config, unique_name, host_buffers, device, "{{{kernel_name}}}", "{{{kernel_name}}}.ptx")
     {{#memnames}}
-    , {{{name}}}_memname(config.get<std::string>(unique_name, "{{{kotekan_name}}}"))
+    , {{{name}}}_memname(config.get<std::string>(unique_name, "{{kotekan_name}}"))
     {{/memnames}}
 {
     {{#check_kotekan_parameters}}
@@ -113,13 +120,40 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config, const std::string& 
         "--verbose",
     };
     build_ptx({kernel_symbol}, opts);
+
+    {{#memnames}}
+    const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
+    Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
+    assert({{{name}}}_buffer);
+    {{^isoutput}}
+    register_consumer({{{name}}}_buffer, unique_name.c_str());
+    {{/isoutput}}
+    {{#isoutput}}
+    register_producer({{{name}}}_buffer, unique_name.c_str());
+    {{/isoutput}}
+    {{/memnames}}
 }
 
 cuda{{{kernel_name}}}::~cuda{{{kernel_name}}}() {}
 
+// int cuda{{{kernel_name}}}::wait_on_precondition(const int gpu_frame_id) {
+//     {{#memnames}}
+//     {{^isoutput}}
+//     const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
+//     Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
+//     assert({{{name}}}_buffer);
+//     uint8_t* const {{{name}}}_frame = wait_for_full_frame({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
+//     if (!{{{name}}}_frame)
+//         return -1;
+//     {{/isoutput}}
+//     {{/memnames}}
+// 
+//     return 0;
+// }
+
 cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
-                                           const std::vector<cudaEvent_t>& /*pre_events*/,
-                                           bool* const /*quit*/) {
+                                         const std::vector<cudaEvent_t>& /*pre_events*/,
+                                         bool* const /*quit*/) {
     pre_execute(gpu_frame_id);
 
     {{#memnames}}
@@ -132,9 +166,10 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
     {{#kernel_arguments}}
     kernel_arg {{{name}}}_arg({{{name}}}_memory, {{{name}}}_length);
     {{/kernel_arguments}}
-    void* args[] = {&exc_arg
+    void* args[] = {
+        &exc_arg,
     {{#kernel_arguments}}
-        , &{{{name}}}_arg
+        &{{{name}}}_arg,
     {{/kernel_arguments}}
     };
 
@@ -144,7 +179,7 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
                                       CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES,
                                       shmem_bytes));
 
-    DEBUG("Running CUDA {{{kernel_Name}}} on GPU frame {:d}", gpu_frame_id);
+    DEBUG("Running CUDA {{{kernel_name}}} on GPU frame {:d}", gpu_frame_id);
     const CUresult err =
         cuLaunchKernel(runtime_kernels[kernel_symbol], blocks, 1, 1, threads_x, threads_y, 1,
                        shmem_bytes, device.getStream(cuda_stream_id), args, NULL);
@@ -158,3 +193,14 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
 
     return record_end_event(gpu_frame_id);
 }
+
+// void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
+//     {{#memnames}}
+//     {{#isoutput}}
+//     const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
+//     Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
+//     assert({{{name}}}_buffer);
+//     mark_frame_full({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
+//     {{/isoutput}}
+//     {{/memnames}}
+// }

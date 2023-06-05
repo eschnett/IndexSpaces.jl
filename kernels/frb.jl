@@ -1662,7 +1662,7 @@ function fix_ptx_kernel()
     cxx = Mustache.render(
         cxx,
         Dict(
-            "kernel_symbol" => "FRBBeamformer",
+            "kernel_name" => "FRBBeamformer",
             "kernel_design_parameters" => [
                 Dict("type" => "int", "name" => "cuda_beam_layout_M", "value" => "$(2*M)"),
                 Dict("type" => "int", "name" => "cuda_beam_layout_N", "value" => "$(2*N)"),
@@ -1691,11 +1691,11 @@ function fix_ptx_kernel()
                 Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
             ],
             "memnames" => [
-                Dict("name" => "S", "kotekan_name" => "gpu_mem_dishlayout"),
-                Dict("name" => "W", "kotekan_name" => "gpu_mem_phase"),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage"),
-                Dict("name" => "I", "kotekan_name" => "gpu_mem_beamgrid"),
-                Dict("name" => "info", "kotekan_name" => "gpu_mem_info"),
+                Dict("name" => "S", "kotekan_name" => "gpu_mem_dishlayout", "isoutput" => false),
+                Dict("name" => "W", "kotekan_name" => "gpu_mem_phase", "isoutput" => false),
+                Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false),
+                Dict("name" => "I", "kotekan_name" => "gpu_mem_beamgrid", "isoutput" => true),
+                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true),
             ],
             "check_kotekan_parameters" => [
                 Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
