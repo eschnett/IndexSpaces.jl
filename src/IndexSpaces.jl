@@ -631,7 +631,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
 
     is_shared = any(mach isa Shared for (phys, mach) in mem_layout.dict)
     is_memory = any(mach isa Memory for (phys, mach) in mem_layout.dict)
-    @assert is_shared ⊻ is_memory
+    @assert !(is_shared && is_memory)
 
     # addr = 0i32
     addrs = Code[]
