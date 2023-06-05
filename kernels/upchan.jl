@@ -146,6 +146,8 @@ const Repl = Index{Physics,ReplTag}
 
 # Global memory layouts
 
+const layout_Tactual = Layout([IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32)])
+
 const layout_G_memory = Layout([
     FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
     Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
@@ -458,6 +460,15 @@ function upchan!(emitter)
     # Set info output
     apply!(emitter, :info => layout_info_registers, 1i32)
     store!(emitter, :info_memory => layout_info_memory, :info)
+
+    # Read parameter `Tactual`
+    load!(emitter, :Tactual => layout_Tactual, :Tactual_memory => layout_Tactual)
+    if!(emitter, :(!(Tactual % $Touter == 0i32))) do emitter
+        apply!(emitter, :info => layout_info_registers, 2i32)
+        store!(emitter, :info_memory => layout_info_memory, :info)
+        trap!(emitter)
+        nothing
+    end
 
     # Initialize ring buffer
     apply!(emitter, :F_ringbuf => layout_F_ringbuf_registers, :(zero(Int4x8)))
@@ -958,6 +969,13 @@ function upchan!(emitter)
         merge!(emitter, :Ē2, [:Ē2lo, :Ē2hi], Dish(:dish, 8, 2) => Register(:dish, 8, 2))
         store!(emitter, :Ē_memory => layout_Ē_memory, :Ē2; align=16)
 
+        push!(
+            emitter.statements,
+            quote
+                t_outer + $Touter ≥ Tactual && break
+            end,
+        )
+
         return nothing
     end # loop!(Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)))
 
@@ -995,7 +1013,7 @@ open("output-A40/upchan-U$U.jl", "w") do fh
     println(fh, upchan_kernel)
 end
 
-@eval function upchan(G_memory, E_memory, Ē_memory, info_memory)
+@eval function upchan(Tactual_memory, G_memory, E_memory, Ē_memory, info_memory)
     shmem = @cuDynamicSharedMem(UInt8, shmem_bytes, 0)
     F_shared = reinterpret(Int4x8, shmem)
     F̄_shared = reinterpret(Int4x8, shmem)
@@ -1015,8 +1033,9 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     shmem_size = idiv(shmem_bytes, 4)
     @assert num_warps * num_blocks_per_sm ≤ 32 # (???)
     @assert shmem_bytes ≤ 99 * 1024 # NVIDIA A10/A40 have 99 kB shared memory
+    Tactual_cuda = CuArray(Int32[T])
     kernel = @cuda launch = false minthreads = num_threads * num_warps blocks_per_sm = num_blocks_per_sm upchan(
-        CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
+        Tactual_cuda, CUDA.zeros(Float16x2, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int4x8, 0), CUDA.zeros(Int32, 0)
     )
     attributes(kernel.fun)[CUDA.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES] = shmem_bytes
 
@@ -1094,14 +1113,23 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     @assert sizeof(Ē_cuda) < 2^32
 
     !silent && println("Running kernel...")
-    kernel(G_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+    kernel(Tactual_cuda, G_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
     synchronize()
 
     if nruns > 0
         !silent && println("Benchmarking...")
         stats = @timed begin
             for run in 1:nruns
-                kernel(G_cuda, E_cuda, Ē_cuda, info_cuda; threads=(num_threads, num_warps), blocks=num_blocks, shmem=shmem_bytes)
+                kernel(
+                    Tactual_cuda,
+                    G_cuda,
+                    E_cuda,
+                    Ē_cuda,
+                    info_cuda;
+                    threads=(num_threads, num_warps),
+                    blocks=num_blocks,
+                    shmem=shmem_bytes,
+                )
             end
             synchronize()
         end
@@ -1212,6 +1240,12 @@ function fix_ptx_kernel()
         shmem_bytes: $shmem_bytes
       kernel-symbol: "$kernel_symbol"
       kernel-arguments:
+        - name: "Tactual"
+          intent: in
+          type: Int32
+          indices: []
+          shape: []
+          strides: []
         - name: "G"
           intent: in
           type: Float16
@@ -1263,16 +1297,18 @@ function fix_ptx_kernel()
             "shmem_bytes" => shmem_bytes,
             "kernel_symbol" => kernel_symbol,
             "kernel_arguments" => [
+                Dict("name" => "Tactual", "value" => "$(1)UL"),
                 Dict("name" => "G", "value" => "$(16 * F * U ÷ 8)UL"),
                 Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
                 Dict("name" => "Ebar", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
                 Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
             ],
             "memnames" => [
-                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain"),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage"),
-                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage"),
-                Dict("name" => "info", "kotekan_name" => "gpu_mem_info"),
+                Dict("name" => "Tactual", "kotekan_name" => "Tactual", "isoutput" => false),
+                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain", "isoutput" => false),
+                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage", "isoutput" => false),
+                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage", "isoutput" => true),
+                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true),
             ],
             "check_kotekan_parameters" => [
                 Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
