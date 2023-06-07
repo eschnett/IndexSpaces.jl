@@ -1571,7 +1571,13 @@ function upchan!(emitter)
         permute!(emitter, :Ē2, :Ē1, Dish(:dish, 8, 2), Freq(:freq, 1, 2))
         split!(emitter, [:Ē2lo, :Ē2hi], :Ē2, Register(:freq, 1, 2))
         merge!(emitter, :Ē2, [:Ē2lo, :Ē2hi], Dish(:dish, 8, 2) => Register(:dish, 8, 2))
-        store!(emitter, :Ē_memory => layout_Ē_memory, :Ē2; align=16)
+
+        # Skip the first MTaps-1 outputs
+        # TODO: Preload the ring buffer instead of skipping
+        if!(emitter, :(t_outer ≥ $(Int32((M - 1) * U)))) do emitter
+            store!(emitter, :Ē_memory => layout_Ē_memory, :Ē2; align=16, offset=-Int32(idiv(D, 4) * (F * U) * P * (M - 1)))
+            nothing
+        end
 
         push!(
             emitter.statements,

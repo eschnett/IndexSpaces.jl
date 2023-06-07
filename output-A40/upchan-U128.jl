@@ -1,5 +1,5 @@
 @fastmath @inbounds(
-    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1602 =#
+    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1608 =#
         info = 1
         info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) % 16) * 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 128) % 128) * 512) + 0 + 0x01] =
             info
@@ -6196,68 +6196,70 @@
             Ē2_dish8_freq64 = Ē2hi_dish0_freq64
             Ē2_dish4_freq64 = Ē2lo_dish4_freq64
             Ē2_dish12_freq64 = Ē2hi_dish4_freq64
-            IndexSpaces.unsafe_store4_global!(
-                Ē_memory,
-                (
+            if t_outer ≥ 384
+                IndexSpaces.unsafe_store4_global!(
+                    Ē_memory,
                     (
                         (
                             (
-                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 +
-                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 128
-                            ) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 4
-                        ) % 2048
-                    ) * 128 +
-                    (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 262144 +
+                                (
+                                    (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 +
+                                    ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 128
+                                ) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 4
+                            ) % 2048
+                        ) * 128 +
+                        (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 262144 +
+                        (
+                            (
+                                (
+                                    ((IndexSpaces.assume_inrange(t_outer, 0, 256, 32768) ÷ 256) % 128) * 256 +
+                                    ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 16) % 2) * 128
+                                ) ÷ 128
+                            ) % 256
+                        ) * 524288 +
+                        (
+                            (
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                            ) ÷ 4
+                        ) % 128
+                    ) +
+                    -1572864 +
+                    0x01,
+                    (Ē2_dish0_freq0, Ē2_dish4_freq0, Ē2_dish8_freq0, Ē2_dish12_freq0),
+                )
+                IndexSpaces.unsafe_store4_global!(
+                    Ē_memory,
                     (
                         (
                             (
-                                ((IndexSpaces.assume_inrange(t_outer, 0, 256, 32768) ÷ 256) % 128) * 256 +
-                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 16) % 2) * 128
-                            ) ÷ 128
-                        ) % 256
-                    ) * 524288 +
-                    (
-                        (
-                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
-                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
-                        ) ÷ 4
-                    ) % 128
-                ) +
-                0 +
-                0x01,
-                (Ē2_dish0_freq0, Ē2_dish4_freq0, Ē2_dish8_freq0, Ē2_dish12_freq0),
-            )
-            IndexSpaces.unsafe_store4_global!(
-                Ē_memory,
-                (
-                    (
+                                (
+                                    ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + 64) +
+                                    ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 128
+                                ) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 4
+                            ) % 2048
+                        ) * 128 +
+                        (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 262144 +
                         (
                             (
-                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) ÷ 8) % 4 + 64) +
-                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 8) % 16) * 128
-                            ) + (IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) * 4
-                        ) % 2048
-                    ) * 128 +
-                    (((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) ÷ 4) % 2) % 2) * 262144 +
-                    (
+                                (
+                                    ((IndexSpaces.assume_inrange(t_outer, 0, 256, 32768) ÷ 256) % 128) * 256 +
+                                    ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 16) % 2) * 128
+                                ) ÷ 128
+                            ) % 256
+                        ) * 524288 +
                         (
                             (
-                                ((IndexSpaces.assume_inrange(t_outer, 0, 256, 32768) ÷ 256) % 128) * 256 +
-                                ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) ÷ 16) % 2) * 128
-                            ) ÷ 128
-                        ) % 256
-                    ) * 524288 +
-                    (
-                        (
-                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
-                            (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
-                        ) ÷ 4
-                    ) % 128
-                ) +
-                0 +
-                0x01,
-                (Ē2_dish0_freq64, Ē2_dish4_freq64, Ē2_dish8_freq64, Ē2_dish12_freq64),
-            )
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 8) * 16 +
+                                (IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 4) * 128
+                            ) ÷ 4
+                        ) % 128
+                    ) +
+                    -1572864 +
+                    0x01,
+                    (Ē2_dish0_freq64, Ē2_dish4_freq64, Ē2_dish8_freq64, Ē2_dish12_freq64),
+                )
+            end
             t_outer + 256 ≥ Tactual && break
         end
         info = 0
