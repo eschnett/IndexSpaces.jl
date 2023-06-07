@@ -4,7 +4,7 @@ set -euxo pipefail
 
 cd $HOME/src/jl/IndexSpaces
 
-Ufactors='16 32 64'
+Ufactors='16 32 64 128'
 
 # Sync Julia code to Blue
 rsync -Paz --exclude .git --exclude *.toml ~/src/jl/IndexSpaces blue.lwlab:src/jl

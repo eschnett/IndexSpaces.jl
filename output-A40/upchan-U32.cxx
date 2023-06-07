@@ -72,7 +72,7 @@ private:
     static constexpr int shmem_bytes = 67840;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z17julia_upchan_406313CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
+    const char* const kernel_symbol = "_Z17julia_upchan_405313CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
 
     // Kernel arguments:
     static constexpr std::size_t Tactual_length = 1UL;

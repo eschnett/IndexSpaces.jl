@@ -238,53 +238,99 @@ const layout_F̄_shared_size = Σ * idiv(Touter, U)
 
 # Register layouts
 
-@assert U ≤ 64
 function thread2time(thread::Int32)
     time = 0i32
-    for bit in 0:(Ubits - 2)
-        threadbit = (1, 0, 2, 4, 3)[bit + 1]
-        val = (thread >> threadbit) & 1i32
-        timebit = Ubits - 2 - bit
-        time |= val << timebit
+    if U ≤ 64
+        for bit in 0:(Ubits - 2)
+            threadbit = (1, 0, 2, 4, 3)[bit + 1]
+            val = (thread >> threadbit) & 1i32
+            timebit = Ubits - 2 - bit
+            time |= val << timebit
+        end
+    else
+        for bit in 0:4
+            threadbit = (1, 0, 2, 4, 3)[bit + 1]
+            val = (thread >> threadbit) & 1i32
+            timebit = Ubits - 2 - bit
+            time |= val << timebit
+        end
     end
     return time
 end
 function thread2freq(thread::Int32)
     freq = 0i32
-    for bit in 0:(Ubits - 2)
-        threadbit = (1, 0, 2, 4, 3)[bit + 1]
-        val = (thread >> threadbit) & 1i32
-        freqbit = bit
-        freq |= val << bit
+    if U ≤ 64
+        for bit in 0:(Ubits - 2)
+            threadbit = (1, 0, 2, 4, 3)[bit + 1]
+            val = (thread >> threadbit) & 1i32
+            freqbit = Ubits - 2 - bit
+            freq |= val << freqbit
+        end
+    else
+        for bit in 0:4
+            threadbit = (1, 0, 2, 4, 3)[bit + 1]
+            val = (thread >> threadbit) & 1i32
+            freqbit = Ubits - 2 - bit
+            freq |= val << freqbit
+        end
     end
     return freq
 end
 
-@assert U ≤ 64
-# eqn. (126)
-const layout_W_registers = Layout([
-    FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
-    [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-    MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M),
-])
+# const layout_W_registers = if U ≤ 64
+#     # eqn. (126)
+#     Layout([
+#         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+#         Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+#         [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
+#         MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M),
+#     ])
+# else
+#     # eqn. (129)
+#     Layout([
+#         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+#         Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+#         [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+#         Time(:time, 1, 1 << (Ubits - 6)) => Register(:time, 1, 1 << (Ubits - 6)),
+#         MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M),
+#     ])
+# end
 
-@assert U ≤ 64
-# eqn. (127)
-const layout_X_registers = Layout([
-    FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
-    [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-    Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
-])
+const layout_X_registers = if U ≤ 64
+    # eqn. (127)
+    Layout([
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
+        Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+    ])
+else
+    # eqn. (130)
+    Layout([
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+        Time(:time, 1, 1 << (Ubits - 6)) => Register(:time, 1, 1 << (Ubits - 6)),
+        Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+    ])
+end
 
-@assert U ≤ 64
-# eqn. (128)
-const layout_G_registers = Layout([
-    FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
-    [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-])
+const layout_G_registers = if U ≤ 64
+    # eqn. (128)
+    Layout([
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+        [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
+    ])
+else
+    # eqn. (131)
+    Layout([
+        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+        [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+        Freq(:freq, 1 << 6, 1 << (Ubits - 6)) => Register(:freq, 1 << 6, 1 << (Ubits - 6)),
+    ])
+end
 
 # eqn. (133)
 @assert U ≥ 4
@@ -359,9 +405,8 @@ const (Dt, Dr) = U ≤ 32 ? (idiv(64, U), idiv(U, W)) : (1, idiv(64, W))
 @assert Ut * Ur == idiv(U, 2)
 @assert Dt * Dr == idiv(D, 128)
 
-@assert U ≤ 64
 @assert Packed
-const layout_F_registers = let
+const layout_F_registers = if U ≤ 64
     Layout([
         # eqn. (110)
         IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
@@ -385,59 +430,139 @@ const layout_F_registers = let
         Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
         Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
     ])
+else
+    Layout([
+        # eqn. (110)
+        IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+        Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+        Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+        Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+        [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:4]...,
+        [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
+        Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        # eqn. (111)
+        #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+        #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
+        #Unpacked Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+        # eqn. (107)
+        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+        Time(:time, 1 << 0, 1 << (Ubits - 6)) => Register(:time, 1 << 0, 1 << (Ubits - 6)),
+        # TODO: check dishes; see (107)
+        Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
+        Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+        # sect. 5.2
+        Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+        Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+        Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+    ])
 end
 
-@assert U ≤ 64
 @assert K == 4
 @assert Packed
-const layout_F̄_registers = Layout([
-    # eqn. (110)
-    IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
-    Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
-    Dish(:dish, 2, 16) => Warp(:warp, 1, W),
-    [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:(Ubits - 2)]...,
-    [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
-    # eqn. (111)
-    #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
-    #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
-    #Unpacked Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
-    # eqn. (105)
-    Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
-    [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-    Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
-    Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
-    # sect. 5.2
-    Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
-    Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
-    Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
-])
+const layout_F̄_registers = if U ≤ 64
+    Layout([
+        # eqn. (110)
+        IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+        Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+        Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+        Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+        [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:(Ubits - 2)]...,
+        [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
+        # eqn. (111)
+        #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+        #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
+        #Unpacked Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
+        # eqn. (105)
+        Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+        [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
+        Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
+        Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+        # sect. 5.2
+        Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+        Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+        Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+    ])
+else
+    Layout([
+        # eqn. (110)
+        IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+        Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+        Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+        Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+        [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:4]...,
+        [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
+        # eqn. (111)
+        #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+        #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
+        #Unpacked Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
+        # eqn. (105)
+        Freq(:freq, 1, 2) => SIMD(:simd, 16, 2),
+        [Freq(:freq, 1 << (bit + 1), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+        Freq(:freq, 1 << 6, 1 << (Ubits - 6)) => Register(:freq, 1 << 6, 1 << (Ubits - 6)),
+        Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
+        Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+        # sect. 5.2
+        Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+        Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+        Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+    ])
+end
 
-const layout_F_ringbuf_registers = Layout([
-    # eqn. (110)
-    IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
-    Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
-    Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
-    Dish(:dish, 2, 16) => Warp(:warp, 1, W),
-    [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:(Ubits - 2)]...,
-    [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
-    #??? Dish(:dish, idiv(D, Dr), Dr) => Register(:dish, idiv(D, Dr), Dr),
-    # eqn. (111)
-    #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-    #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
-    #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
-    #Unpacked Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
-    MTaps(:mtaps, 1, M - 1) => Register(:mtaps, 1, M - 1),
-    # eqn. (105)
-    Time(:time, idiv(U, Ur), Ur) => Register(:time, idiv(U, Ur), Ur),
-    Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
-    [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-    # sect. 5.2
-    Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
-    Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
-    Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
-])
+const layout_F_ringbuf_registers = if U ≤ 64
+    Layout([
+        # eqn. (110)
+        IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+        Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+        Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+        Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+        [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:(Ubits - 2)]...,
+        [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
+        #??? Dish(:dish, idiv(D, Dr), Dr) => Register(:dish, idiv(D, Dr), Dr),
+        # eqn. (111)
+        #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+        #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
+        #Unpacked Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+        MTaps(:mtaps, 1, M - 1) => Register(:mtaps, 1, M - 1),
+        # eqn. (105)
+        # Time(:time, idiv(U, Ur), Ur) => Register(:time, idiv(U, Ur), Ur),
+        Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
+        # sect. 5.2
+        Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+        Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+        Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+    ])
+else
+    Layout([
+        # eqn. (110)
+        IntValue(:intvalue, 1, 4) => SIMD(:simd, 1, 4),
+        Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
+        Dish(:dish, 1, 2) => SIMD(:simd, 8, 2),
+        Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+        [Dish(:dish, 1 << (bit + 2), 2) => Register(:dish, 1 << (bit + 2), 2) for bit in 3:4]...,
+        [Dish(:dish, 1 << (bit + 2), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in (Ubits - 1):4]...,
+        #??? Dish(:dish, idiv(D, Dr), Dr) => Register(:dish, idiv(D, Dr), Dr),
+        # eqn. (111)
+        #Unpacked FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+        #Unpacked Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+        #Unpacked Dish(:dish, 1 << 0, 2) => Register(:dish, 1, 2),
+        #Unpacked Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+        MTaps(:mtaps, 1, M - 1) => Register(:mtaps, 1, M - 1),
+        # eqn. (107)
+        # Time(:time, idiv(U, Ur), Ur) => Register(:time, idiv(U, Ur), Ur),
+        Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+        Time(:time, 1 << 0, 1 << (Ubits - 6)) => Register(:time, 1 << 0, 1 << (Ubits - 6)),
+        # sect. 5.2
+        Dish(:dish, 128, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+        Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+        Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+    ])
+end
 
 const layout_info_registers = Layout([
     IntValue(:intvalue, 1, 32) => SIMD(:simd, 1, 32),
@@ -479,31 +604,70 @@ function upchan!(emitter)
 
     # Calculate weights
     # sinc-Hanning weight function, eqn. (11), with `N=U`
-    @assert U ≤ 64
-    layout_Wm_registers = Layout([
-        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)]...,
-    ])
-    for m in 0:(M - 1)
-        Wsum1 = inv(sum(Wkernel(s, M, U) for s in 0:(M * U - 1)))
-        push!(
-            emitter.statements,
-            quote
-                ($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m))) = let
-                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
-                    time0 = thread2time(thread)
-                    time1 = time0 + $(Int32(idiv(U, 2)))
-                    s0 = time0 + $(Int32(m * U))
-                    s1 = time1 + $(Int32(m * U))
-                    W0 = $Wsum1 * Wkernel(s0, $M, $U)
-                    W1 = $Wsum1 * Wkernel(s1, $M, $U)
-                    (W0, W1)
-                end
-            end,
-        )
-        apply!(emitter, Symbol(:Wpfb_m, m) => layout_Wm_registers, :(Float16x2($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m)))))
+    if U ≤ 64
+        layout_Wm_registers = Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            [
+                Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 2)
+            ]...,
+            Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        ])
+        for m in 0:(M - 1)
+            Wsum1 = inv(sum(Wkernel(s, M, U) for s in 0:(M * U - 1)))
+            push!(
+                emitter.statements,
+                quote
+                    ($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m))) = let
+                        thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                        time0 = thread2time(thread)
+                        time1 = time0 + $(Int32(idiv(U, 2)))
+                        s0 = time0 + $(Int32(m * U))
+                        s1 = time1 + $(Int32(m * U))
+                        W0 = $Wsum1 * Wkernel(s0, $M, $U)
+                        W1 = $Wsum1 * Wkernel(s1, $M, $U)
+                        (W0, W1)
+                    end
+                end,
+            )
+            apply!(emitter, Symbol(:Wpfb_m, m) => layout_Wm_registers, :(Float16x2($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m)))))
+        end
+        merge!(emitter, :Wpfb, [Symbol(:Wpfb_m, m) for m in 0:(M - 1)], MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M))
+    else
+        layout_Wm_registers = Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            [Time(:time, 1 << (Ubits - 2 - bit), 2) => Thread(:thread, 1 << [1, 0, 2, 4, 3][bit + 1], 2) for bit in 0:4]...,
+            Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
+        ])
+        for m in 0:(M - 1), t in 0:1
+            Wsum1 = inv(sum(Wkernel(s, M, U) for s in 0:(M * U - 1)))
+            push!(
+                emitter.statements,
+                quote
+                    ($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m))) = let
+                        thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                        time0 = $(Int32(t)) + thread2time(thread)
+                        time1 = time0 + $(Int32(idiv(U, 2)))
+                        s0 = time0 + $(Int32(m * U))
+                        s1 = time1 + $(Int32(m * U))
+                        W0 = $Wsum1 * Wkernel(s0, $M, $U)
+                        W1 = $Wsum1 * Wkernel(s1, $M, $U)
+                        (W0, W1)
+                    end
+                end,
+            )
+            apply!(
+                emitter,
+                Symbol(:Wpfb_m, m, :_t, t) => layout_Wm_registers,
+                :(Float16x2($(Symbol(:Wpfb0_m, m)), $(Symbol(:Wpfb1_m, m)))),
+            )
+        end
+        for m in 0:(M - 1)
+            merge!(
+                emitter, Symbol(:Wpfb_m, m), [Symbol(:Wpfb_m, m, :_t, t) for t in 0:1], Time(:time, 1, 2) => Register(:time, 1, 2)
+            )
+        end
+        merge!(emitter, :Wpfb, [Symbol(:Wpfb_m, m) for m in 0:(M - 1)], MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M))
     end
-    merge!(emitter, :Wpfb, [Symbol(:Wpfb_m, m) for m in 0:(M - 1)], MTaps(:mtaps, 1, M) => Register(:mtaps, 1, M))
 
     # Calculate extra phases
     # eqn. (88), (125), (139)
@@ -526,7 +690,7 @@ function upchan!(emitter)
     merge!(emitter, :X, [:Xre, :Xim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
 
     # Calculate FFT coefficients
-    @assert 8 ≤ U ≤ 64
+    @assert 8 ≤ U ≤ 128
     layout_Γ¹reim_registers = Layout([
         FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
         Time(:time, idiv(U, 2), 2) => SIMD(:simd, 16, 2),
@@ -571,16 +735,32 @@ function upchan!(emitter)
     merge!(emitter, :Γ¹re, [:Γ¹rere, :Γ¹reim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
     merge!(emitter, :Γ¹im, [:Γ¹imre, :Γ¹imim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
     merge!(emitter, :Γ¹, [:Γ¹re, :Γ¹im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    # Why do we need this? `mma_row_col_m16n8k16_f16!` should skip this tag if not present.
+    if U ≥ 128
+        merge!(emitter, :Γ¹, [:Γ¹, :Γ¹], Time(:time, 1, 2) => Register(:time, 1, 2))
+    end
 
-    @assert 16 ≤ U ≤ 64
-    layout_Γ²reim_registers = Layout([
-        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
-        [Time(:time, 1 << (Ubits - 5 - bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in 0:(Ubits - 5)]...,
-        Freq(:freq, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
-        Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
-        Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
-    ])
+    @assert 16 ≤ U ≤ 128
+    layout_Γ²reim_registers = if U ≤ 64
+        Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
+            [Time(:time, 1 << (Ubits - 5 - bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in 0:(Ubits - 5)]...,
+            Freq(:freq, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
+            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
+            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
+        ])
+    else
+        Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
+            Time(:time, idiv(U, 32), 2) => Thread(:thread, 1 << 1, 2),
+            Time(:time, idiv(U, 64), 2) => Thread(:thread, 1 << 0, 2),
+            Freq(:freq, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
+            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
+            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
+        ])
+    end
     # eqn. (61)
     push!(
         emitter.statements,
@@ -607,6 +787,9 @@ function upchan!(emitter)
                 elseif U == 64
                     timelo0 = 2i32 * thread1 + 1i32 * thread0
                     timelo1 = timelo0 + 4i32
+                elseif U == 128
+                    timelo0 = 4i32 * thread1 + 2i32 * thread0
+                    timelo1 = timelo0 + 4i32
                 else
                     @assert false
                 end
@@ -622,21 +805,37 @@ function upchan!(emitter)
     apply!(emitter, :Γ²re => layout_Γ²reim_registers, :(Float16x2(real(Γ²0), real(Γ²1))))
     apply!(emitter, :Γ²im => layout_Γ²reim_registers, :(Float16x2(imag(Γ²0), imag(Γ²1))))
     merge!(emitter, :Γ², [:Γ²re, :Γ²im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+    # Why do we need this? `mma_row_col_m16n8k16_f16!` should skip this tag if not present.
+    if U ≥ 128
+        merge!(emitter, :Γ², [:Γ², :Γ²], Time(:time, 1, 2) => Register(:time, 1, 2))
+    end
 
-    @assert 16 ≤ U ≤ 64
-    layout_Γ³reim_registers = Layout([
-        FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
-        Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
-        # Dish(:dish_in, 32, 2) => Thread(:thread, 1 << 1, 2),
-        # Dish(:dish_in, 64, 2) => Thread(:thread, 1 << 0, 2),
-        [Time(:time, 1 << (Ubits - 5 - bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in 0:(Ubits - 5)]...,
-        [Dish(:dish_in, 1 << (5 + bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in (Ubits - 4):1]...,
-        # Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
-        # Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
-        # Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
-        [Freq(:freq, 1 << (3 + bit), 2) => Thread(:thread, 1 << [2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 4)]...,
-        [Dish(:dish, 1 << (4 + bit), 2) => Thread(:thread, 1 << [2, 4, 3][bit + 1], 2) for bit in (Ubits - 3):2]...,
-    ])
+    @assert 16 ≤ U ≤ 128
+    layout_Γ³reim_registers = if U ≤ 64
+        Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
+            # Dish(:dish_in, 32, 2) => Thread(:thread, 1 << 1, 2),
+            # Dish(:dish_in, 64, 2) => Thread(:thread, 1 << 0, 2),
+            [Time(:time, 1 << (Ubits - 5 - bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in 0:(Ubits - 5)]...,
+            [Dish(:dish_in, 1 << (5 + bit), 2) => Thread(:thread, 1 << [1, 0][bit + 1], 2) for bit in (Ubits - 4):1]...,
+            # Freq(:freq, 8, 2) => Thread(:thread, 1 << 2, 2),
+            # Dish(:dish, 32, 2) => Thread(:thread, 1 << 4, 2),
+            # Dish(:dish, 64, 2) => Thread(:thread, 1 << 3, 2),
+            [Freq(:freq, 1 << (3 + bit), 2) => Thread(:thread, 1 << [2, 4, 3][bit + 1], 2) for bit in 0:(Ubits - 4)]...,
+            [Dish(:dish, 1 << (4 + bit), 2) => Thread(:thread, 1 << [2, 4, 3][bit + 1], 2) for bit in (Ubits - 3):2]...,
+        ])
+    else
+        Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Time(:time, idiv(U, 16), 2) => SIMD(:simd, 16, 2),
+            Time(:time, idiv(U, 32), 2) => Thread(:thread, 1 << 1, 2),
+            Time(:time, idiv(U, 64), 2) => Thread(:thread, 1 << 0, 2),
+            Freq(:freq, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
+            Freq(:freq, 1 << 4, 2) => Thread(:thread, 1 << 4, 2),
+            Freq(:freq, 1 << 5, 2) => Thread(:thread, 1 << 3, 2),
+        ])
+    end
     # eqn. (62)
     push!(
         emitter.statements,
@@ -663,6 +862,9 @@ function upchan!(emitter)
                 elseif U == 64
                     timelo0 = 2i32 * thread1 + 1i32 * thread0
                     timelo1 = timelo0 + 4i32
+                elseif U == 128
+                    timelo0 = 4i32 * thread1 + 2i32 * thread0
+                    timelo1 = timelo0 + 4i32
                 else
                     @assert false
                 end
@@ -675,6 +877,10 @@ function upchan!(emitter)
                     dish_in = 1i32 * thread0
                     dish = 1i32 * thread3
                 elseif U == 64
+                    freqhi = 1i32 * thread2 + 2i32 * thread4 + 4i32 * thread3
+                    dish_in = 0i32
+                    dish = 0i32
+                elseif U == 128
                     freqhi = 1i32 * thread2 + 2i32 * thread4 + 4i32 * thread3
                     dish_in = 0i32
                     dish = 0i32
@@ -702,6 +908,55 @@ function upchan!(emitter)
     merge!(emitter, :Γ³, [:Γ³, :Γ³], Dish(:dish, 1, 2) => Register(:dish, 1, 2))
     for bit in 5:Ubits
         merge!(emitter, :Γ³, [:Γ³, :Γ³], Dish(:dish, 1 << bit, 2) => Register(:dish, 1 << bit, 2))
+    end
+    if U ≥ 128
+        merge!(emitter, :Γ³, [:Γ³, :Γ³], Time(:time, 1, 2) => Register(:time, 1, 2))
+    end
+
+    if U ≥ 128
+        layout_Γ⁴reim_registers = Layout([
+            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+            Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
+            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
+            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
+            Freq(:freq, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
+            Freq(:freq, 1 << 4, 2) => Thread(:thread, 1 << 4, 2),
+            Freq(:freq, 1 << 5, 2) => Thread(:thread, 1 << 3, 2),
+        ])
+        # eqn. (61)
+        push!(
+            emitter.statements,
+            quote
+                (Γ⁴0, Γ⁴1) = let
+                    k = Ubits
+                    @assert U == 2^k
+                    m = 6
+                    n = k - m
+                    @assert 0 ≤ m
+                    @assert 0 ≤ n
+                    thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+                    thread0 = (thread ÷ 1i32) % 2i32
+                    thread1 = (thread ÷ 2i32) % 2i32
+                    thread2 = (thread ÷ 4i32) % 2i32
+                    thread3 = (thread ÷ 8i32) % 2i32
+                    thread4 = (thread ÷ 16i32) % 2i32
+                    # We only calculate the coefficient for `timelo = 1` since the coefficient for `timelo = 0` is trivial
+                    timelo = 1i32
+                    freqlo0 =
+                        1i32 * 0i32 + 2i32 * thread1 + 4i32 * thread0 + 8i32 * thread2 + 16i32 * thread4 + 32i32 * thread3
+                    freqlo1 =
+                        1i32 * 1i32 + 2i32 * thread1 + 4i32 * thread0 + 8i32 * thread2 + 16i32 * thread4 + 32i32 * thread3
+                    (Γ⁴0, Γ⁴1) = (
+                        cispi((-2i32 * timelo * freqlo0 / Float32(2^(m + n))) % 2.0f0),
+                        cispi((-2i32 * timelo * freqlo1 / Float32(2^(m + n))) % 2.0f0),
+                    )
+                    (Γ⁴0, Γ⁴1)
+                end
+            end,
+        )
+        apply!(emitter, :Γ⁴re => layout_Γ⁴reim_registers, :(Float16x2(real(Γ⁴0), real(Γ⁴1))))
+        apply!(emitter, :Γ⁴im => layout_Γ⁴reim_registers, :(Float16x2(imag(Γ⁴0), imag(Γ⁴1))))
+        merge!(emitter, :Γ⁴, [:Γ⁴re, :Γ⁴im], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
     end
 
     # Outermost loop over outer blocks
@@ -809,6 +1064,7 @@ function upchan!(emitter)
 
                 # Step 6: Compute E4 by FFTing E3
                 apply!(emitter, :XX, [:E3], (E3,) -> :($E3))
+
                 if U == 16
 
                     # Step 6.1: Length 8 FFT: W = exp(...) X
@@ -1118,6 +1374,141 @@ function upchan!(emitter)
                         )
                     end
                     apply!(emitter, :E4, [:YY], (YY,) -> :($YY))
+
+                elseif U == 128
+
+                    # Step 6.1: Length 8 FFT: W = exp(...) X
+                    begin
+                        # D_ik = A_ij * B_jk + C_ik
+                        # output indices
+                        mma_is = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2), Cplx(:cplx, 1, C)]
+                        # input indices
+                        mma_js = [Time(:time, 64, 2), Time(:time, 16, 2), Time(:time, 32, 2), Cplx(:cplx_in, 1, 2)]
+                        # spectator indices
+                        mma_ks = [Time(:time, 8, 2), Time(:time, 2, 2), Time(:time, 4, 2)]
+                        layout_WW_registers = Layout([
+                            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                            Time(:time, 1 << 3, 2) => SIMD(:simd, 16, 2),
+                            Time(:time, 1 << 2, 2) => Thread(:thread, 1 << 1, 2),
+                            Time(:time, 1 << 1, 2) => Thread(:thread, 1 << 0, 2),
+                            Freq(:freq, 1 << 0, 2) => Thread(:thread, 1 << 2, 2),
+                            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 4, 2),
+                            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 3, 2),
+                            Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+                            Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
+                            Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+                            Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+                            Dish(:dish, 1 << 0, 2) => Register(:dish, 1 << 0, 2),
+                            Dish(:dish, 1 << 5, 4) => Register(:dish, 1 << 5, 4),
+                            Time(:time, 1 << 0, 2) => Register(:time, 1 << 0, 2),
+                            # sect. 5.2
+                            Dish(:dish, 1 << 7, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+                            Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+                            Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+                        ])
+                        split!(emitter, [:XXre, :XXim], :XX, Cplx(:cplx, 1, C))
+                        merge!(emitter, :XX, [:XXre, :XXim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+                        apply!(emitter, :WW => layout_WW_registers, :(zero(Float16x2)))
+                        mma_row_col_m16n8k16_f16!(
+                            emitter, :WW, :Γ¹ => (mma_is, mma_js), :XX => (mma_js, mma_ks), :WW => (mma_is, mma_ks)
+                        )
+                    end
+
+                    # Step 6.2: Z = exp(...) W
+                    split!(emitter, [:Γ²re, :Γ²im], :Γ², Cplx(:cplx, 1, C))
+                    split!(emitter, [:WWre, :WWim], :WW, Cplx(:cplx, 1, C))
+                    apply!(
+                        emitter,
+                        :ZZre,
+                        [:WWre, :WWim, :Γ²re, :Γ²im],
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²re, $WWre, -$Γ²im * $WWim)),
+                    )
+                    apply!(
+                        emitter,
+                        :ZZim,
+                        [:WWre, :WWim, :Γ²re, :Γ²im],
+                        (WWre, WWim, Γ²re, Γ²im) -> :(muladd($Γ²re, $WWim, $Γ²im * $WWre)),
+                    )
+                    merge!(emitter, :ZZ, [:ZZre, :ZZim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+
+                    # Step 6.3: Length 8 FFT: Y = exp(...) Z
+                    begin
+                        # D_ik = A_ij * B_jk + C_ik
+                        # output indices
+                        mma_is = [Freq(:freq, 8, 2), Freq(:freq, 32, 2), Freq(:freq, 16, 2), Cplx(:cplx, 1, C)]
+                        # input indices
+                        mma_js = [Time(:time, 8, 2), Time(:time, 2, 2), Time(:time, 4, 2), Cplx(:cplx_in, 1, 2)]
+                        # spectator indices
+                        mma_ks = [Freq(:freq, 1, 2), Freq(:freq, 4, 2), Freq(:freq, 2, 2)]
+                        #
+                        split!(emitter, [:ZZre, :ZZim], :ZZ, Cplx(:cplx, 1, C))
+                        merge!(emitter, :ZZ, [:ZZre, :ZZim], Cplx(:cplx_in, 1, C) => Register(:cplx_in, 1, C))
+                        let
+                            layout = copy(emitter.environment[:ZZ])
+                            for dish in []
+                                k = Dish(:dish, dish, 2)
+                                k′ = Dish(:dish_in, dish, 2)
+                                v = layout[k]
+                                delete!(layout, k)
+                                layout[k′] = v
+                            end
+                            emitter.environment[:ZZ] = layout
+                        end
+                        layout_YY_registers = Layout([
+                            FloatValue(:floatvalue, 1, 16) => SIMD(:simd, 1, 16),
+                            Freq(:freq, 1 << 0, 2) => SIMD(:simd, 16, 2),
+                            Freq(:freq, 1 << 1, 2) => Thread(:thread, 1 << 1, 2),
+                            Freq(:freq, 1 << 2, 2) => Thread(:thread, 1 << 0, 2),
+                            Freq(:freq, 1 << 3, 2) => Thread(:thread, 1 << 2, 2),
+                            Freq(:freq, 1 << 4, 2) => Thread(:thread, 1 << 4, 2),
+                            Freq(:freq, 1 << 5, 2) => Thread(:thread, 1 << 3, 2),
+                            Cplx(:cplx, 1, C) => Register(:cplx, 1, C),
+                            Time(:time, U, idiv(Touter, U)) => Loop(:t_inner, U, idiv(Touter, U)),
+                            Time(:time, Touter, idiv(T, Touter)) => Loop(:t_outer, Touter, idiv(T, Touter)),
+                            Dish(:dish, 2, 16) => Warp(:warp, 1, W),
+                            Dish(:dish, 1 << 0, 2) => Register(:dish, 1 << 0, 2),
+                            Dish(:dish, 1 << 5, 4) => Register(:dish, 1 << 5, 4),
+                            Time(:time, 1 << 0, 2) => Register(:time, 1 << 0, 2),
+                            # sect. 5.2
+                            Dish(:dish, 1 << 7, idiv(D, 128)) => Block(:block, 1, idiv(D, 128)),
+                            Polr(:polr, 1, P) => Block(:block, idiv(D, 128), P),
+                            Freq(:freq, U, F) => Block(:block, idiv(D, 128) * P, F),
+                        ])
+                        apply!(emitter, :YY => layout_YY_registers, :(zero(Float16x2)))
+                        mma_row_col_m16n8k16_f16!(
+                            emitter, :YY, :Γ³ => (mma_is, mma_js), :ZZ => (mma_js, mma_ks), :YY => (mma_is, mma_ks)
+                        )
+                    end
+
+                    # Step 6.4 (equivalent to 6.2): Z = exp(...) W
+                    apply!(emitter, :WWW, [:YY], (YY,) -> :($YY))
+
+                    split!(emitter, [:WWW_t0, :WWW_t1], :WWW, Time(:time, 1, 2))
+
+                    # Only treat the `t1` variable since the `t0` variable would be multiplied by `1`
+                    split!(emitter, [:Γ⁴re, :Γ⁴im], :Γ⁴, Cplx(:cplx, 1, C))
+                    split!(emitter, [:WWWre, :WWWim], :WWW_t1, Cplx(:cplx, 1, C))
+                    apply!(
+                        emitter,
+                        :ZZZre,
+                        [:WWWre, :WWWim, :Γ⁴re, :Γ⁴im],
+                        (WWWre, WWWim, Γ⁴re, Γ⁴im) -> :(muladd($Γ⁴re, $WWWre, -$Γ⁴im * $WWWim)),
+                    )
+                    apply!(
+                        emitter,
+                        :ZZZim,
+                        [:WWWre, :WWWim, :Γ⁴re, :Γ⁴im],
+                        (WWWre, WWWim, Γ⁴re, Γ⁴im) -> :(muladd($Γ⁴re, $WWWim, $Γ⁴im * $WWWre)),
+                    )
+                    apply!(emitter, :ZZZ_t0, [:WWW_t0], (WWW_t0) -> :($WWW_t0))
+                    merge!(emitter, :ZZZ_t1, [:ZZZre, :ZZZim], Cplx(:cplx, 1, C) => Register(:cplx, 1, C))
+
+                    # Step 6.5 (equivalent to 6.3, but without mma): Length 2 FFT: Y = exp(...) Z
+                    apply!(emitter, :YYY_u0, [:WWW_t0, :WWW_t1], (WWW_t0, WWW_t1) -> :($WWW_t0 + $WWW_t1))
+                    apply!(emitter, :YYY_u1, [:WWW_t0, :WWW_t1], (WWW_t0, WWW_t1) -> :($WWW_t0 - $WWW_t1))
+                    merge!(emitter, :YYY, [:YYY_u0, :YYY_u1], Freq(:freq, idiv(U, 2), 2) => Register(:freq, idiv(U, 2), 2))
+
+                    apply!(emitter, :E4, [:YYY], (YYY,) -> :($YYY))
 
                 else            # unsupported value for U
                     @assert false

@@ -1,5 +1,5 @@
 @fastmath @inbounds(
-    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1211 =#
+    begin #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:1602 =#
         info = 1
         info_memory[((IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32) % 32) % 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, 16) % 16) % 16) * 32 + ((IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0, 128) % 128) % 128) * 512) + 0 + 0x01] =
             info
@@ -79,11 +79,11 @@
         X_cplx1 = Xim
         (Γ¹0, Γ¹1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:545 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:709 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:548 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:549 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:712 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:713 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -113,11 +113,11 @@
         Γ¹_cplx1_cplx_in1 = Γ¹im_cplx_in1
         (Γ²0, Γ²1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:590 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:770 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:593 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:594 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:773 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:774 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -133,8 +133,11 @@
             elseif U == 64
                 timelo0 = (2i32) * thread1 + (1i32) * thread0
                 timelo1 = timelo0 + 4i32
+            elseif U == 128
+                timelo0 = (4i32) * thread1 + (2i32) * thread0
+                timelo1 = timelo0 + 4i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:611 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:794 =#
             end
             freqlo = (1i32) * thread2 + (2i32) * thread3 + (4i32) * thread4
             (Γ²0, Γ²1) = (
@@ -149,11 +152,11 @@
         Γ²_cplx1 = Γ²im
         (Γ³0, Γ³1) = let
             k = Ubits
-            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:646 =#
+            @assert U == 2^k                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:845 =#
             m = 3
             n = k - m
-            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:649 =#
-            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:650 =#
+            @assert 0 ≤ m                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:848 =#
+            @assert 0 ≤ n                    #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:849 =#
             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, 32)
             thread0 = (thread ÷ (1i32)) % (2i32)
             thread1 = (thread ÷ (2i32)) % (2i32)
@@ -169,8 +172,11 @@
             elseif U == 64
                 timelo0 = (2i32) * thread1 + (1i32) * thread0
                 timelo1 = timelo0 + 4i32
+            elseif U == 128
+                timelo0 = (4i32) * thread1 + (2i32) * thread0
+                timelo1 = timelo0 + 4i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:667 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:869 =#
             end
             if U == 16
                 freqhi = (1i32) * thread2
@@ -184,8 +190,12 @@
                 freqhi = (1i32) * thread2 + (2i32) * thread4 + (4i32) * thread3
                 dish_in = 0i32
                 dish = 0i32
+            elseif U == 128
+                freqhi = (1i32) * thread2 + (2i32) * thread4 + (4i32) * thread3
+                dish_in = 0i32
+                dish = 0i32
             else
-                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:682 =#
+                @assert false                        #= /home/eschnett/src/jl/IndexSpaces/kernels/upchan.jl:888 =#
             end
             delta = dish == dish_in
             (Γ³0, Γ³1) = (
