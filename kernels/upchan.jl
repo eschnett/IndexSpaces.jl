@@ -1,3 +1,5 @@
+Base.remove_linenums!
+
 # CHORD upchannelization kernel
 # <CHORD_GPU_upchannelization.pdf>
 
@@ -1914,11 +1916,11 @@ function fix_ptx_kernel()
                 Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
             ],
             "memnames" => [
-                Dict("name" => "Tactual", "kotekan_name" => "Tactual", "isoutput" => false),
-                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain", "isoutput" => false),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage", "isoutput" => false),
-                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage", "isoutput" => true),
-                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true),
+                Dict("name" => "Tactual", "kotekan_name" => "Tactual", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage", "isoutput" => true, "hasbuffer" => true),
+                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
             ],
             "check_kotekan_parameters" => [
                 Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),

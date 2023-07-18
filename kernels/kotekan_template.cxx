@@ -33,7 +33,7 @@ public:
     
     // int wait_on_precondition(int gpu_frame_id) override;
     cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit) override;
-    // void finalize_frame(int gpu_frame_id) override;
+    void finalize_frame(int gpu_frame_id) override;
 
 private:
 
@@ -84,6 +84,13 @@ private:
     {{#memnames}}
     const std::string {{{name}}}_memname;
     {{/memnames}}
+
+    // Host-side buffer arrays
+    {{#memnames}}
+    {{^hasbuffer}}
+    std::vector<std::vector<std::int32_t>> host_{{{name}}};
+    {{/hasbuffer}}
+    {{/memnames}}
 };
 
 REGISTER_CUDA_COMMAND(cuda{{{kernel_name}}});
@@ -94,9 +101,24 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
                                              cudaDeviceInterface& device) :
     cudaCommand(config, unique_name, host_buffers, device, "{{{kernel_name}}}", "{{{kernel_name}}}.ptx")
     {{#memnames}}
+    {{#hasbuffer}}
     , {{{name}}}_memname(config.get<std::string>(unique_name, "{{kotekan_name}}"))
+    {{/hasbuffer}}
+    {{^hasbuffer}}
+    , {{{name}}}_memname(unique_name + "/info")
+    {{/hasbuffer}}
     {{/memnames}}
 {
+    // // Add Graphviz entries for the GPU buffers used by this kernel.
+    // {{#memnames}}
+    // {{#hasbuffer}}
+    // gpu_buffers_used.push_back(std::make_tuple({{{name}}}_memname, true, true, false));
+    // {{/hasbuffer}}
+    // {{^hasbuffer}}
+    // gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
+    // {{/hasbuffer}}
+    // {{/memnames}}
+
     {{#check_kotekan_parameters}}
     const int {{{name}}} = config.get<int>(unique_name, "{{{name}}}");
     if ({{{name}}} != ({{{value}}}))
@@ -157,10 +179,26 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
     pre_execute(gpu_frame_id);
 
     {{#memnames}}
+    {{#hasbuffer}}
     void* const {{{name}}}_memory = device.get_gpu_memory_array({{{name}}}_memname, gpu_frame_id, {{{name}}}_length);
+    {{/hasbuffer}}
+    {{^hasbuffer}}
+    std::int32_t* const {{{name}}}_memory =
+        static_cast<std::int32_t*>(device.get_gpu_memory({{{name}}}_memname, {{{name}}}_length));
+    host_{{{name}}}.resize(_gpu_buffer_depth);
+    for (int i = 0; i < _gpu_buffer_depth; ++i)
+        host_info[i].resize({{{name}}}_length / sizeof(std::int32_t));
+    {{/hasbuffer}}
     {{/memnames}}
 
     record_start_event(gpu_frame_id);
+
+    // Initialize host-side buffer arrays
+    {{#memnames}}
+    {{^hasbuffer}}
+    CHECK_CUDA_ERROR(cudaMemsetAsync({{{name}}}_memory, 0xff, {{{name}}}_length, device.getStream(cuda_stream_id)));
+    {{/hasbuffer}}
+    {{/memnames}}
 
     const char* exc_arg = "exception";
     {{#kernel_arguments}}
@@ -191,16 +229,33 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
         ERROR("cuLaunchKernel: {}", errStr);
     }
 
-    return record_end_event(gpu_frame_id);
+    // Copy results back to host memory
+    {{#memnames}}
+    {{^hasbuffer}}
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(host_{{{name}}}[gpu_frame_id].data(),
+                                     {{{name}}}_memory, {{{name}}}_length, cudaMemcpyDeviceToHost,
+                                     device.getStream(cuda_stream_id)));
+    {{/hasbuffer}}
+    {{/memnames}}
+
+   return record_end_event(gpu_frame_id);
 }
 
-// void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
-//     {{#memnames}}
-//     {{#isoutput}}
-//     const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
-//     Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
-//     assert({{{name}}}_buffer);
-//     mark_frame_full({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
-//     {{/isoutput}}
-//     {{/memnames}}
-// }
+void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
+    cudaCommand::finalize_frame(gpu_frame_id);
+
+    {{#memnames}}
+    // {{#isoutput}}
+    // const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
+    // Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
+    // assert({{{name}}}_buffer);
+    // mark_frame_full({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
+    // {{/isoutput}}
+    {{^hasbuffer}}
+    for (std::size_t i = 0; i < host_{{{name}}}[gpu_frame_id].size(); ++i)
+        if (host_{{{name}}}[gpu_frame_id][i] != 0)
+            ERROR("cuda{{{kernel_name}}} returned '{{{name}}}' value {:d} at index {:d} (zero indicates noerror)",
+                  host_{{{name}}}[gpu_frame_id][i], int(i));
+    {{/hasbuffer}}
+    {{/memnames}}
+}

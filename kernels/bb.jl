@@ -956,11 +956,11 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                     Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
                 ],
                 "memnames" => [
-                    Dict("name" => "A", "kotekan_name" => "gpu_mem_phase", "isoutput" => false),
-                    Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false),
-                    Dict("name" => "s", "kotekan_name" => "gpu_mem_output_scaling", "isoutput" => false),
-                    Dict("name" => "J", "kotekan_name" => "gpu_mem_formed_beams", "isoutput" => true),
-                    Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true),
+                    Dict("name" => "A", "kotekan_name" => "gpu_mem_phase", "isoutput" => false, "hasbuffer" => true),
+                    Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false, "hasbuffer" => true),
+                    Dict("name" => "s", "kotekan_name" => "gpu_mem_output_scaling", "isoutput" => false, "hasbuffer" => true),
+                    Dict("name" => "J", "kotekan_name" => "gpu_mem_formed_beams", "isoutput" => true, "hasbuffer" => true),
+                    Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
                 ],
                 "check_kotekan_parameters" => [
                     Dict("name" => "num_elements", "value" => "cuda_number_of_dishes * cuda_number_of_polarizations"),

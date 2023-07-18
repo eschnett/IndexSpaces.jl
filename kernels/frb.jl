@@ -1691,11 +1691,11 @@ function fix_ptx_kernel()
                 Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
             ],
             "memnames" => [
-                Dict("name" => "S", "kotekan_name" => "gpu_mem_dishlayout", "isoutput" => false),
-                Dict("name" => "W", "kotekan_name" => "gpu_mem_phase", "isoutput" => false),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false),
-                Dict("name" => "I", "kotekan_name" => "gpu_mem_beamgrid", "isoutput" => true),
-                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true),
+                Dict("name" => "S", "kotekan_name" => "gpu_mem_dishlayout", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "W", "kotekan_name" => "gpu_mem_phase", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false, "hasbuffer" => true),
+                Dict("name" => "I", "kotekan_name" => "gpu_mem_beamgrid", "isoutput" => true, "hasbuffer" => true),
+                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
             ],
             "check_kotekan_parameters" => [
                 Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
