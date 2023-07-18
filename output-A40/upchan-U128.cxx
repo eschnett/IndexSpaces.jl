@@ -72,7 +72,7 @@ private:
     static constexpr int shmem_bytes = 66816;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z17julia_upchan_410813CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
+    const char* const kernel_symbol = "_Z17julia_upchan_409713CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
 
     // Kernel arguments:
     static constexpr std::size_t Tactual_length = 1UL;
@@ -137,26 +137,47 @@ cudaUpchannelizer_U128::cudaUpchannelizer_U128(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    const std::string Tactual_buffer_name = "host_" + Tactual_memname;
-    Buffer* const Tactual_buffer = host_buffers.get_buffer(Tactual_buffer_name.c_str());
-    assert(Tactual_buffer);
-    register_consumer(Tactual_buffer, unique_name.c_str());
-    const std::string G_buffer_name = "host_" + G_memname;
-    Buffer* const G_buffer = host_buffers.get_buffer(G_buffer_name.c_str());
-    assert(G_buffer);
-    register_consumer(G_buffer, unique_name.c_str());
-    const std::string E_buffer_name = "host_" + E_memname;
-    Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-    assert(E_buffer);
-    register_consumer(E_buffer, unique_name.c_str());
-    const std::string Ebar_buffer_name = "host_" + Ebar_memname;
-    Buffer* const Ebar_buffer = host_buffers.get_buffer(Ebar_buffer_name.c_str());
-    assert(Ebar_buffer);
-    register_producer(Ebar_buffer, unique_name.c_str());
-    const std::string info_buffer_name = "host_" + info_memname;
-    Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    assert(info_buffer);
-    register_producer(info_buffer, unique_name.c_str());
+    // 
+    // const std::string Tactual_buffer_name = "host_" + Tactual_memname;
+    // Buffer* const Tactual_buffer = host_buffers.get_buffer(Tactual_buffer_name.c_str());
+    // assert(Tactual_buffer);
+    // 
+    // register_consumer(Tactual_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string G_buffer_name = "host_" + G_memname;
+    // Buffer* const G_buffer = host_buffers.get_buffer(G_buffer_name.c_str());
+    // assert(G_buffer);
+    // 
+    // register_consumer(G_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string E_buffer_name = "host_" + E_memname;
+    // Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
+    // assert(E_buffer);
+    // 
+    // register_consumer(E_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string Ebar_buffer_name = "host_" + Ebar_memname;
+    // Buffer* const Ebar_buffer = host_buffers.get_buffer(Ebar_buffer_name.c_str());
+    // assert(Ebar_buffer);
+    // 
+    // 
+    // register_producer(Ebar_buffer, unique_name.c_str());
+    // 
+    // 
+    // const std::string info_buffer_name = "host_" + info_memname;
+    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
+    // assert(info_buffer);
+    // 
+    // 
+    // register_producer(info_buffer, unique_name.c_str());
+    // 
+    // 
 }
 
 cudaUpchannelizer_U128::~cudaUpchannelizer_U128() {}
@@ -199,8 +220,8 @@ cudaUpchannelizer_U128::~cudaUpchannelizer_U128() {}
 // }
 
 cudaEvent_t cudaUpchannelizer_U128::execute(const int gpu_frame_id,
-                                         const std::vector<cudaEvent_t>& /*pre_events*/,
-                                         bool* const /*quit*/) {
+                                           const std::vector<cudaEvent_t>& /*pre_events*/,
+                                           bool* const /*quit*/) {
     pre_execute(gpu_frame_id);
 
     void* const Tactual_memory = device.get_gpu_memory_array(Tactual_memname, gpu_frame_id, Tactual_length);

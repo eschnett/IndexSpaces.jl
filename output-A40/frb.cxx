@@ -75,7 +75,7 @@ private:
     static constexpr int shmem_bytes = 76896;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z15julia_frb_1026813CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE";
+    const char* const kernel_symbol = "_Z15julia_frb_1025413CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE";
 
     // Kernel arguments:
     static constexpr std::size_t S_length = 2304UL;
@@ -136,26 +136,47 @@ cudaFRBBeamformer::cudaFRBBeamformer(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    const std::string S_buffer_name = "host_" + S_memname;
-    Buffer* const S_buffer = host_buffers.get_buffer(S_buffer_name.c_str());
-    assert(S_buffer);
-    register_consumer(S_buffer, unique_name.c_str());
-    const std::string W_buffer_name = "host_" + W_memname;
-    Buffer* const W_buffer = host_buffers.get_buffer(W_buffer_name.c_str());
-    assert(W_buffer);
-    register_consumer(W_buffer, unique_name.c_str());
-    const std::string E_buffer_name = "host_" + E_memname;
-    Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-    assert(E_buffer);
-    register_consumer(E_buffer, unique_name.c_str());
-    const std::string I_buffer_name = "host_" + I_memname;
-    Buffer* const I_buffer = host_buffers.get_buffer(I_buffer_name.c_str());
-    assert(I_buffer);
-    register_producer(I_buffer, unique_name.c_str());
-    const std::string info_buffer_name = "host_" + info_memname;
-    Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    assert(info_buffer);
-    register_producer(info_buffer, unique_name.c_str());
+    // 
+    // const std::string S_buffer_name = "host_" + S_memname;
+    // Buffer* const S_buffer = host_buffers.get_buffer(S_buffer_name.c_str());
+    // assert(S_buffer);
+    // 
+    // register_consumer(S_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string W_buffer_name = "host_" + W_memname;
+    // Buffer* const W_buffer = host_buffers.get_buffer(W_buffer_name.c_str());
+    // assert(W_buffer);
+    // 
+    // register_consumer(W_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string E_buffer_name = "host_" + E_memname;
+    // Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
+    // assert(E_buffer);
+    // 
+    // register_consumer(E_buffer, unique_name.c_str());
+    // 
+    // 
+    // 
+    // const std::string I_buffer_name = "host_" + I_memname;
+    // Buffer* const I_buffer = host_buffers.get_buffer(I_buffer_name.c_str());
+    // assert(I_buffer);
+    // 
+    // 
+    // register_producer(I_buffer, unique_name.c_str());
+    // 
+    // 
+    // const std::string info_buffer_name = "host_" + info_memname;
+    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
+    // assert(info_buffer);
+    // 
+    // 
+    // register_producer(info_buffer, unique_name.c_str());
+    // 
+    // 
 }
 
 cudaFRBBeamformer::~cudaFRBBeamformer() {}
@@ -198,8 +219,8 @@ cudaFRBBeamformer::~cudaFRBBeamformer() {}
 // }
 
 cudaEvent_t cudaFRBBeamformer::execute(const int gpu_frame_id,
-                                         const std::vector<cudaEvent_t>& /*pre_events*/,
-                                         bool* const /*quit*/) {
+                                           const std::vector<cudaEvent_t>& /*pre_events*/,
+                                           bool* const /*quit*/) {
     pre_execute(gpu_frame_id);
 
     void* const S_memory = device.get_gpu_memory_array(S_memname, gpu_frame_id, S_length);
