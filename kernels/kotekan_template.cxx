@@ -121,17 +121,17 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    {{#memnames}}
-    const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
-    Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
-    assert({{{name}}}_buffer);
-    {{^isoutput}}
-    register_consumer({{{name}}}_buffer, unique_name.c_str());
-    {{/isoutput}}
-    {{#isoutput}}
-    register_producer({{{name}}}_buffer, unique_name.c_str());
-    {{/isoutput}}
-    {{/memnames}}
+    // {{#memnames}}
+    // const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
+    // Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
+    // assert({{{name}}}_buffer);
+    // {{^isoutput}}
+    // register_consumer({{{name}}}_buffer, unique_name.c_str());
+    // {{/isoutput}}
+    // {{#isoutput}}
+    // register_producer({{{name}}}_buffer, unique_name.c_str());
+    // {{/isoutput}}
+    // {{/memnames}}
 }
 
 cuda{{{kernel_name}}}::~cuda{{{kernel_name}}}() {}
@@ -152,8 +152,8 @@ cuda{{{kernel_name}}}::~cuda{{{kernel_name}}}() {}
 // }
 
 cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
-                                         const std::vector<cudaEvent_t>& /*pre_events*/,
-                                         bool* const /*quit*/) {
+                                           const std::vector<cudaEvent_t>& /*pre_events*/,
+                                           bool* const /*quit*/) {
     pre_execute(gpu_frame_id);
 
     {{#memnames}}
@@ -168,9 +168,9 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
     {{/kernel_arguments}}
     void* args[] = {
         &exc_arg,
-    {{#kernel_arguments}}
+        {{#kernel_arguments}}
         &{{{name}}}_arg,
-    {{/kernel_arguments}}
+        {{/kernel_arguments}}
     };
 
     DEBUG("kernel_symbol: {}", kernel_symbol);
