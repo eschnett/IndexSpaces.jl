@@ -32,7 +32,7 @@ public:
     virtual ~cuda{{{kernel_name}}}();
     
     // int wait_on_precondition(int gpu_frame_id) override;
-    cudaEvent_t execute(int gpu_frame_id, const std::vector<cudaEvent_t>& pre_events, bool* quit) override;
+    cudaEvent_t execute(cudaPipelineState& pipestate, const std::vector<cudaEvent_t>& pre_events) override;
     void finalize_frame(int gpu_frame_id) override;
 
 private:
@@ -109,15 +109,15 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     {{/hasbuffer}}
     {{/memnames}}
 {
-    // // Add Graphviz entries for the GPU buffers used by this kernel.
-    // {{#memnames}}
-    // {{#hasbuffer}}
-    // gpu_buffers_used.push_back(std::make_tuple({{{name}}}_memname, true, true, false));
-    // {{/hasbuffer}}
-    // {{^hasbuffer}}
-    // gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
-    // {{/hasbuffer}}
-    // {{/memnames}}
+    // Add Graphviz entries for the GPU buffers used by this kernel
+    {{#memnames}}
+    {{#hasbuffer}}
+    gpu_buffers_used.push_back(std::make_tuple({{{name}}}_memname, true, true, false));
+    {{/hasbuffer}}
+    {{^hasbuffer}}
+    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
+    {{/hasbuffer}}
+    {{/memnames}}
 
     {{#check_kotekan_parameters}}
     const int {{{name}}} = config.get<int>(unique_name, "{{{name}}}");
@@ -173,14 +173,13 @@ cuda{{{kernel_name}}}::~cuda{{{kernel_name}}}() {}
 //     return 0;
 // }
 
-cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
-                                           const std::vector<cudaEvent_t>& /*pre_events*/,
-                                           bool* const /*quit*/) {
-    pre_execute(gpu_frame_id);
+cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
+                                           const std::vector<cudaEvent_t>& /*pre_events*/) {
+    pre_execute(pipestate.gpu_frame_id);
 
     {{#memnames}}
     {{#hasbuffer}}
-    void* const {{{name}}}_memory = device.get_gpu_memory_array({{{name}}}_memname, gpu_frame_id, {{{name}}}_length);
+    void* const {{{name}}}_memory = device.get_gpu_memory_array({{{name}}}_memname, pipestate.gpu_frame_id, {{{name}}}_length);
     {{/hasbuffer}}
     {{^hasbuffer}}
     std::int32_t* const {{{name}}}_memory =
@@ -191,7 +190,7 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
     {{/hasbuffer}}
     {{/memnames}}
 
-    record_start_event(gpu_frame_id);
+    record_start_event(pipestate.gpu_frame_id);
 
     // Initialize host-side buffer arrays
     {{#memnames}}
@@ -217,7 +216,7 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
                                       CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES,
                                       shmem_bytes));
 
-    DEBUG("Running CUDA {{{kernel_name}}} on GPU frame {:d}", gpu_frame_id);
+    DEBUG("Running CUDA {{{kernel_name}}} on GPU frame {:d}", pipestate.gpu_frame_id);
     const CUresult err =
         cuLaunchKernel(runtime_kernels[kernel_symbol], blocks, 1, 1, threads_x, threads_y, 1,
                        shmem_bytes, device.getStream(cuda_stream_id), args, NULL);
@@ -232,13 +231,13 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(const int gpu_frame_id,
     // Copy results back to host memory
     {{#memnames}}
     {{^hasbuffer}}
-    CHECK_CUDA_ERROR(cudaMemcpyAsync(host_{{{name}}}[gpu_frame_id].data(),
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(host_{{{name}}}[pipestate.gpu_frame_id].data(),
                                      {{{name}}}_memory, {{{name}}}_length, cudaMemcpyDeviceToHost,
                                      device.getStream(cuda_stream_id)));
     {{/hasbuffer}}
     {{/memnames}}
 
-   return record_end_event(gpu_frame_id);
+   return record_end_event(pipestate.gpu_frame_id);
 }
 
 void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
