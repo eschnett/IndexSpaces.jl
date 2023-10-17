@@ -6,14 +6,17 @@
  * Do not modify this C++ file, your changes will be lost.
  */
 
-#include "cudaCommand.hpp"
-#include "cudaDeviceInterface.hpp"
-
 #include <bufferContainer.hpp>
+#include <chordMetadata.hpp>
+#include <cudaCommand.hpp>
+#include <cudaDeviceInterface.hpp>
 
 #include <fmt.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -75,7 +78,7 @@ private:
     static constexpr int shmem_bytes = 76896;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z15julia_frb_1025613CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE";
+    const char* const kernel_symbol = "_Z3frb13CuDeviceArrayI7Int16x2Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS1_Li1ELi1EES_I5Int32Li1ELi1EE";
 
     // Kernel arguments:
     static constexpr std::size_t S_length = 2304UL;
@@ -95,6 +98,9 @@ private:
 
     // Host-side buffer arrays
     std::vector<std::vector<std::int32_t>> host_info;
+
+    // Declare extra variables (if any)
+    
 };
 
 REGISTER_CUDA_COMMAND(cudaFRBBeamformer);
@@ -108,35 +114,14 @@ cudaFRBBeamformer::cudaFRBBeamformer(Config& config,
     , W_memname(config.get<std::string>(unique_name, "gpu_mem_phase"))
     , E_memname(config.get<std::string>(unique_name, "gpu_mem_voltage"))
     , I_memname(config.get<std::string>(unique_name, "gpu_mem_beamgrid"))
-    , info_memname(unique_name + "/info")
+    , info_memname(unique_name + "/gpu_mem_info")
 {
-    // Add Graphviz entries for the GPU buffers used by this kernel.
+    // Add Graphviz entries for the GPU buffers used by this kernel
     gpu_buffers_used.push_back(std::make_tuple(S_memname, true, true, false));
     gpu_buffers_used.push_back(std::make_tuple(W_memname, true, true, false));
     gpu_buffers_used.push_back(std::make_tuple(E_memname, true, true, false));
     gpu_buffers_used.push_back(std::make_tuple(I_memname, true, true, false));
-    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
-
-    const int num_dishes = config.get<int>(unique_name, "num_dishes");
-    if (num_dishes != (cuda_number_of_dishes))
-      throw std::runtime_error(
-        "The num_dishes config setting must be " + std::to_string(cuda_number_of_dishes) + " for the CUDA Baseband Beamformer");
-    const int dish_grid_size = config.get<int>(unique_name, "dish_grid_size");
-    if (dish_grid_size != (cuda_dish_layout_M))
-      throw std::runtime_error(
-        "The dish_grid_size config setting must be " + std::to_string(cuda_dish_layout_M) + " for the CUDA Baseband Beamformer");
-    const int num_local_freq = config.get<int>(unique_name, "num_local_freq");
-    if (num_local_freq != (cuda_number_of_frequencies))
-      throw std::runtime_error(
-        "The num_local_freq config setting must be " + std::to_string(cuda_number_of_frequencies) + " for the CUDA Baseband Beamformer");
-    const int samples_per_data_set = config.get<int>(unique_name, "samples_per_data_set");
-    if (samples_per_data_set != (cuda_number_of_timesamples))
-      throw std::runtime_error(
-        "The samples_per_data_set config setting must be " + std::to_string(cuda_number_of_timesamples) + " for the CUDA Baseband Beamformer");
-    const int time_downsampling = config.get<int>(unique_name, "time_downsampling");
-    if (time_downsampling != (cuda_downsampling_factor))
-      throw std::runtime_error(
-        "The time_downsampling config setting must be " + std::to_string(cuda_downsampling_factor) + " for the CUDA Baseband Beamformer");
+    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_gpu_mem_info", false, true, true));
 
 
     set_command_type(gpuCommandType::KERNEL);
@@ -146,87 +131,11 @@ cudaFRBBeamformer::cudaFRBBeamformer(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    // 
-    // const std::string S_buffer_name = "host_" + S_memname;
-    // Buffer* const S_buffer = host_buffers.get_buffer(S_buffer_name.c_str());
-    // assert(S_buffer);
-    // 
-    // register_consumer(S_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string W_buffer_name = "host_" + W_memname;
-    // Buffer* const W_buffer = host_buffers.get_buffer(W_buffer_name.c_str());
-    // assert(W_buffer);
-    // 
-    // register_consumer(W_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string E_buffer_name = "host_" + E_memname;
-    // Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-    // assert(E_buffer);
-    // 
-    // register_consumer(E_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string I_buffer_name = "host_" + I_memname;
-    // Buffer* const I_buffer = host_buffers.get_buffer(I_buffer_name.c_str());
-    // assert(I_buffer);
-    // 
-    // 
-    // register_producer(I_buffer, unique_name.c_str());
-    // 
-    // 
-    // const std::string info_buffer_name = "host_" + info_memname;
-    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    // assert(info_buffer);
-    // 
-    // 
-    // register_producer(info_buffer, unique_name.c_str());
-    // 
-    // 
+    // Initialize extra variables (if necessary)
+    
 }
 
 cudaFRBBeamformer::~cudaFRBBeamformer() {}
-
-// int cudaFRBBeamformer::wait_on_precondition(const int gpu_frame_id) {
-//     
-//     
-//     const std::string S_buffer_name = "host_" + S_memname;
-//     Buffer* const S_buffer = host_buffers.get_buffer(S_buffer_name.c_str());
-//     assert(S_buffer);
-//     uint8_t* const S_frame = wait_for_full_frame(S_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!S_frame)
-//         return -1;
-//     
-//     
-//     
-//     const std::string W_buffer_name = "host_" + W_memname;
-//     Buffer* const W_buffer = host_buffers.get_buffer(W_buffer_name.c_str());
-//     assert(W_buffer);
-//     uint8_t* const W_frame = wait_for_full_frame(W_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!W_frame)
-//         return -1;
-//     
-//     
-//     
-//     const std::string E_buffer_name = "host_" + E_memname;
-//     Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-//     assert(E_buffer);
-//     uint8_t* const E_frame = wait_for_full_frame(E_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!E_frame)
-//         return -1;
-//     
-//     
-//     
-//     
-//     
-//     
-// 
-//     return 0;
-// }
 
 cudaEvent_t cudaFRBBeamformer::execute(cudaPipelineState& pipestate,
                                            const std::vector<cudaEvent_t>& /*pre_events*/) {
@@ -242,9 +151,71 @@ cudaEvent_t cudaFRBBeamformer::execute(cudaPipelineState& pipestate,
     for (int i = 0; i < _gpu_buffer_depth; ++i)
         host_info[i].resize(info_length / sizeof(std::int32_t));
 
+    const char* const axislabels_S[] = {  "MN", "D"  };
+    const std::size_t axislengths_S[] = { 2, 576 };
+    const std::size_t ndims_S = sizeof axislabels_S / sizeof *axislabels_S;
+    const metadataContainer* const mc_S =
+        device.get_gpu_memory_array_metadata(S_memname, pipestate.gpu_frame_id);
+    assert(mc_S && metadata_container_is_chord(mc_S));
+    const chordMetadata* const meta_S = get_chord_metadata(mc_S);
+    INFO("input S array shape: {:s}", meta_S->get_dimensions_string());
+    assert(meta_S->dims == ndims_S);
+    for (std::size_t dim = 0; dim < ndims_S; ++dim) {
+        assert(std::strncmp(meta_S->dim_name[dim],
+                            axislabels_S[ndims_S - 1 - dim],
+                            sizeof meta_S->dim_name[dim]) == 0);
+        assert(meta_S->dim[dim] == int(axislengths_S[ndims_S - 1 - dim]));
+    }
+    const char* const axislabels_W[] = {  "C", "dishM", "dishN", "F", "P"  };
+    const std::size_t axislengths_W[] = { 2, 24, 24, 256, 2 };
+    const std::size_t ndims_W = sizeof axislabels_W / sizeof *axislabels_W;
+    const metadataContainer* const mc_W =
+        device.get_gpu_memory_array_metadata(W_memname, pipestate.gpu_frame_id);
+    assert(mc_W && metadata_container_is_chord(mc_W));
+    const chordMetadata* const meta_W = get_chord_metadata(mc_W);
+    INFO("input W array shape: {:s}", meta_W->get_dimensions_string());
+    assert(meta_W->dims == ndims_W);
+    for (std::size_t dim = 0; dim < ndims_W; ++dim) {
+        assert(std::strncmp(meta_W->dim_name[dim],
+                            axislabels_W[ndims_W - 1 - dim],
+                            sizeof meta_W->dim_name[dim]) == 0);
+        assert(meta_W->dim[dim] == int(axislengths_W[ndims_W - 1 - dim]));
+    }
+    const char* const axislabels_E[] = {  "D", "F", "P", "T"  };
+    const std::size_t axislengths_E[] = { 512, 256, 2, 2064 };
+    const std::size_t ndims_E = sizeof axislabels_E / sizeof *axislabels_E;
+    const metadataContainer* const mc_E =
+        device.get_gpu_memory_array_metadata(E_memname, pipestate.gpu_frame_id);
+    assert(mc_E && metadata_container_is_chord(mc_E));
+    const chordMetadata* const meta_E = get_chord_metadata(mc_E);
+    INFO("input E array shape: {:s}", meta_E->get_dimensions_string());
+    assert(meta_E->dims == ndims_E);
+    for (std::size_t dim = 0; dim < ndims_E; ++dim) {
+        assert(std::strncmp(meta_E->dim_name[dim],
+                            axislabels_E[ndims_E - 1 - dim],
+                            sizeof meta_E->dim_name[dim]) == 0);
+        assert(meta_E->dim[dim] == int(axislengths_E[ndims_E - 1 - dim]));
+    }
+    const char* const axislabels_I[] = {  "beamP", "beamQ", "Tbar", "F"  };
+    const std::size_t axislengths_I[] = { 48, 48, 52, 256 };
+    const std::size_t ndims_I = sizeof axislabels_I / sizeof *axislabels_I;
+    metadataContainer* const mc_I =
+        device.create_gpu_memory_array_metadata(I_memname, pipestate.gpu_frame_id, mc_E->parent_pool);
+    chordMetadata* const meta_I = get_chord_metadata(mc_I);
+    chord_metadata_copy(meta_I, meta_E);
+    meta_I->dims = ndims_I;
+    for (std::size_t dim = 0; dim < ndims_I; ++dim) {
+        std::strncpy(meta_I->dim_name[dim],
+                     axislabels_I[ndims_I - 1 - dim],
+                     sizeof meta_I->dim_name[dim]);
+        meta_I->dim[dim] = axislengths_I[ndims_I - 1 - dim];
+    }
+    INFO("output I array shape: {:s}", meta_I->get_dimensions_string());
+
     record_start_event(pipestate.gpu_frame_id);
 
     // Initialize host-side buffer arrays
+    // TODO: Skip this for performance
     CHECK_CUDA_ERROR(cudaMemsetAsync(info_memory, 0xff, info_length, device.getStream(cuda_stream_id)));
 
     const char* exc_arg = "exception";
@@ -262,6 +233,9 @@ cudaEvent_t cudaFRBBeamformer::execute(cudaPipelineState& pipestate,
         &info_arg,
     };
 
+    // Modify kernel arguments (if necessary)
+    
+
     DEBUG("kernel_symbol: {}", kernel_symbol);
     DEBUG("runtime_kernels[kernel_symbol]: {}", static_cast<void*>(runtime_kernels[kernel_symbol]));
     CHECK_CU_ERROR(cuFuncSetAttribute(runtime_kernels[kernel_symbol],
@@ -276,8 +250,7 @@ cudaEvent_t cudaFRBBeamformer::execute(cudaPipelineState& pipestate,
     if (err != CUDA_SUCCESS) {
         const char* errStr;
         cuGetErrorString(err, &errStr);
-        INFO("Error number: {}", err);
-        ERROR("cuLaunchKernel: {}", errStr);
+        ERROR("cuLaunchKernel: Error number: {}: {}", err, errStr);
     }
 
     // Copy results back to host memory
@@ -285,27 +258,20 @@ cudaEvent_t cudaFRBBeamformer::execute(cudaPipelineState& pipestate,
                                      info_memory, info_length, cudaMemcpyDeviceToHost,
                                      device.getStream(cuda_stream_id)));
 
-   return record_end_event(pipestate.gpu_frame_id);
+    // Check error codes
+    // TODO: Skip this for performance
+    CHECK_CUDA_ERROR(cudaStreamSynchronize(device.getStream(cuda_stream_id)));
+    const std::int32_t error_code = *std::max_element(host_info[pipestate.gpu_frame_id].begin(),
+                                                      host_info[pipestate.gpu_frame_id].end());
+    if (error_code != 0)
+        ERROR("CUDA kernel returned error codecuLaunchKernel: {}", error_code);
+
+    return record_end_event(pipestate.gpu_frame_id);
 }
 
 void cudaFRBBeamformer::finalize_frame(const int gpu_frame_id) {
     cudaCommand::finalize_frame(gpu_frame_id);
 
-    // 
-    // 
-    // 
-    // 
-    // const std::string I_buffer_name = "host_" + I_memname;
-    // Buffer* const I_buffer = host_buffers.get_buffer(I_buffer_name.c_str());
-    // assert(I_buffer);
-    // mark_frame_full(I_buffer, unique_name.c_str(), gpu_frame_id);
-    // 
-    // 
-    // const std::string info_buffer_name = "host_" + info_memname;
-    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    // assert(info_buffer);
-    // mark_frame_full(info_buffer, unique_name.c_str(), gpu_frame_id);
-    // 
     for (std::size_t i = 0; i < host_info[gpu_frame_id].size(); ++i)
         if (host_info[gpu_frame_id][i] != 0)
             ERROR("cudaFRBBeamformer returned 'info' value {:d} at index {:d} (zero indicates noerror)",
