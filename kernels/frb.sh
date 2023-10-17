@@ -32,4 +32,4 @@ clang-format -i ~/src/kotekan/lib/cuda/cudaFRBBeamformer.cpp
 ssh blue.lwlab 'cd src/kotekan && cmake --build cmake-build --target kotekan/kotekan'
 
 # Run Kotekan on Blue
-ssh blue.lwlab 'cd src/kotekan && ./cmake-build/kotekan/kotekan --bind-address 0:23000 --config config/tests/mvp.yaml'
+ssh blue.lwlab 'cd src/kotekan && env JULIA_NUM_THREADS=$(nproc) ./cmake-build/kotekan/kotekan --bind-address 0:23000 --config config/tests/f_engine_frb.yaml'

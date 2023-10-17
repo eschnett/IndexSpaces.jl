@@ -1645,7 +1645,7 @@ function fix_ptx_kernel()
         - name: "I"
           intent: out
           type: Float16
-          indices: [beamP, beamQ, Tds, F]
+          indices: [beamP, beamQ, Tbar, F]
           shape: [$(2*M), $(2*N), $(cld(T, Tds)), $F]
           strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*cld(T,Tds))]
         - name: "info"
@@ -1683,27 +1683,62 @@ function fix_ptx_kernel()
             "num_blocks" => num_blocks,
             "shmem_bytes" => shmem_bytes,
             "kernel_symbol" => kernel_symbol,
-            "kernel_arguments" => [
-                Dict("name" => "S", "value" => "$(16 * 2 * M * N ÷ 8)UL"),
-                Dict("name" => "W", "value" => "$(16 * C * M * N * F * P ÷ 8)UL"),
-                Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * cld(T, Tds) ÷ 8)UL"),
-                Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
-            ],
+            "kernel_arguments" => let
+                @assert 16 * 2 * M * N ÷ 8 < 0x80000000
+                @assert 16 * C * M * N * F * P ÷ 8 < 0x80000000
+                @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                @assert 16 * 2 * M * 2 * N * cld(T, Tds) ÷ 8 < 0x80000000
+                @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
+                [
+                    Dict("name" => "S", "value" => "$(16 * 2 * M * N ÷ 8)UL"),
+                    Dict("name" => "W", "value" => "$(16 * C * M * N * F * P ÷ 8)UL"),
+                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * cld(T, Tds) ÷ 8)UL"),
+                    Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
+                ]
+            end,
             "memnames" => [
-                Dict("name" => "S", "kotekan_name" => "gpu_mem_dishlayout", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "W", "kotekan_name" => "gpu_mem_phase", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "I", "kotekan_name" => "gpu_mem_beamgrid", "isoutput" => true, "hasbuffer" => true),
+                Dict(
+                    "name" => "S",
+                    "kotekan_name" => "gpu_mem_dishlayout",
+                    "axislabels" => """ "MN", "D" """,
+                    "axislengths" => "2, $(M*N)",
+                    "isoutput" => false,
+                    "hasbuffer" => true,
+                ),
+                Dict(
+                    "name" => "W",
+                    "kotekan_name" => "gpu_mem_phase",
+                    "axislabels" => """ "C", "dishM", "dishN", "F", "P" """,
+                    "axislengths" => "$C, $M, $N, $F, $P",
+                    "isoutput" => false,
+                    "hasbuffer" => true,
+                ),
+                Dict(
+                    "name" => "E",
+                    "kotekan_name" => "gpu_mem_voltage",
+                    "axislabels" => """ "D", "F", "P", "T" """,
+                    "axislengths" => "$D, $F, $P, $T",
+                    "isoutput" => false,
+                    "hasbuffer" => true,
+                ),
+                Dict(
+                    "name" => "I",
+                    "kotekan_name" => "gpu_mem_beamgrid",
+                    "axislabels" => """ "beamP", "beamQ", "Tbar", "F" """,
+                    "axislengths" => "$(2*M), $(2*N), $(cld(T, Tds)), $F",
+                    "isoutput" => true,
+                    "hasbuffer" => true,
+                ),
                 Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
             ],
-            "check_kotekan_parameters" => [
-                Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
-                Dict("name" => "dish_grid_size", "value" => "cuda_dish_layout_M"),
-                Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
-                Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
-                Dict("name" => "time_downsampling", "value" => "cuda_downsampling_factor"),
-            ],
+            # "check_kotekan_parameters" => [
+            #     Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
+            #     Dict("name" => "dish_grid_size", "value" => "cuda_dish_layout_M"),
+            #     Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
+            #     Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
+            #     Dict("name" => "time_downsampling", "value" => "cuda_downsampling_factor"),
+            # ],
             "get_runtime_parameters" => [],
         ),
     )

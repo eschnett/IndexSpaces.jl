@@ -948,26 +948,54 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 "num_blocks" => num_blocks,
                 "shmem_bytes" => shmem_bytes,
                 "kernel_symbol" => kernel_symbol,
-                "kernel_arguments" => [
-                    Dict("name" => "A", "value" => "$(8 * C * D * B * P * F ÷ 8)UL"),
-                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                    Dict("name" => "s", "value" => "$(32 * B * P * F ÷ 8)UL"),
-                    Dict("name" => "J", "value" => "$(4 * C * T * P * F * B ÷ 8)UL"),
-                    Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
-                ],
+                "kernel_arguments" => let
+                    @assert 8 * C * D * B * P * F ÷ 8 < 0x80000000
+                    @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                    @assert 32 * B * P * F ÷ 8 < 0x80000000
+                    @assert 4 * C * T * P * F * B ÷ 8 < 0x80000000
+                    @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
+                    [
+                        Dict("name" => "A", "value" => "$(8 * C * D * B * P * F ÷ 8)ULL"),
+                        Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)ULL"),
+                        Dict("name" => "s", "value" => "$(32 * B * P * F ÷ 8)ULL"),
+                        Dict("name" => "J", "value" => "$(4 * C * T * P * F * B ÷ 8)ULL"),
+                        Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)ULL"),
+                    ]
+                end,
                 "memnames" => [
-                    Dict("name" => "A", "kotekan_name" => "gpu_mem_phase", "isoutput" => false, "hasbuffer" => true),
-                    Dict("name" => "E", "kotekan_name" => "gpu_mem_voltage", "isoutput" => false, "hasbuffer" => true),
+                    Dict(
+                        "name" => "A",
+                        "kotekan_name" => "gpu_mem_phase",
+                        "axislabels" => """ "C", "D", "B", "P", "F" """,
+                        "axislengths" => "$C, $D, $B, $P, $F",
+                        "isoutput" => false,
+                        "hasbuffer" => true,
+                    ),
+                    Dict(
+                        "name" => "E",
+                        "kotekan_name" => "gpu_mem_voltage",
+                        "axislabels" => """ "D", "F", "P", "T" """,
+                        "axislengths" => "$D, $F, $P, $T",
+                        "isoutput" => false,
+                        "hasbuffer" => true,
+                    ),
                     Dict("name" => "s", "kotekan_name" => "gpu_mem_output_scaling", "isoutput" => false, "hasbuffer" => true),
-                    Dict("name" => "J", "kotekan_name" => "gpu_mem_formed_beams", "isoutput" => true, "hasbuffer" => true),
+                    Dict(
+                        "name" => "J",
+                        "kotekan_name" => "gpu_mem_formed_beams",
+                        "axislabels" => """ "T", "P", "F", "B" """,
+                        "axislengths" => "$T, $P, $F, $B",
+                        "isoutput" => true,
+                        "hasbuffer" => true,
+                    ),
                     Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
                 ],
-                "check_kotekan_parameters" => [
-                    Dict("name" => "num_elements", "value" => "cuda_number_of_dishes * cuda_number_of_polarizations"),
-                    Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
-                    Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
-                    Dict("name" => "num_beams", "value" => "cuda_number_of_beams"),
-                ],
+                # "check_kotekan_parameters" => [
+                #     Dict("name" => "num_elements", "value" => "cuda_number_of_dishes * cuda_number_of_polarizations"),
+                #     Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
+                #     Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
+                #     Dict("name" => "num_beams", "value" => "cuda_number_of_beams"),
+                # ],
                 "get_runtime_parameters" => [],
             ),
         )

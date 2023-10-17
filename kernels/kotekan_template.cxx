@@ -6,14 +6,17 @@
  * Do not modify this C++ file, your changes will be lost.
  */
 
-#include "cudaCommand.hpp"
-#include "cudaDeviceInterface.hpp"
-
 #include <bufferContainer.hpp>
+#include <chordMetadata.hpp>
+#include <cudaCommand.hpp>
+#include <cudaDeviceInterface.hpp>
 
 #include <fmt.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -91,6 +94,9 @@ private:
     std::vector<std::vector<std::int32_t>> host_{{{name}}};
     {{/hasbuffer}}
     {{/memnames}}
+
+    // Declare extra variables (if any)
+    {{{declare_extra_variables}}}
 };
 
 REGISTER_CUDA_COMMAND(cuda{{{kernel_name}}});
@@ -102,10 +108,10 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     cudaCommand(config, unique_name, host_buffers, device, "{{{kernel_name}}}", "{{{kernel_name}}}.ptx")
     {{#memnames}}
     {{#hasbuffer}}
-    , {{{name}}}_memname(config.get<std::string>(unique_name, "{{kotekan_name}}"))
+    , {{{name}}}_memname(config.get<std::string>(unique_name, "{{{kotekan_name}}}"))
     {{/hasbuffer}}
     {{^hasbuffer}}
-    , {{{name}}}_memname(unique_name + "/info")
+    , {{{name}}}_memname(unique_name + "/{{{kotekan_name}}}")
     {{/hasbuffer}}
     {{/memnames}}
 {
@@ -115,16 +121,9 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     gpu_buffers_used.push_back(std::make_tuple({{{name}}}_memname, true, true, false));
     {{/hasbuffer}}
     {{^hasbuffer}}
-    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
+    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_{{{kotekan_name}}}", false, true, true));
     {{/hasbuffer}}
     {{/memnames}}
-
-    {{#check_kotekan_parameters}}
-    const int {{{name}}} = config.get<int>(unique_name, "{{{name}}}");
-    if ({{{name}}} != ({{{value}}}))
-      throw std::runtime_error(
-        "The {{{name}}} config setting must be " + std::to_string({{{value}}}) + " for the CUDA Baseband Beamformer");
-    {{/check_kotekan_parameters}}
 
     {{#runtime_parameters}}
     const {{{type}}} {{{name}}} = config.get<{{{type}}}>(unique_name, "{{{name}}}");
@@ -143,35 +142,11 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    // {{#memnames}}
-    // const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
-    // Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
-    // assert({{{name}}}_buffer);
-    // {{^isoutput}}
-    // register_consumer({{{name}}}_buffer, unique_name.c_str());
-    // {{/isoutput}}
-    // {{#isoutput}}
-    // register_producer({{{name}}}_buffer, unique_name.c_str());
-    // {{/isoutput}}
-    // {{/memnames}}
+    // Initialize extra variables (if necessary)
+    {{{init_extra_variables}}}
 }
 
 cuda{{{kernel_name}}}::~cuda{{{kernel_name}}}() {}
-
-// int cuda{{{kernel_name}}}::wait_on_precondition(const int gpu_frame_id) {
-//     {{#memnames}}
-//     {{^isoutput}}
-//     const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
-//     Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
-//     assert({{{name}}}_buffer);
-//     uint8_t* const {{{name}}}_frame = wait_for_full_frame({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!{{{name}}}_frame)
-//         return -1;
-//     {{/isoutput}}
-//     {{/memnames}}
-// 
-//     return 0;
-// }
 
 cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
                                            const std::vector<cudaEvent_t>& /*pre_events*/) {
@@ -190,9 +165,46 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
     {{/hasbuffer}}
     {{/memnames}}
 
+    {{#memnames}}
+    {{#hasbuffer}}
+    const char* const axislabels_{{{name}}}[] = { {{{axislabels}}} };
+    const std::size_t axislengths_{{{name}}}[] = { {{{axislengths}}} };
+    const std::size_t ndims_{{{name}}} = sizeof axislabels_{{{name}}} / sizeof *axislabels_{{{name}}};
+    {{^isoutput}}
+    const metadataContainer* const mc_{{{name}}} =
+        device.get_gpu_memory_array_metadata({{{name}}}_memname, pipestate.gpu_frame_id);
+    assert(mc_{{{name}}} && metadata_container_is_chord(mc_{{{name}}}));
+    const chordMetadata* const meta_{{{name}}} = get_chord_metadata(mc_{{{name}}});
+    INFO("input {{{name}}} array shape: {:s}", meta_{{{name}}}->get_dimensions_string());
+    assert(meta_{{{name}}}->dims == ndims_{{{name}}});
+    for (std::size_t dim = 0; dim < ndims_{{{name}}}; ++dim) {
+        assert(std::strncmp(meta_{{{name}}}->dim_name[dim],
+                            axislabels_{{{name}}}[ndims_{{{name}}} - 1 - dim],
+                            sizeof meta_{{{name}}}->dim_name[dim]) == 0);
+        assert(meta_{{{name}}}->dim[dim] == int(axislengths_{{{name}}}[ndims_{{{name}}} - 1 - dim]));
+    }
+    {{/isoutput}}
+    {{#isoutput}}
+    metadataContainer* const mc_{{{name}}} =
+        device.create_gpu_memory_array_metadata({{{name}}}_memname, pipestate.gpu_frame_id, mc_E->parent_pool);
+    chordMetadata* const meta_{{{name}}} = get_chord_metadata(mc_{{{name}}});
+    chord_metadata_copy(meta_{{{name}}}, meta_E);
+    meta_{{{name}}}->dims = ndims_{{{name}}};
+    for (std::size_t dim = 0; dim < ndims_{{{name}}}; ++dim) {
+        std::strncpy(meta_{{{name}}}->dim_name[dim],
+                     axislabels_{{{name}}}[ndims_{{{name}}} - 1 - dim],
+                     sizeof meta_{{{name}}}->dim_name[dim]);
+        meta_{{{name}}}->dim[dim] = axislengths_{{{name}}}[ndims_{{{name}}} - 1 - dim];
+    }
+    INFO("output {{{name}}} array shape: {:s}", meta_{{{name}}}->get_dimensions_string());
+    {{/isoutput}}
+    {{/hasbuffer}}
+    {{/memnames}}
+
     record_start_event(pipestate.gpu_frame_id);
 
     // Initialize host-side buffer arrays
+    // TODO: Skip this for performance
     {{#memnames}}
     {{^hasbuffer}}
     CHECK_CUDA_ERROR(cudaMemsetAsync({{{name}}}_memory, 0xff, {{{name}}}_length, device.getStream(cuda_stream_id)));
@@ -210,6 +222,9 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
         {{/kernel_arguments}}
     };
 
+    // Modify kernel arguments (if necessary)
+    {{{modify_kernel_arguments}}}
+
     DEBUG("kernel_symbol: {}", kernel_symbol);
     DEBUG("runtime_kernels[kernel_symbol]: {}", static_cast<void*>(runtime_kernels[kernel_symbol]));
     CHECK_CU_ERROR(cuFuncSetAttribute(runtime_kernels[kernel_symbol],
@@ -224,8 +239,7 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
     if (err != CUDA_SUCCESS) {
         const char* errStr;
         cuGetErrorString(err, &errStr);
-        INFO("Error number: {}", err);
-        ERROR("cuLaunchKernel: {}", errStr);
+        ERROR("cuLaunchKernel: Error number: {}: {}", err, errStr);
     }
 
     // Copy results back to host memory
@@ -237,19 +251,21 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
     {{/hasbuffer}}
     {{/memnames}}
 
-   return record_end_event(pipestate.gpu_frame_id);
+    // Check error codes
+    // TODO: Skip this for performance
+    CHECK_CUDA_ERROR(cudaStreamSynchronize(device.getStream(cuda_stream_id)));
+    const std::int32_t error_code = *std::max_element(host_info[pipestate.gpu_frame_id].begin(),
+                                                      host_info[pipestate.gpu_frame_id].end());
+    if (error_code != 0)
+        ERROR("CUDA kernel returned error codecuLaunchKernel: {}", error_code);
+
+    return record_end_event(pipestate.gpu_frame_id);
 }
 
 void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
     cudaCommand::finalize_frame(gpu_frame_id);
 
     {{#memnames}}
-    // {{#isoutput}}
-    // const std::string {{{name}}}_buffer_name = "host_" + {{{name}}}_memname;
-    // Buffer* const {{{name}}}_buffer = host_buffers.get_buffer({{{name}}}_buffer_name.c_str());
-    // assert({{{name}}}_buffer);
-    // mark_frame_full({{{name}}}_buffer, unique_name.c_str(), gpu_frame_id);
-    // {{/isoutput}}
     {{^hasbuffer}}
     for (std::size_t i = 0; i < host_{{{name}}}[gpu_frame_id].size(); ++i)
         if (host_{{{name}}}[gpu_frame_id][i] != 0)
