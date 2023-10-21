@@ -235,8 +235,8 @@ const layout_I_memory = Layout(
         BeamP(:beamP, 1, 2) => SIMD(:simd, 16, 2),
         BeamP(:beamP, 2, M) => Memory(:memory, 1, M),
         BeamQ(:beamQ, 1, 2 * N) => Memory(:memory, M, 2 * N),
-        DSTime(:dstime, 1, cld(T, Tds)) => Memory(:memory, M * 2 * N, cld(T, Tds)),
-        Freq(:freq, 1, F) => Memory(:memory, M * 2 * N * cld(T, Tds), F),
+        DSTime(:dstime, 1, fld(T, Tds)) => Memory(:memory, M * 2 * N, fld(T, Tds)),
+        Freq(:freq, 1, F) => Memory(:memory, M * 2 * N * fld(T, Tds), F),
     ),
 )
 
@@ -1225,7 +1225,7 @@ function make_frb_kernel()
                 BeamQ(:beamQ, 1, 2) => Register(:beamQ, 1, 2),
                 BeamQ(:beamQ, 2, N) => Warp(:warp, 1, N),
                 Freq(:freq, 1, F) => Block(:block, 1, F),
-                DSTime(:dstime, 1, cld(T, Tds)) => Loop(:dstime, 1, cld(T, Tds)),
+                DSTime(:dstime, 1, fld(T, Tds)) => Loop(:dstime, 1, fld(T, Tds)),
             ),
         )
         apply!(emitter, :I => layout_I_registers, :(zero(Float16x2)))
@@ -1334,21 +1334,21 @@ function make_frb_kernel()
         nothing
     end
 
-    # Write out partial I results if necessary
-    if T % Tds ≠ 0
-        if!(emitter, :(
-            let
-                thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
-                warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
-                p = 2i32 * thread
-                q = 2i32 * warp
-                0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
-            end
-        )) do emitter
-            store!(emitter, :I_memory => layout_I_memory, :I)
-            nothing
-        end
-    end
+    # # Write out partial I results if necessary
+    # if T % Tds ≠ 0
+    #     if!(emitter, :(
+    #         let
+    #             thread = IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0, $num_threads)
+    #             warp = IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0, $num_warps)
+    #             p = 2i32 * thread
+    #             q = 2i32 * warp
+    #             0i32 ≤ p < $(Int32(2 * M)) && 0i32 ≤ q < $(Int32(2 * N))
+    #         end
+    #     )) do emitter
+    #         store!(emitter, :I_memory => layout_I_memory, :I)
+    #         nothing
+    #     end
+    # end
 
     apply!(emitter, :info => layout_info_registers, 0i32)
     store!(emitter, :info_memory => layout_info_memory, :info)
@@ -1413,7 +1413,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     Smn_memory = Array{Int16x2}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
     E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
-    I_wanted = Array{Float16x2}(undef, M * 2 * N * cld(T, Tds) * F)
+    I_wanted = Array{Float16x2}(undef, M * 2 * N * fld(T, Tds) * F)
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     Random.seed!(0)
@@ -1478,7 +1478,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             dstime = time ÷ Tds
             @show dstime
             for beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-                Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * cld(T, Tds) * freq
+                Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * fld(T, Tds) * freq
                 dishm, dishn = dish_grid[dish + 1]
                 # Eqn. (4)
                 Ẽvalue = cispi((2 * dishm * beamp / Float32(2 * M) + 2 * dishn * beamq / Float32(2 * N)) % 2.0f0) * Wvalue * Evalue
@@ -1562,8 +1562,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
         println("    I:")
         did_test_I_memory = falses(length(I_memory))
-        for freq in 0:(F - 1), dstime in 0:(cld(T, Tds) - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
-            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * cld(T, Tds) * freq
+        for freq in 0:(F - 1), dstime in 0:(fld(T, Tds) - 1), beamq in 0:(2 * N - 1), beamp in 0:(2 * M - 1)
+            Iidx = beamp ÷ 2 + M * beamq + M * 2 * N * dstime + M * 2 * N * fld(T, Tds) * freq
             if beamp % 2 == 0
                 @assert !did_test_I_memory[Iidx + 1]
                 did_test_I_memory[Iidx + 1] = true
@@ -1646,7 +1646,7 @@ function fix_ptx_kernel()
           intent: out
           type: Float16
           indices: [beamP, beamQ, Tbar, F]
-          shape: [$(2*M), $(2*N), $(cld(T, Tds)), $F]
+          shape: [$(2*M), $(2*N), $(fld(T, Tds)), $F]
           strides: [1, $(2*M), $(2*M*2*N), $(2*M*2*N*cld(T,Tds))]
         - name: "info"
           intent: out
@@ -1687,13 +1687,13 @@ function fix_ptx_kernel()
                 @assert 16 * 2 * M * N ÷ 8 < 0x80000000
                 @assert 16 * C * M * N * F * P ÷ 8 < 0x80000000
                 @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
-                @assert 16 * 2 * M * 2 * N * cld(T, Tds) ÷ 8 < 0x80000000
+                @assert 16 * 2 * M * 2 * N * fld(T, Tds) * F ÷ 8 < 0x80000000
                 @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
                 [
                     Dict("name" => "S", "value" => "$(16 * 2 * M * N ÷ 8)UL"),
                     Dict("name" => "W", "value" => "$(16 * C * M * N * F * P ÷ 8)UL"),
                     Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                    Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * cld(T, Tds) ÷ 8)UL"),
+                    Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * fld(T, Tds) * F ÷ 8)UL"),
                     Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
                 ]
             end,
@@ -1701,6 +1701,7 @@ function fix_ptx_kernel()
                 Dict(
                     "name" => "S",
                     "kotekan_name" => "gpu_mem_dishlayout",
+                    "type" => "int16",
                     "axislabels" => """ "MN", "D" """,
                     "axislengths" => "2, $(M*N)",
                     "isoutput" => false,
@@ -1709,6 +1710,7 @@ function fix_ptx_kernel()
                 Dict(
                     "name" => "W",
                     "kotekan_name" => "gpu_mem_phase",
+                    "type" => "float16",
                     "axislabels" => """ "C", "dishM", "dishN", "F", "P" """,
                     "axislengths" => "$C, $M, $N, $F, $P",
                     "isoutput" => false,
@@ -1717,6 +1719,7 @@ function fix_ptx_kernel()
                 Dict(
                     "name" => "E",
                     "kotekan_name" => "gpu_mem_voltage",
+                    "type" => "int4p4",
                     "axislabels" => """ "D", "F", "P", "T" """,
                     "axislengths" => "$D, $F, $P, $T",
                     "isoutput" => false,
@@ -1725,12 +1728,19 @@ function fix_ptx_kernel()
                 Dict(
                     "name" => "I",
                     "kotekan_name" => "gpu_mem_beamgrid",
+                    "type" => "float16",
                     "axislabels" => """ "beamP", "beamQ", "Tbar", "F" """,
-                    "axislengths" => "$(2*M), $(2*N), $(cld(T, Tds)), $F",
+                    "axislengths" => "$(2*M), $(2*N), $(fld(T, Tds)), $F",
                     "isoutput" => true,
                     "hasbuffer" => true,
                 ),
-                Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
+                Dict(
+                    "name" => "info",
+                    "kotekan_name" => "gpu_mem_info",
+                    "type" => "int32",
+                    "isoutput" => true,
+                    "hasbuffer" => false,
+                ),
             ],
             # "check_kotekan_parameters" => [
             #     Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
