@@ -175,7 +175,10 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
         device.get_gpu_memory_array_metadata({{{name}}}_memname, pipestate.gpu_frame_id);
     assert(mc_{{{name}}} && metadata_container_is_chord(mc_{{{name}}}));
     const chordMetadata* const meta_{{{name}}} = get_chord_metadata(mc_{{{name}}});
-    INFO("input {{{name}}} array shape: {:s}", meta_{{{name}}}->get_dimensions_string());
+    INFO("input {{{name}}} array: {:s} {:s}",
+        meta_{{{name}}}->get_type_string(),
+        meta_{{{name}}}->get_dimensions_string());
+    assert(meta_{{{name}}}->type == {{{type}}});
     assert(meta_{{{name}}}->dims == ndims_{{{name}}});
     for (std::size_t dim = 0; dim < ndims_{{{name}}}; ++dim) {
         assert(std::strncmp(meta_{{{name}}}->dim_name[dim],
@@ -189,6 +192,7 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
         device.create_gpu_memory_array_metadata({{{name}}}_memname, pipestate.gpu_frame_id, mc_E->parent_pool);
     chordMetadata* const meta_{{{name}}} = get_chord_metadata(mc_{{{name}}});
     chord_metadata_copy(meta_{{{name}}}, meta_E);
+    meta_{{{name}}}->type = {{{type}}};
     meta_{{{name}}}->dims = ndims_{{{name}}};
     for (std::size_t dim = 0; dim < ndims_{{{name}}}; ++dim) {
         std::strncpy(meta_{{{name}}}->dim_name[dim],
@@ -196,7 +200,9 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
                      sizeof meta_{{{name}}}->dim_name[dim]);
         meta_{{{name}}}->dim[dim] = axislengths_{{{name}}}[ndims_{{{name}}} - 1 - dim];
     }
-    INFO("output {{{name}}} array shape: {:s}", meta_{{{name}}}->get_dimensions_string());
+    INFO("output {{{name}}} array: {:s} {:s}",
+        meta_{{{name}}}->get_type_string(),
+        meta_{{{name}}}->get_dimensions_string());
     {{/isoutput}}
     {{/hasbuffer}}
     {{/memnames}}
