@@ -42,6 +42,7 @@ const F = 256                   # benchmarking A30: 56; A40: 84
 const Touter = 48
 const Tinner = 4
 const Tds = 40                  # downsampling factor
+const output_gain = 1 / (8 * Tds)
 
 const W = 24                    # number of warps
 const B = 1                     # number of blocks per SM
@@ -922,8 +923,13 @@ function do_second_fft!(emitter)
         emitter,
         :I,
         [:I, :Ẽp0re, :Ẽp0im, :Ẽp1re, :Ẽp1im],
-        (I, Ẽp0re, Ẽp0im, Ẽp1re, Ẽp1im) ->
-            :(muladd($Ẽp1im, $Ẽp1im, muladd($Ẽp1re, $Ẽp1re, muladd($Ẽp0im, $Ẽp0im, muladd($Ẽp0re, $Ẽp0re, $I)))));
+        (I, Ẽp0re, Ẽp0im, Ẽp1re, Ẽp1im) -> :(
+        # muladd($Ẽp1im, $Ẽp1im, muladd($Ẽp1re, $Ẽp1re, muladd($Ẽp0im, $Ẽp0im, muladd($Ẽp0re, $Ẽp0re, $I))))
+        muladd(
+            $(Float16x2(output_gain, output_gain)),
+            muladd($Ẽp1im, $Ẽp1im, muladd($Ẽp1re, $Ẽp1re, muladd($Ẽp0im, $Ẽp0im, $Ẽp0re * $Ẽp0re))),
+            $I,
+        ));
         ignore=[Time(:time, 1, T)],
     )
 
@@ -1614,6 +1620,7 @@ function fix_ptx_kernel()
         number-of-frequencies: $F
         number-of-polarizations: $P
         number-of-timesamples: $T
+        output-gain: $output_gain
         sampling-time-μsec: $sampling_time_μsec
       compile-parameters:
         minthreads: $(num_threads * num_warps)
