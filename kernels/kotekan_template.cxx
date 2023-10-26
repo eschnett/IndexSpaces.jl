@@ -71,7 +71,7 @@ private:
     static constexpr int shmem_bytes = {{{shmem_bytes}}};
 
     // Kernel name:
-    const char* const kernel_symbol = "{{kernel_symbol}}";
+    const char* const kernel_symbol = "{{{kernel_symbol}}}";
 
     // Kernel arguments:
     {{#kernel_arguments}}
@@ -91,7 +91,7 @@ private:
     // Host-side buffer arrays
     {{#memnames}}
     {{^hasbuffer}}
-    std::vector<std::vector<std::int32_t>> host_{{{name}}};
+    std::vector<std::vector<std::uint8_t>> host_{{{name}}};
     {{/hasbuffer}}
     {{/memnames}}
 
@@ -112,6 +112,12 @@ cuda{{{kernel_name}}}::cuda{{{kernel_name}}}(Config& config,
     {{/hasbuffer}}
     {{^hasbuffer}}
     , {{{name}}}_memname(unique_name + "/{{{kotekan_name}}}")
+    {{/hasbuffer}}
+    {{/memnames}}
+
+    {{#memnames}}
+    {{^hasbuffer}}
+    , host_{{{name}}}(_gpu_buffer_depth)
     {{/hasbuffer}}
     {{/memnames}}
 {
@@ -157,11 +163,8 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
     void* const {{{name}}}_memory = device.get_gpu_memory_array({{{name}}}_memname, pipestate.gpu_frame_id, {{{name}}}_length);
     {{/hasbuffer}}
     {{^hasbuffer}}
-    std::int32_t* const {{{name}}}_memory =
-        static_cast<std::int32_t*>(device.get_gpu_memory({{{name}}}_memname, {{{name}}}_length));
-    host_{{{name}}}.resize(_gpu_buffer_depth);
-    for (int i = 0; i < _gpu_buffer_depth; ++i)
-        host_info[i].resize({{{name}}}_length / sizeof(std::int32_t));
+    host_{{{name}}}[pipestate.gpu_frame_id].resize({{{name}}}_length);
+    void* const {{{name}}}_memory = device.get_gpu_memory({{{name}}}_memname, {{{name}}}_length);
     {{/hasbuffer}}
     {{/memnames}}
 
@@ -209,14 +212,6 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
 
     record_start_event(pipestate.gpu_frame_id);
 
-    // Initialize host-side buffer arrays
-    // TODO: Skip this for performance
-    {{#memnames}}
-    {{^hasbuffer}}
-    CHECK_CUDA_ERROR(cudaMemsetAsync({{{name}}}_memory, 0xff, {{{name}}}_length, device.getStream(cuda_stream_id)));
-    {{/hasbuffer}}
-    {{/memnames}}
-
     const char* exc_arg = "exception";
     {{#kernel_arguments}}
     kernel_arg {{{name}}}_arg({{{name}}}_memory, {{{name}}}_length);
@@ -230,6 +225,29 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
 
     // Modify kernel arguments (if necessary)
     {{{modify_kernel_arguments}}}
+
+    // Copy inputs to device memory
+    {{#memnames}}
+    {{^hasbuffer}}
+    {{^isoutput}}
+    CHECK_CUDA_ERROR(cudaMemcpyAsync({{{name}}}_memory,
+                                     host_{{{name}}}[pipestate.gpu_frame_id].data(),
+                                     {{{name}}}_length,
+                                     cudaMemcpyHostToDevice,
+                                     device.getStream(cuda_stream_id)));
+    {{/isoutput}}
+    {{/hasbuffer}}
+    {{/memnames}}
+
+    // Initialize host-side buffer arrays
+    // TODO: Skip this for performance
+    {{#memnames}}
+    {{^hasbuffer}}
+    {{#isoutput}}
+    CHECK_CUDA_ERROR(cudaMemsetAsync({{{name}}}_memory, 0xff, {{{name}}}_length, device.getStream(cuda_stream_id)));
+    {{/isoutput}}
+    {{/hasbuffer}}
+    {{/memnames}}
 
     DEBUG("kernel_symbol: {}", kernel_symbol);
     DEBUG("runtime_kernels[kernel_symbol]: {}", static_cast<void*>(runtime_kernels[kernel_symbol]));
@@ -249,21 +267,26 @@ cudaEvent_t cuda{{{kernel_name}}}::execute(cudaPipelineState& pipestate,
     }
 
     // Copy results back to host memory
+    // TODO: Skip this for performance
     {{#memnames}}
     {{^hasbuffer}}
+    {{#isoutput}}
     CHECK_CUDA_ERROR(cudaMemcpyAsync(host_{{{name}}}[pipestate.gpu_frame_id].data(),
-                                     {{{name}}}_memory, {{{name}}}_length, cudaMemcpyDeviceToHost,
+                                     {{{name}}}_memory,
+                                     {{{name}}}_length,
+                                     cudaMemcpyDeviceToHost,
                                      device.getStream(cuda_stream_id)));
+    {{/isoutput}}
     {{/hasbuffer}}
     {{/memnames}}
 
     // Check error codes
     // TODO: Skip this for performance
     CHECK_CUDA_ERROR(cudaStreamSynchronize(device.getStream(cuda_stream_id)));
-    const std::int32_t error_code = *std::max_element(host_info[pipestate.gpu_frame_id].begin(),
-                                                      host_info[pipestate.gpu_frame_id].end());
+    const std::int32_t error_code = *std::max_element((const std::int32_t*)&*host_info[pipestate.gpu_frame_id].begin(),
+                                                      (const std::int32_t*)&*host_info[pipestate.gpu_frame_id].end());
     if (error_code != 0)
-        ERROR("CUDA kernel returned error codecuLaunchKernel: {}", error_code);
+        ERROR("CUDA kernel returned error code cuLaunchKernel: {}", error_code);
 
     return record_end_event(pipestate.gpu_frame_id);
 }
@@ -273,10 +296,12 @@ void cuda{{{kernel_name}}}::finalize_frame(const int gpu_frame_id) {
 
     {{#memnames}}
     {{^hasbuffer}}
+    {{#isoutput}}
     for (std::size_t i = 0; i < host_{{{name}}}[gpu_frame_id].size(); ++i)
         if (host_{{{name}}}[gpu_frame_id][i] != 0)
             ERROR("cuda{{{kernel_name}}} returned '{{{name}}}' value {:d} at index {:d} (zero indicates noerror)",
                   host_{{{name}}}[gpu_frame_id][i], int(i));
+    {{/isoutput}}
     {{/hasbuffer}}
     {{/memnames}}
 }
