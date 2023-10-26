@@ -1756,7 +1756,7 @@ function fix_ptx_kernel()
             #     Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
             #     Dict("name" => "time_downsampling", "value" => "cuda_downsampling_factor"),
             # ],
-            "get_runtime_parameters" => [],
+            "runtime_parameters" => [],
         ),
     )
     write("output-$card/frb.cxx", cxx)

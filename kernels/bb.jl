@@ -1013,7 +1013,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 #     Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
                 #     Dict("name" => "num_beams", "value" => "cuda_number_of_beams"),
                 # ],
-                "get_runtime_parameters" => [],
+                "runtime_parameters" => [],
             ),
         )
         write("output-$card/bb.cxx", cxx)
