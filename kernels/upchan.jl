@@ -591,7 +591,7 @@ function upchan!(emitter)
 
     # Read parameter `Tactual`
     load!(emitter, :Tactual => layout_Tactual, :Tactual_memory => layout_Tactual)
-    if!(emitter, :(!(0i32 ≤ Tactual < $(Int32(T)) && Tactual % $(Int32(Touter)) == 0i32))) do emitter
+    if!(emitter, :(!(0i32 ≤ Tactual ≤ $(Int32(T)) && Tactual % $(Int32(Touter)) == 0i32))) do emitter
         apply!(emitter, :info => layout_info_registers, 2i32)
         store!(emitter, :info_memory => layout_info_memory, :info)
         trap!(emitter)
@@ -1908,27 +1908,62 @@ function fix_ptx_kernel()
             "num_blocks" => num_blocks,
             "shmem_bytes" => shmem_bytes,
             "kernel_symbol" => kernel_symbol,
-            "kernel_arguments" => [
-                Dict("name" => "Tactual", "value" => "$(1)UL"),
-                Dict("name" => "G", "value" => "$(16 * F * U ÷ 8)UL"),
-                Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                Dict("name" => "Ebar", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
-            ],
+            "kernel_arguments" => let
+                @assert 32 ÷ 8 < 0x80000000
+                @assert 16 * F * U ÷ 8 < 0x80000000
+                @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
+                [
+                    Dict("name" => "Tactual", "value" => "$(32 ÷ 8)UL"),
+                    Dict("name" => "G", "value" => "$(16 * F * U ÷ 8)UL"),
+                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "Ebar", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
+                ]
+            end,
             "memnames" => [
-                Dict("name" => "Tactual", "kotekan_name" => "Tactual", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "G", "kotekan_name" => "gpu_mem_gain", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "E", "kotekan_name" => "gpu_mem_input_voltage", "isoutput" => false, "hasbuffer" => true),
-                Dict("name" => "Ebar", "kotekan_name" => "gpu_mem_output_voltage", "isoutput" => true, "hasbuffer" => true),
+                Dict("name" => "Tactual", "kotekan_name" => "Tactual", "isoutput" => false, "hasbuffer" => false),
+                Dict(
+                    "name" => "G",
+                    "kotekan_name" => "gpu_mem_gain",
+                    "type" => "float16",
+                    "axislabels" => """ "Fbar" """,
+                    "axislengths" => "$(F*U)",
+                    "isoutput" => false,
+                    "hasbuffer" => true,
+                ),
+                Dict(
+                    "name" => "E",
+                    "kotekan_name" => "gpu_mem_input_voltage",
+                    "type" => "int4p4",
+                    "axislabels" => """ "D", "F", "P", "T" """,
+                    "axislengths" => "$D, $F, $P, $T",
+                    "isoutput" => false,
+                    "hasbuffer" => true,
+                ),
+                Dict(
+                    "name" => "Ebar",
+                    "kotekan_name" => "gpu_mem_output_voltage",
+                    "type" => "int4p4",
+                    "axislabels" => """ "D", "Fbar", "P", "Tbar" """,
+                    "axislengths" => "$D, $(F*U), $P, $(idiv(T, U))",
+                    "isoutput" => true,
+                    "hasbuffer" => true,
+                ),
                 Dict("name" => "info", "kotekan_name" => "gpu_mem_info", "isoutput" => true, "hasbuffer" => false),
             ],
-            "check_kotekan_parameters" => [
-                Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
-                Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
-                Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
-                Dict("name" => "upchan_factor", "value" => "cuda_upchannelization_factor"),
-            ],
-            "runtime_parameters" => [Dict("type" => "std::vector<float>", "name" => "freq_gains")],
+            # "check_kotekan_parameters" => [
+            #     Dict("name" => "num_dishes", "value" => "cuda_number_of_dishes"),
+            #     Dict("name" => "num_local_freq", "value" => "cuda_number_of_frequencies"),
+            #     Dict("name" => "samples_per_data_set", "value" => "cuda_number_of_timesamples"),
+            #     Dict("name" => "upchan_factor", "value" => "cuda_upchannelization_factor"),
+            # ],
+            # "runtime_parameters" => [Dict("type" => "std::vector<float16_t>", "name" => "host_freq_gains")],
+            "runtime_parameters" => [],
+            "modify_kernel_arguments" => """
+                *(std::int32_t*)host_Tactual[pipestate.gpu_frame_id].data() = cuda_number_of_timesamples;
+            """,
         ),
     )
     write("output-A40/upchan-U$U.cxx", cxx)
