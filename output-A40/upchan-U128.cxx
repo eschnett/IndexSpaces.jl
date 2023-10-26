@@ -6,14 +6,17 @@
  * Do not modify this C++ file, your changes will be lost.
  */
 
-#include "cudaCommand.hpp"
-#include "cudaDeviceInterface.hpp"
-
 #include <bufferContainer.hpp>
+#include <chordMetadata.hpp>
+#include <cudaCommand.hpp>
+#include <cudaDeviceInterface.hpp>
 
 #include <fmt.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -72,17 +75,16 @@ private:
     static constexpr int shmem_bytes = 66816;
 
     // Kernel name:
-    const char* const kernel_symbol = "_Z17julia_upchan_409713CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
+    const char* const kernel_symbol = "_Z6upchan13CuDeviceArrayI5Int32Li1ELi1EES_I9Float16x2Li1ELi1EES_I6Int4x8Li1ELi1EES_IS2_Li1ELi1EES_IS0_Li1ELi1EE";
 
     // Kernel arguments:
-    static constexpr std::size_t Tactual_length = 1UL;
+    static constexpr std::size_t Tactual_length = 4UL;
     static constexpr std::size_t G_length = 4096UL;
     static constexpr std::size_t E_length = 536870912UL;
     static constexpr std::size_t Ebar_length = 536870912UL;
     static constexpr std::size_t info_length = 262144UL;
 
     // Runtime parameters:
-    std::vector<float> freq_gains;
 
     // GPU memory:
     const std::string Tactual_memname;
@@ -92,7 +94,11 @@ private:
     const std::string info_memname;
 
     // Host-side buffer arrays
-    std::vector<std::vector<std::int32_t>> host_info;
+    std::vector<std::vector<std::uint8_t>> host_Tactual;
+    std::vector<std::vector<std::uint8_t>> host_info;
+
+    // Declare extra variables (if any)
+    
 };
 
 REGISTER_CUDA_COMMAND(cudaUpchannelizer_U128);
@@ -102,43 +108,22 @@ cudaUpchannelizer_U128::cudaUpchannelizer_U128(Config& config,
                                              bufferContainer& host_buffers,
                                              cudaDeviceInterface& device) :
     cudaCommand(config, unique_name, host_buffers, device, "Upchannelizer_U128", "Upchannelizer_U128.ptx")
-    , Tactual_memname(config.get<std::string>(unique_name, "Tactual"))
+    , Tactual_memname(unique_name + "/Tactual")
     , G_memname(config.get<std::string>(unique_name, "gpu_mem_gain"))
     , E_memname(config.get<std::string>(unique_name, "gpu_mem_input_voltage"))
     , Ebar_memname(config.get<std::string>(unique_name, "gpu_mem_output_voltage"))
-    , info_memname(unique_name + "/info")
+    , info_memname(unique_name + "/gpu_mem_info")
+
+    , host_Tactual(_gpu_buffer_depth)
+    , host_info(_gpu_buffer_depth)
 {
-    // Add Graphviz entries for the GPU buffers used by this kernel.
-    gpu_buffers_used.push_back(std::make_tuple(Tactual_memname, true, true, false));
+    // Add Graphviz entries for the GPU buffers used by this kernel
+    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_Tactual", false, true, true));
     gpu_buffers_used.push_back(std::make_tuple(G_memname, true, true, false));
     gpu_buffers_used.push_back(std::make_tuple(E_memname, true, true, false));
     gpu_buffers_used.push_back(std::make_tuple(Ebar_memname, true, true, false));
-    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_info", false, true, true));
+    gpu_buffers_used.push_back(std::make_tuple(get_name() + "_gpu_mem_info", false, true, true));
 
-    const int num_dishes = config.get<int>(unique_name, "num_dishes");
-    if (num_dishes != (cuda_number_of_dishes))
-      throw std::runtime_error(
-        "The num_dishes config setting must be " + std::to_string(cuda_number_of_dishes) + " for the CUDA Baseband Beamformer");
-    const int num_local_freq = config.get<int>(unique_name, "num_local_freq");
-    if (num_local_freq != (cuda_number_of_frequencies))
-      throw std::runtime_error(
-        "The num_local_freq config setting must be " + std::to_string(cuda_number_of_frequencies) + " for the CUDA Baseband Beamformer");
-    const int samples_per_data_set = config.get<int>(unique_name, "samples_per_data_set");
-    if (samples_per_data_set != (cuda_number_of_timesamples))
-      throw std::runtime_error(
-        "The samples_per_data_set config setting must be " + std::to_string(cuda_number_of_timesamples) + " for the CUDA Baseband Beamformer");
-    const int upchan_factor = config.get<int>(unique_name, "upchan_factor");
-    if (upchan_factor != (cuda_upchannelization_factor))
-      throw std::runtime_error(
-        "The upchan_factor config setting must be " + std::to_string(cuda_upchannelization_factor) + " for the CUDA Baseband Beamformer");
-
-    const std::vector<float> freq_gains = config.get<std::vector<float>>(unique_name, "freq_gains");
-    std::vector<float16_t> freq_gains16(freq_gains.size());
-    for (std::size_t i=0; i<freq_gains16.size(); i++)
-      freq_gains16[i] = freq_gains[i];
-    const void* const G_host = freq_gains16.data();
-    void* const G_memory = device.get_gpu_memory(G_memname, G_length);
-    CHECK_CUDA_ERROR(cudaMemcpy(G_memory, G_host, G_length, cudaMemcpyHostToDevice));
 
     set_command_type(gpuCommandType::KERNEL);
     const std::vector<std::string> opts = {
@@ -147,106 +132,80 @@ cudaUpchannelizer_U128::cudaUpchannelizer_U128(Config& config,
     };
     build_ptx({kernel_symbol}, opts);
 
-    // 
-    // const std::string Tactual_buffer_name = "host_" + Tactual_memname;
-    // Buffer* const Tactual_buffer = host_buffers.get_buffer(Tactual_buffer_name.c_str());
-    // assert(Tactual_buffer);
-    // 
-    // register_consumer(Tactual_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string G_buffer_name = "host_" + G_memname;
-    // Buffer* const G_buffer = host_buffers.get_buffer(G_buffer_name.c_str());
-    // assert(G_buffer);
-    // 
-    // register_consumer(G_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string E_buffer_name = "host_" + E_memname;
-    // Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-    // assert(E_buffer);
-    // 
-    // register_consumer(E_buffer, unique_name.c_str());
-    // 
-    // 
-    // 
-    // const std::string Ebar_buffer_name = "host_" + Ebar_memname;
-    // Buffer* const Ebar_buffer = host_buffers.get_buffer(Ebar_buffer_name.c_str());
-    // assert(Ebar_buffer);
-    // 
-    // 
-    // register_producer(Ebar_buffer, unique_name.c_str());
-    // 
-    // 
-    // const std::string info_buffer_name = "host_" + info_memname;
-    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    // assert(info_buffer);
-    // 
-    // 
-    // register_producer(info_buffer, unique_name.c_str());
-    // 
-    // 
+    // Initialize extra variables (if necessary)
+    
 }
 
 cudaUpchannelizer_U128::~cudaUpchannelizer_U128() {}
-
-// int cudaUpchannelizer_U128::wait_on_precondition(const int gpu_frame_id) {
-//     
-//     
-//     const std::string Tactual_buffer_name = "host_" + Tactual_memname;
-//     Buffer* const Tactual_buffer = host_buffers.get_buffer(Tactual_buffer_name.c_str());
-//     assert(Tactual_buffer);
-//     uint8_t* const Tactual_frame = wait_for_full_frame(Tactual_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!Tactual_frame)
-//         return -1;
-//     
-//     
-//     
-//     const std::string G_buffer_name = "host_" + G_memname;
-//     Buffer* const G_buffer = host_buffers.get_buffer(G_buffer_name.c_str());
-//     assert(G_buffer);
-//     uint8_t* const G_frame = wait_for_full_frame(G_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!G_frame)
-//         return -1;
-//     
-//     
-//     
-//     const std::string E_buffer_name = "host_" + E_memname;
-//     Buffer* const E_buffer = host_buffers.get_buffer(E_buffer_name.c_str());
-//     assert(E_buffer);
-//     uint8_t* const E_frame = wait_for_full_frame(E_buffer, unique_name.c_str(), gpu_frame_id);
-//     if (!E_frame)
-//         return -1;
-//     
-//     
-//     
-//     
-//     
-//     
-// 
-//     return 0;
-// }
 
 cudaEvent_t cudaUpchannelizer_U128::execute(cudaPipelineState& pipestate,
                                            const std::vector<cudaEvent_t>& /*pre_events*/) {
     pre_execute(pipestate.gpu_frame_id);
 
-    void* const Tactual_memory = device.get_gpu_memory_array(Tactual_memname, pipestate.gpu_frame_id, Tactual_length);
+    host_Tactual[pipestate.gpu_frame_id].resize(Tactual_length);
+    void* const Tactual_memory = device.get_gpu_memory(Tactual_memname, Tactual_length);
     void* const G_memory = device.get_gpu_memory_array(G_memname, pipestate.gpu_frame_id, G_length);
     void* const E_memory = device.get_gpu_memory_array(E_memname, pipestate.gpu_frame_id, E_length);
     void* const Ebar_memory = device.get_gpu_memory_array(Ebar_memname, pipestate.gpu_frame_id, Ebar_length);
-    std::int32_t* const info_memory =
-        static_cast<std::int32_t*>(device.get_gpu_memory(info_memname, info_length));
-    host_info.resize(_gpu_buffer_depth);
-    for (int i = 0; i < _gpu_buffer_depth; ++i)
-        host_info[i].resize(info_length / sizeof(std::int32_t));
+    host_info[pipestate.gpu_frame_id].resize(info_length);
+    void* const info_memory = device.get_gpu_memory(info_memname, info_length);
+
+    const char* const axislabels_G[] = {  "Fbar"  };
+    const std::size_t axislengths_G[] = { 2048 };
+    const std::size_t ndims_G = sizeof axislabels_G / sizeof *axislabels_G;
+    const metadataContainer* const mc_G =
+        device.get_gpu_memory_array_metadata(G_memname, pipestate.gpu_frame_id);
+    assert(mc_G && metadata_container_is_chord(mc_G));
+    const chordMetadata* const meta_G = get_chord_metadata(mc_G);
+    INFO("input G array: {:s} {:s}",
+        meta_G->get_type_string(),
+        meta_G->get_dimensions_string());
+    assert(meta_G->type == float16);
+    assert(meta_G->dims == ndims_G);
+    for (std::size_t dim = 0; dim < ndims_G; ++dim) {
+        assert(std::strncmp(meta_G->dim_name[dim],
+                            axislabels_G[ndims_G - 1 - dim],
+                            sizeof meta_G->dim_name[dim]) == 0);
+        assert(meta_G->dim[dim] == int(axislengths_G[ndims_G - 1 - dim]));
+    }
+    const char* const axislabels_E[] = {  "D", "F", "P", "T"  };
+    const std::size_t axislengths_E[] = { 512, 16, 2, 32768 };
+    const std::size_t ndims_E = sizeof axislabels_E / sizeof *axislabels_E;
+    const metadataContainer* const mc_E =
+        device.get_gpu_memory_array_metadata(E_memname, pipestate.gpu_frame_id);
+    assert(mc_E && metadata_container_is_chord(mc_E));
+    const chordMetadata* const meta_E = get_chord_metadata(mc_E);
+    INFO("input E array: {:s} {:s}",
+        meta_E->get_type_string(),
+        meta_E->get_dimensions_string());
+    assert(meta_E->type == int4p4);
+    assert(meta_E->dims == ndims_E);
+    for (std::size_t dim = 0; dim < ndims_E; ++dim) {
+        assert(std::strncmp(meta_E->dim_name[dim],
+                            axislabels_E[ndims_E - 1 - dim],
+                            sizeof meta_E->dim_name[dim]) == 0);
+        assert(meta_E->dim[dim] == int(axislengths_E[ndims_E - 1 - dim]));
+    }
+    const char* const axislabels_Ebar[] = {  "D", "Fbar", "P", "Tbar"  };
+    const std::size_t axislengths_Ebar[] = { 512, 2048, 2, 256 };
+    const std::size_t ndims_Ebar = sizeof axislabels_Ebar / sizeof *axislabels_Ebar;
+    metadataContainer* const mc_Ebar =
+        device.create_gpu_memory_array_metadata(Ebar_memname, pipestate.gpu_frame_id, mc_E->parent_pool);
+    chordMetadata* const meta_Ebar = get_chord_metadata(mc_Ebar);
+    chord_metadata_copy(meta_Ebar, meta_E);
+    meta_Ebar->type = int4p4;
+    meta_Ebar->dims = ndims_Ebar;
+    for (std::size_t dim = 0; dim < ndims_Ebar; ++dim) {
+        std::strncpy(meta_Ebar->dim_name[dim],
+                     axislabels_Ebar[ndims_Ebar - 1 - dim],
+                     sizeof meta_Ebar->dim_name[dim]);
+        meta_Ebar->dim[dim] = axislengths_Ebar[ndims_Ebar - 1 - dim];
+    }
+    INFO("output Ebar array: {:s} {:s}",
+        meta_Ebar->get_type_string(),
+        meta_Ebar->get_dimensions_string());
 
     record_start_event(pipestate.gpu_frame_id);
-
-    // Initialize host-side buffer arrays
-    CHECK_CUDA_ERROR(cudaMemsetAsync(info_memory, 0xff, info_length, device.getStream(cuda_stream_id)));
 
     const char* exc_arg = "exception";
     kernel_arg Tactual_arg(Tactual_memory, Tactual_length);
@@ -263,6 +222,21 @@ cudaEvent_t cudaUpchannelizer_U128::execute(cudaPipelineState& pipestate,
         &info_arg,
     };
 
+    // Modify kernel arguments (if necessary)
+        *(std::int32_t*)host_Tactual[pipestate.gpu_frame_id].data() = cuda_number_of_timesamples;
+
+
+    // Copy inputs to device memory
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(Tactual_memory,
+                                     host_Tactual[pipestate.gpu_frame_id].data(),
+                                     Tactual_length,
+                                     cudaMemcpyHostToDevice,
+                                     device.getStream(cuda_stream_id)));
+
+    // Initialize host-side buffer arrays
+    // TODO: Skip this for performance
+    CHECK_CUDA_ERROR(cudaMemsetAsync(info_memory, 0xff, info_length, device.getStream(cuda_stream_id)));
+
     DEBUG("kernel_symbol: {}", kernel_symbol);
     DEBUG("runtime_kernels[kernel_symbol]: {}", static_cast<void*>(runtime_kernels[kernel_symbol]));
     CHECK_CU_ERROR(cuFuncSetAttribute(runtime_kernels[kernel_symbol],
@@ -277,36 +251,31 @@ cudaEvent_t cudaUpchannelizer_U128::execute(cudaPipelineState& pipestate,
     if (err != CUDA_SUCCESS) {
         const char* errStr;
         cuGetErrorString(err, &errStr);
-        INFO("Error number: {}", err);
-        ERROR("cuLaunchKernel: {}", errStr);
+        ERROR("cuLaunchKernel: Error number: {}: {}", err, errStr);
     }
 
     // Copy results back to host memory
+    // TODO: Skip this for performance
     CHECK_CUDA_ERROR(cudaMemcpyAsync(host_info[pipestate.gpu_frame_id].data(),
-                                     info_memory, info_length, cudaMemcpyDeviceToHost,
+                                     info_memory,
+                                     info_length,
+                                     cudaMemcpyDeviceToHost,
                                      device.getStream(cuda_stream_id)));
 
-   return record_end_event(pipestate.gpu_frame_id);
+    // Check error codes
+    // TODO: Skip this for performance
+    CHECK_CUDA_ERROR(cudaStreamSynchronize(device.getStream(cuda_stream_id)));
+    const std::int32_t error_code = *std::max_element((const std::int32_t*)&*host_info[pipestate.gpu_frame_id].begin(),
+                                                      (const std::int32_t*)&*host_info[pipestate.gpu_frame_id].end());
+    if (error_code != 0)
+        ERROR("CUDA kernel returned error code cuLaunchKernel: {}", error_code);
+
+    return record_end_event(pipestate.gpu_frame_id);
 }
 
 void cudaUpchannelizer_U128::finalize_frame(const int gpu_frame_id) {
     cudaCommand::finalize_frame(gpu_frame_id);
 
-    // 
-    // 
-    // 
-    // 
-    // const std::string Ebar_buffer_name = "host_" + Ebar_memname;
-    // Buffer* const Ebar_buffer = host_buffers.get_buffer(Ebar_buffer_name.c_str());
-    // assert(Ebar_buffer);
-    // mark_frame_full(Ebar_buffer, unique_name.c_str(), gpu_frame_id);
-    // 
-    // 
-    // const std::string info_buffer_name = "host_" + info_memname;
-    // Buffer* const info_buffer = host_buffers.get_buffer(info_buffer_name.c_str());
-    // assert(info_buffer);
-    // mark_frame_full(info_buffer, unique_name.c_str(), gpu_frame_id);
-    // 
     for (std::size_t i = 0; i < host_info[gpu_frame_id].size(); ++i)
         if (host_info[gpu_frame_id][i] != 0)
             ERROR("cudaUpchannelizer_U128 returned 'info' value {:d} at index {:d} (zero indicates noerror)",
