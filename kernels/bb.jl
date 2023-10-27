@@ -310,9 +310,9 @@ function make_bb_kernel()
             cplx => SIMD(:simd, 4, 2),
             dish01 => SIMD(:simd, 4 * 2, 4),
             dish2etc => Memory(:memory, 1, idiv(D, 4)),
-            freq => Memory(:memory, idiv(D, 4), F),
-            polr => Memory(:memory, idiv(D, 4) * F, P),
-            time => Memory(:memory, idiv(D, 4) * F * P, T),
+            polr => Memory(:memory, idiv(D, 4), P),
+            freq => Memory(:memory, idiv(D, 4) * P, F),
+            time => Memory(:memory, idiv(D, 4) * P * F, T),
         ),
     )
 
@@ -901,9 +901,9 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             - name: "E"
               intent: in
               type: Int4
-              indices: [C, D, F, P, T]
-              shape: [$C, $D, $F, $P, $T]
-              strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+              indices: [C, D, P, F, T]
+              shape: [$C, $D, $P, $F, $T]
+              strides: [1, $C, $(C*D), $(C*D*P), $(C*D*P*F)]
             - name: "s"
               intent: in
               type: Int32
@@ -950,13 +950,13 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 "kernel_symbol" => kernel_symbol,
                 "kernel_arguments" => let
                     @assert 8 * C * D * B * P * F ÷ 8 < 0x80000000
-                    @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                    @assert 4 * C * D * P * F * T ÷ 8 < 0x80000000
                     @assert 32 * B * P * F ÷ 8 < 0x80000000
                     @assert 4 * C * T * P * F * B ÷ 8 < 0x80000000
                     @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
                     [
                         Dict("name" => "A", "value" => "$(8 * C * D * B * P * F ÷ 8)ULL"),
-                        Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)ULL"),
+                        Dict("name" => "E", "value" => "$(4 * C * D * P * F * T ÷ 8)ULL"),
                         Dict("name" => "s", "value" => "$(32 * B * P * F ÷ 8)ULL"),
                         Dict("name" => "J", "value" => "$(4 * C * T * P * F * B ÷ 8)ULL"),
                         Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)ULL"),
@@ -976,8 +976,8 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                         "name" => "E",
                         "kotekan_name" => "gpu_mem_voltage",
                         "type" => "int4p4",
-                        "axislabels" => """ "D", "F", "P", "T" """,
-                        "axislengths" => "$D, $F, $P, $T",
+                        "axislabels" => """ "D", "P", "F", "T" """,
+                        "axislengths" => "$D, $P, $F, $T",
                         "isoutput" => false,
                         "hasbuffer" => true,
                     ),
@@ -1023,7 +1023,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
 
     # TODO: determine types and sizes automatically
     A_memory = Array{Int8x4}(undef, idiv(D, 2) * B * P * F)
-    E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
+    E_memory = Array{Int4x8}(undef, idiv(D, 4) * P * F * T)
     s_memory = Array{Int32}(undef, B * P * F)
     J_wanted = Array{Int4x8}(undef, idiv(T, 4) * P * F * B)
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
@@ -1082,7 +1082,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             else
                 @assert false
             end
-            E_memory[(((time * P + polr) * F + freq) * D + dish) ÷ 4 + 1] += if dish % 4 == 0
+            E_memory[(((time * F + freq) * P + polr) * D + dish) ÷ 4 + 1] += if dish % 4 == 0
                 Int4x8(Eval.re, Eval.im, 0, 0, 0, 0, 0, 0)
             elseif dish % 4 == 1
                 Int4x8(0, 0, Eval.re, Eval.im, 0, 0, 0, 0)
@@ -1116,7 +1116,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
                 Ju = 0 + 0im
                 for d in 0:(D - 1)
                     A = Complex{Int}(reinterpret(NTuple{2,Int8}, A_memory)[((f * P + p) * B + b) * D + d + 1]...)
-                    E = Complex{Int}(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * P + p) * F + f) * D + d + 1])...)
+                    E = Complex{Int}(convert(NTuple{2,Int8}, reinterpret(Int4x2, E_memory)[((t * F + f) * P + p) * D + d + 1])...)
                     Ju += A * E
                 end
                 Ju = shift(Ju, σ)

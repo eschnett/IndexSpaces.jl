@@ -162,9 +162,9 @@ const layout_E_memory = Layout([
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
     Dish(:dish, 1, 4) => SIMD(:simd, 8, 4),
     Dish(:dish, 4, idiv(D, 4)) => Memory(:memory, 1, idiv(D, 4)),
-    Freq(:freq, U, F) => Memory(:memory, idiv(D, 4), F),
-    Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4) * F, P),
-    Time(:time, 1, T) => Memory(:memory, idiv(D, 4) * F * P, T),
+    Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4), P),
+    Freq(:freq, 1, F) => Memory(:memory, idiv(D, 4) * P, F),
+    Time(:time, 1, T) => Memory(:memory, idiv(D, 4) * P * F, T),
 ])
 
 const layout_Ē_memory = Layout([
@@ -172,9 +172,9 @@ const layout_Ē_memory = Layout([
     Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
     Dish(:dish, 1, 4) => SIMD(:simd, 8, 4),
     Dish(:dish, 4, idiv(D, 4)) => Memory(:memory, 1, idiv(D, 4)),
-    Freq(:freq, 1, F * U) => Memory(:memory, idiv(D, 4), F * U),
-    Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4) * (F * U), P),
-    Time(:time, U, idiv(T, U)) => Memory(:memory, idiv(D, 4) * (F * U) * P, idiv(T, U)),
+    Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4), P),
+    Freq(:freq, 1, F * U) => Memory(:memory, idiv(D, 4) * P, F * U),
+    Time(:time, U, idiv(T, U)) => Memory(:memory, idiv(D, 4) * P * (F * U), idiv(T, U)),
 ])
 
 const layout_info_memory = Layout([
@@ -1657,8 +1657,8 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
 
     !silent && println("Allocating input data...")
     G_memory = Array{Float16}(undef, F * U)
-    E_memory = Array{Int4x2}(undef, D * F * P * T)
-    Ē_wanted = Array{Complex{Float32}}(undef, D * (F * U) * P * idiv(T, U))
+    E_memory = Array{Int4x2}(undef, D * P * F * T)
+    Ē_wanted = Array{Complex{Float32}}(undef, D * P * (F * U) * idiv(T, U))
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
     !silent && println("Setting up input data...")
@@ -1687,8 +1687,8 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     att = interp(attenuation_factors, delta)
 
     # map!(i -> zero(Int4x2), E_memory, E_memory)
-    for time in 0:(T - 1), polr in 0:(P - 1), freq in 0:(F - 1), dish in 0:(D - 1)
-        Eidx = dish + D * freq + D * F * polr + D * F * P * time
+    for time in 0:(T - 1), freq in 0:(F - 1), polr in 0:(P - 1), dish in 0:(D - 1)
+        Eidx = dish + D * polr + D * P * freq + D * P * F * time
         if polr == 0 && dish == 0 && freq == 0
             E1 = amp * cispi((2 * time / Float32(U) * test_freq) % 2.0f0)
         else
@@ -1699,8 +1699,8 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     end
 
     # map!(i -> zero(Int4x2), Ẽ_wanted, Ẽ_wanted)
-    for tbar in 0:(idiv(T, U) - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
-        Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
+    for tbar in 0:(idiv(T, U) - 1), fbar in 0:(F * U - 1), polr in 0:(P - 1), dish in 0:(D - 1)
+        Ēidx = dish + D * polr + D * P * fbar + D * P * (F * U) * tbar
         if polr == 0 && dish == 0 && fbar ÷ U == 0
             Ē1 = fbar == bin ? att * amp * cispi((2 * (tbar - (M - 1) + M / 2.0f0) * (0.5f0 + delta)) % 2.0f0) : 0
         else
@@ -1717,7 +1717,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
     !silent && println("Copying data from CPU to GPU...")
     G_cuda = CuArray(G_memory)
     E_cuda = CuArray(E_memory)
-    Ē_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(C, 2) * idiv(D, 4) * (F * U) * P * idiv(T, U))
+    Ē_cuda = CUDA.fill(Int4x8(-8, -8, -8, -8, -8, -8, -8, -8), idiv(C, 2) * idiv(D, 4) * P * (F * U) * idiv(T, U))
     info_cuda = CUDA.fill(-1i32, length(info_wanted))
 
     @assert sizeof(G_cuda) < 2^32
@@ -1793,9 +1793,9 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
         num_errors = 0
         println("    Ē:")
         did_test_Ē_memory = falses(length(Ē_memory))
-        # for tbar in 0:(idiv(T, U) - 1), polr in 0:(P - 1), fbar in 0:(F * U - 1), dish in 0:(D - 1)
+        # for tbar in 0:(idiv(T, U) - 1), fbar in 0:(F * U - 1), polr in 0:(P - 1), dish in 0:(D - 1)
         for polr in 0:(P - 1), dish in 0:(D - 1), fbar in 0:(F * U - 1), tbar in 0:(idiv(T, U) - 1)
-            Ēidx = dish + D * fbar + D * (F * U) * polr + D * (F * U) * P * tbar
+            Ēidx = dish + D * polr + D * P * fbar + D * (F * U) * P * tbar
             @assert !did_test_Ē_memory[Ēidx + 1]
             did_test_Ē_memory[Ēidx + 1] = true
             have_value = Complex(convert(NTuple{2,Int32}, Ē_memory[Ēidx + 1])...)
@@ -1804,7 +1804,7 @@ function main(; compile_only::Bool=false, nruns::Int=0, run_selftest::Bool=false
             if abs(err) > 0.8f0
                 num_errors += 1
                 if num_errors ≤ 100
-                    println("        dish=$dish fbar=$fbar polr=$polr tbar=$tbar Ē=$have_value Ē₀=$want_value ΔĒ=$(abs(err))")
+                    println("        dish=$dish polr=$polr fbar=$fbar tbar=$tbar Ē=$have_value Ē₀=$want_value ΔĒ=$(abs(err))")
                 elseif num_errors == 101
                     println("        [skipping further error output]")
                 end
@@ -1867,15 +1867,15 @@ function fix_ptx_kernel()
         - name: "E"
           intent: in
           type: Int4
-          indices: [C, D, F, P, T]
-          shape: [$C, $D, $F, $P, $T]
-          strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+          indices: [C, D, P, F, T]
+          shape: [$C, $D, $P, $F, $T]
+          strides: [1, $C, $(C*D), $(C*D*P), $(C*D*P*F)]
         - name: "Ē"
           intent: out
           type: Int4
-          indices: [C, D, F̄, P, T̄]
-          shape: [$C, $D, $(F*U), $P, $(idiv(T, U))]
-          strides: [1, $C, $(C*D), $(C*D*F*U), $(C*D*F*U*P)]
+          indices: [C, D, P, F̄, T̄]
+          shape: [$C, $D, $P, $(F*U), $(idiv(T, U))]
+          strides: [1, $C, $(C*D), $(C*D*P), $(C*D*P*F*U)]
         - name: "info"
           intent: out
           type: Int32
@@ -1911,14 +1911,14 @@ function fix_ptx_kernel()
             "kernel_arguments" => let
                 @assert 32 ÷ 8 < 0x80000000
                 @assert 16 * F * U ÷ 8 < 0x80000000
-                @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
-                @assert 4 * C * D * F * P * T ÷ 8 < 0x80000000
+                @assert 4 * C * D * P * F * T ÷ 8 < 0x80000000
+                @assert 4 * C * D * P * F * T ÷ 8 < 0x80000000
                 @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
                 [
                     Dict("name" => "Tactual", "value" => "$(32 ÷ 8)UL"),
                     Dict("name" => "G", "value" => "$(16 * F * U ÷ 8)UL"),
-                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
-                    Dict("name" => "Ebar", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "E", "value" => "$(4 * C * D * P * F * T ÷ 8)UL"),
+                    Dict("name" => "Ebar", "value" => "$(4 * C * D * P * F * T ÷ 8)UL"),
                     Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
                 ]
             end,
@@ -1937,8 +1937,8 @@ function fix_ptx_kernel()
                     "name" => "E",
                     "kotekan_name" => "gpu_mem_input_voltage",
                     "type" => "int4p4",
-                    "axislabels" => """ "D", "F", "P", "T" """,
-                    "axislengths" => "$D, $F, $P, $T",
+                    "axislabels" => """ "D", "P", "F", "T" """,
+                    "axislengths" => "$D, $P, $F, $T",
                     "isoutput" => false,
                     "hasbuffer" => true,
                 ),
@@ -1946,8 +1946,8 @@ function fix_ptx_kernel()
                     "name" => "Ebar",
                     "kotekan_name" => "gpu_mem_output_voltage",
                     "type" => "int4p4",
-                    "axislabels" => """ "D", "Fbar", "P", "Tbar" """,
-                    "axislengths" => "$D, $(F*U), $P, $(idiv(T, U))",
+                    "axislabels" => """ "D", "P", "Fbar", "Tbar" """,
+                    "axislengths" => "$D, $P, $(F*U), $(idiv(T, U))",
                     "isoutput" => true,
                     "hasbuffer" => true,
                 ),

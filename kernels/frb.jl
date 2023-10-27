@@ -198,8 +198,8 @@ const layout_E_memory = Layout(
         Cplx(:cplx, 1, C) => SIMD(:simd, 4, 2),
         Dish(:dish, 1, 4) => SIMD(:simd, 8, 4),
         Dish(:dish, 4, idiv(D, 4)) => Memory(:memory, 1, idiv(D, 4)),
-        Freq(:freq, 1, F) => Memory(:memory, idiv(D, 4), F),
-        Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4) * F, P),
+        Polr(:polr, 1, P) => Memory(:memory, idiv(D, 4), P),
+        Freq(:freq, 1, F) => Memory(:memory, idiv(D, 4) * P, F),
         Time(:time, 1, T) => Memory(:memory, idiv(D, 4) * F * P, T),
     ),
 )
@@ -1418,7 +1418,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
     # TODO: determine types and sizes automatically
     Smn_memory = Array{Int16x2}(undef, M * N)
     W_memory = Array{Float16x2}(undef, M * N * F * P)
-    E_memory = Array{Int4x8}(undef, idiv(D, 4) * F * P * T)
+    E_memory = Array{Int4x8}(undef, idiv(D, 4) * P * F * T)
     I_wanted = Array{Float16x2}(undef, M * 2 * N * fld(T, Tds) * F)
     info_wanted = Array{Int32}(undef, num_threads * num_warps * num_blocks)
 
@@ -1473,7 +1473,7 @@ function main(; compile_only::Bool=false, output_kernel::Bool=false, run_selftes
             polr = rand(0:(P - 1))
             time = rand(0:(T - 1))
             @show dish freq polr time
-            Eidx = dish ÷ 4 + idiv(D, 4) * freq + idiv(D, 4) * F * polr + idiv(D, 4) * F * P * time
+            Eidx = dish ÷ 4 + idiv(D, 4) * polr + idiv(D, 4) * P * freq + idiv(D, 4) * F * P * time
             Evalue = rand(-7:7) + im * rand(-7:7)
             Evalue8 = zero(SVector{8,Int8})
             Evalue8 = setindex(Evalue8, imag(Evalue), 2 * (dish % 4) + 0 + 1)
@@ -1646,9 +1646,9 @@ function fix_ptx_kernel()
         - name: "E"
           intent: in
           type: Int4
-          indices: [C, D, F, P, T]
-          shape: [$C, $D, $F, $P, $T]
-          strides: [1, $C, $(C*D), $(C*D*F), $(C*D*F*P)]
+          indices: [C, D, P, F, T]
+          shape: [$C, $D, $P, $F, $T]
+          strides: [1, $C, $(C*D), $(C*D*P), $(C*D*P*F)]
         - name: "I"
           intent: out
           type: Float16
@@ -1699,7 +1699,7 @@ function fix_ptx_kernel()
                 [
                     Dict("name" => "S", "value" => "$(16 * 2 * M * N ÷ 8)UL"),
                     Dict("name" => "W", "value" => "$(16 * C * M * N * F * P ÷ 8)UL"),
-                    Dict("name" => "E", "value" => "$(4 * C * D * F * P * T ÷ 8)UL"),
+                    Dict("name" => "E", "value" => "$(4 * C * D * P * F * T ÷ 8)UL"),
                     Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * fld(T, Tds) * F ÷ 8)UL"),
                     Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
                 ]
@@ -1727,8 +1727,8 @@ function fix_ptx_kernel()
                     "name" => "E",
                     "kotekan_name" => "gpu_mem_voltage",
                     "type" => "int4p4",
-                    "axislabels" => """ "D", "F", "P", "T" """,
-                    "axislengths" => "$D, $F, $P, $T",
+                    "axislabels" => """ "D", "P", "F", "T" """,
+                    "axislengths" => "$D, $P, $F, $T",
                     "isoutput" => false,
                     "hasbuffer" => true,
                 ),
