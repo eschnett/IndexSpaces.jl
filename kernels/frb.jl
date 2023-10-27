@@ -222,8 +222,8 @@ const layout_W_memory = Layout(
         DishMhi(:dishMhi, 1, 4) => Memory(:memory, idiv(M, 4), 4),
         DishNlo(:dishNlo, 1, idiv(N, 4)) => Memory(:memory, M, idiv(N, 4)),
         DishNhi(:dishNhi, 1, 4) => Memory(:memory, M * idiv(N, 4), 4),
-        Freq(:freq, 1, F) => Memory(:memory, M * N, F),
-        Polr(:polr, 1, P) => Memory(:memory, M * N * F, P),
+        Polr(:polr, 1, P) => Memory(:memory, M * N, P),
+        Freq(:freq, 1, F) => Memory(:memory, M * N * P, F),
     ),
 )
 
@@ -1640,9 +1640,9 @@ function fix_ptx_kernel()
         - name: "W"
           intent: in
           type: Float16
-          indices: [C, dishM, dishN, F, P]
-          shape: [$C, $M, $N, $F, $P]
-          strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*F), $(C*M*N*F*P)]
+          indices: [C, dishM, dishN, P, F]
+          shape: [$C, $M, $N, $P, $F]
+          strides: [1, $C, $(C*M), $(C*M*N), $(C*M*N*P), $(C*M*N*P*F)]
         - name: "E"
           intent: in
           type: Int4
@@ -1698,7 +1698,7 @@ function fix_ptx_kernel()
                 @assert 32 * num_threads * num_warps * num_blocks ÷ 8 < 0x80000000
                 [
                     Dict("name" => "S", "value" => "$(16 * 2 * M * N ÷ 8)UL"),
-                    Dict("name" => "W", "value" => "$(16 * C * M * N * F * P ÷ 8)UL"),
+                    Dict("name" => "W", "value" => "$(16 * C * M * N * P * F ÷ 8)UL"),
                     Dict("name" => "E", "value" => "$(4 * C * D * P * F * T ÷ 8)UL"),
                     Dict("name" => "I", "value" => "$(16 * 2 * M * 2 * N * fld(T, Tds) * F ÷ 8)UL"),
                     Dict("name" => "info", "value" => "$(32 * num_threads * num_warps * num_blocks ÷ 8)UL"),
@@ -1718,8 +1718,8 @@ function fix_ptx_kernel()
                     "name" => "W",
                     "kotekan_name" => "gpu_mem_phase",
                     "type" => "float16",
-                    "axislabels" => """ "C", "dishM", "dishN", "F", "P" """,
-                    "axislengths" => "$C, $M, $N, $F, $P",
+                    "axislabels" => """ "C", "dishM", "dishN", "P", "F" """,
+                    "axislengths" => "$C, $M, $N, $P, $F",
                     "isoutput" => false,
                     "hasbuffer" => true,
                 ),
