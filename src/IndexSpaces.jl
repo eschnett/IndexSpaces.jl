@@ -1103,6 +1103,17 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, index1::Index
     return nothing
 end
 
+function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, index1::Index{Physics}, index2::Index{Machine})
+    @assert index1 ≠ index2
+    var_layout = emitter.environment[var]
+    if var_layout[index1] isa Register
+        permute!(emitter, res, var, var_layout[index1], index2)
+    else
+        permute!(emitter, res, var, index2, var_layout[index1])
+    end
+    return nothing
+end
+
 get_lo4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val << 0x0, r1.val << 0x4))
 get_hi4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val >> 0x4, r1.val >> 0x0))
 get_lo8(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4}} = T(prmt(r0.val, r1.val, 0x6240))
