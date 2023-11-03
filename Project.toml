@@ -1,7 +1,7 @@
 name = "IndexSpaces"
 uuid = "3ceaaf38-e7b4-4193-a23a-303dd231a83a"
 authors = ["Erik Schnetter <schnetter@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
