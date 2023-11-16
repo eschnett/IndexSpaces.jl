@@ -988,7 +988,9 @@ function unsafe_store4_global!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{
 end
 
 export store!
-function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4, offset::Code=0)
+function store!(
+    emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4, offset::Code=0, postprocess=identity
+)
     mem_var, mem_layout = mem
     reg_layout = emitter.environment[reg_var]
 
@@ -997,7 +999,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
-            push!(emitter.statements, :($mem_var[$addr + $offset + 0x1] = $reg_name))
+            push!(emitter.statements, :($mem_var[$postprocess($addr + $offset) + 0x1] = $reg_name))
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -1031,7 +1033,7 @@ function store!(emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg
             push!(
                 emitter.statements,
                 :(IndexSpaces.unsafe_store4_global!(
-                    $mem_var, $addr + $offset + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
+                    $mem_var, $postprocess($addr + $offset) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
                 )),
             )
         end
