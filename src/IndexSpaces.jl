@@ -1033,7 +1033,7 @@ function store!(
             push!(
                 emitter.statements,
                 :(IndexSpaces.unsafe_store4_global!(
-                    $mem_var, $postprocess(:($addr + $offset)) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
+                    $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
                 )),
             )
         end
