@@ -895,7 +895,13 @@ function unsafe_load4_global(arr::CuDeviceArray{T}, idx::Integer) where {T}
 end
 
 export load!
-function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem::Pair{Symbol,Layout{Physics,Machine}}; align::Int=4)
+function load!(
+    emitter::Emitter,
+    reg::Pair{Symbol,Layout{Physics,Machine}},
+    mem::Pair{Symbol,Layout{Physics,Machine}};
+    align::Int=4,
+    postprocess=identity,
+)
     reg_var, reg_layout = reg
     mem_var, mem_layout = mem
     # reg_var may or may not already exist
@@ -907,7 +913,7 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
-            push!(emitter.statements, :($reg_name = $mem_var[$addr + 0x1]))
+            push!(emitter.statements, :($reg_name = $mem_var[$(postprocess(addr)) + 0x1]))
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -940,7 +946,11 @@ function load!(emitter::Emitter, reg::Pair{Symbol,Layout{Physics,Machine}}, mem:
             addr = memory_index(reg_layout, mem_layout, vals)
             push!(
                 emitter.statements,
-                :(($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global($mem_var, $addr + 1i32)),
+                :(
+                    ($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global(
+                        $mem_var, $(postprocess(addr)) + 1i32
+                    )
+                ),
             )
         end
     else
