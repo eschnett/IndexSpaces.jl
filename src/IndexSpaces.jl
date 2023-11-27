@@ -1022,6 +1022,7 @@ function store!(
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
         loop_over_registers(emitter, tmp_layout) do state
+            @show state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
