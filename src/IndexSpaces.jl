@@ -999,7 +999,13 @@ end
 
 export store!
 function store!(
-    emitter::Emitter, mem::Pair{Symbol,Layout{Physics,Machine}}, reg_var::Symbol; align::Int=4, offset::Code=0, postprocess=identity
+    emitter::Emitter,
+    mem::Pair{Symbol,Layout{Physics,Machine}},
+    reg_var::Symbol;
+    align::Int=4,
+    condition=Returns(true),
+    offset::Code=0,
+    postprocess=identity,
 )
     mem_var, mem_layout = mem
     reg_layout = emitter.environment[reg_var]
@@ -1009,7 +1015,15 @@ function store!(
             reg_name = register_name(reg_var, state)
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
-            push!(emitter.statements, :($mem_var[$(postprocess(:($addr + $offset))) + 0x1] = $reg_name))
+            cond = condition(state)
+            push!(
+                emitter.statements,
+                quote
+                    if $cond
+                        $mem_var[$(postprocess(:($addr + $offset))) + 0x1] = $reg_name
+                    end
+                end,
+            )
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -1022,7 +1036,6 @@ function store!(
         delete!(tmp_layout, phys0)
         delete!(tmp_layout, phys1)
         loop_over_registers(emitter, tmp_layout) do state
-            @show state
             state0 = copy(state)
             state1 = copy(state)
             state2 = copy(state)
@@ -1041,11 +1054,16 @@ function store!(
             reg3_name = register_name(reg_var, state3)
             vals = physics_values(state0, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
+            cond = condition(state)
             push!(
                 emitter.statements,
-                :(IndexSpaces.unsafe_store4_global!(
-                    $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
-                )),
+                quote
+                    if $cond
+                        IndexSpaces.unsafe_store4_global!(
+                            $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
+                        )
+                    end
+                end,
             )
         end
     else
