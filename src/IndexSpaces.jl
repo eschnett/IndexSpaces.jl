@@ -180,15 +180,21 @@ end
 function Layout(pairs::AbstractVector{<:Pair{<:Index{Typ1},<:Index{Typ2}}}) where {Typ1,Typ2}
     dict = Dict{Index{Typ1},Index{Typ2}}()
     for (k, v) in pairs
-        if k ∈ keys(dict)
-            throw(ArgumentError("key $k exists already"))
+        if k.length ≠ v.length
+            throw(ArgumentError("Layout: Key and value lengths disagree for key $k, value $v"))
         end
-        if v ∈ values(dict)
-            throw(ArgumentError("value $v exists already"))
+        # Skip length 1 pairs
+        if k.length > 1
+            if k ∈ keys(dict)
+                throw(ArgumentError("key $k exists already"))
+            end
+            if v ∈ values(dict)
+                throw(ArgumentError("value $v exists already"))
+            end
+            @assert k ∉ keys(dict)
+            @assert v ∉ values(dict)
+            dict[k] = v
         end
-        @assert k ∉ keys(dict)
-        @assert v ∉ values(dict)
-        dict[k] = v
     end
     return Layout(dict)::Layout{Typ1,Typ2}
 end
