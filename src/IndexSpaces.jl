@@ -2476,8 +2476,8 @@ function mma_sp_row_col_m16n8k16_f16!(
     end
     @assert C_value_bits == 4
 
-    @assert spectator in A_row
-    @assert spectator in A_col
+    # @assert spectator in A_row
+    # @assert spectator in A_col
     # TODO: Generalize this
     @assert A_row[3] == spectator
     @assert A_col[2] == spectator
@@ -2534,16 +2534,14 @@ function mma_sp_row_col_m16n8k16_f16!(
         Bstate = filter_state(state, B_layout)
         Cstate = filter_state(state, C_layout)
         Dstate = filter_state(state, D_layout)
-        # We have 4 A inputs in principle, but sparsity reduces this to 2
+        # We have 4 `A` inputs in principle, but sparsity reduces this to 2
         Astate0 = copy(Astate)
         Astate1 = copy(Astate)
         # Astate2 = copy(Astate)
         # Astate3 = copy(Astate)
         # A is stored column-major in registers
         Astate0.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
-        Astate0.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
         Astate1.dict[A_row[4].name] = get(Astate1.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
-        Astate1.dict[A_col[4].name] = get(Astate1.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
         # Astate2.dict[A_row[4].name] = get(Astate2.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
         # Astate2.dict[A_col[4].name] = get(Astate2.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
         # Astate3.dict[A_row[4].name] = get(Astate3.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
