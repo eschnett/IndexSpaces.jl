@@ -2476,13 +2476,18 @@ function mma_sp_row_col_m16n8k16_f16!(
     end
     @assert C_value_bits == 4
 
+    @assert spectator in A_row
+    @assert spectator in A_col
+    # TODO: Generalize this
+    @assert A_row[3] == spectator
+    @assert A_col[2] == spectator
+
     @assert length(A_col) == 4
     @assert length(A_row) == 4
     @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
-    @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
-    @assert A_layout[A_col[3]] == Thread(:thread, 2, 2)
-    A_layout[A_col[4]]::Register
-    @assert A_layout[A_col[4]].length == 2
+    @assert A_col[2] == spectator
+    @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
+    @assert A_layout[A_col[4]] == Thread(:thread, 2, 2)
     @assert A_layout[A_row[1]] == Thread(:thread, 4, 2)
     @assert A_layout[A_row[2]] == Thread(:thread, 8, 2)
     @assert A_layout[A_row[3]] == Thread(:thread, 16, 2)
@@ -2510,12 +2515,6 @@ function mma_sp_row_col_m16n8k16_f16!(
     @assert C_layout[C_row[3]] == Thread(:thread, 16, 2)
     C_layout[C_row[4]]::Register
     @assert C_layout[C_row[4]].length == 2
-
-    @assert spectator in A_row
-    @assert spectator in A_col
-    # TODO: Generalize this
-    @assert A_row[3] == spectator
-    @assert A_col[2] == spectator
 
     # Check that physics indices match
     @assert C_col == B_col
