@@ -1988,6 +1988,35 @@ CUDA.@device_override function mma_m16n8k16(A::NTuple{4,Float16x2}, B::NTuple{2,
     return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
 end
 
+mma_sp_m16n8k16(A::NTuple{4,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}) = C
+CUDA.@device_override function mma_sp_m16n8k16(
+    A::NTuple{2,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}, e::Int2x16, f::Integer
+)
+    D = Base.llvmcall(
+        """
+            %res = call {i32, i32} asm sideeffect "mma.sp.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 {\$0, \$1}, {\$2, \$3}, {\$4, \$5}, {\$6, \$7}, \$8, \$9;", "=r,=r,r,r,r,r,r,r,r,n"(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4, i32 %5, i32 %6, i32 %7)
+            %res0 = extractvalue {i32, i32} %res, 0
+            %res1 = extractvalue {i32, i32} %res, 1
+            %val0 = insertvalue [2 x i32] undef, i32 %res0, 0
+            %val = insertvalue [2 x i32] %val0, i32 %res1, 1
+            ret [2 x i32] %val
+        """,
+        NTuple{2,Int32},
+        NTuple{8,Int32},
+        A[1].val % Int32,
+        A[2].val % Int32,
+        A[3].val % Int32,
+        A[4].val % Int32,
+        B[1].val % Int32,
+        B[2].val % Int32,
+        C[1].val % Int32,
+        C[2].val % Int32,
+        e.val % Int32,
+        F % Int32,
+    )
+    return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
+end
+
 # TODO: combine `mma` functions
 export mma_row_col_m8n8k16_s8!
 function mma_row_col_m8n8k16_s8!(
@@ -2375,6 +2404,223 @@ function mma_row_col_m16n8k16_f16!(
             :(
                 ($D0_name, $D1_name) = IndexSpaces.mma_m16n8k16(
                     ($A0_name, $A1_name, $A2_name, $A3_name), ($B0_name, $B1_name), ($C0_name, $C1_name)
+                )
+            ),
+        )
+    end
+
+    return nothing
+end
+
+export mma_sp_row_col_m16n8k16_f16!
+function mma_sp_row_col_m16n8k16_f16!(
+    emitter::Emitter,
+    D::Symbol,
+    A_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    B_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    C_indices::Pair{Symbol,<:Tuple{<:AbstractVector{<:Index{Physics}},<:AbstractVector{<:Index{Physics}}}},
+    spectator::Index{Physics},
+)
+    # The equivalent non-sparse (dense) operation is:
+
+    # D       = A       * B       + C
+    # D_ij    = A_ik    * B_kj    + C_ij
+    # D_16_8  = A_16_16 * B_16_8   + C_16_8
+    # Float16 = Float16 * Float16 + Float16
+
+    # We assume that this operation has been made sparse by omitting
+    # an index, i.e. one of the index bits of `A` is a spectator bit
+    # (is passed through). This must be one of the indices in both
+    # `A_row` and in `A_col`.
+
+    (A, (A_row, A_col)) = A_indices
+    (B, (B_row, B_col)) = B_indices
+    (C, (C_row, C_col)) = C_indices
+
+    A_layout = emitter.environment[A]
+    B_layout = emitter.environment[B]
+    C_layout = emitter.environment[C]
+    # D might or might not be identical to C
+    if D ≠ C
+        @assert D ∉ emitter.environment
+    end
+    D_layout = C_layout
+    emitter.environment[D] = D_layout
+
+    inv_A_layout = inv(A_layout)
+    inv_B_layout = inv(B_layout)
+    inv_C_layout = inv(C_layout)
+    inv_D_layout = inv(D_layout)
+
+    A_value = inv_A_layout[SIMD(:simd, 1, 2)]
+    A_value_tag = indextag(A_value)::ValueTag
+    A_value_bits = 0
+    while Index{Physics,A_value_tag}(A_value.name, 1, 1 << (A_value_bits + 1)) in A_layout
+        A_value_bits += 1
+    end
+    @assert A_value_bits == 4
+
+    B_value = inv_B_layout[SIMD(:simd, 1, 2)]
+    B_value_tag = indextag(B_value)::ValueTag
+    B_value_bits = 0
+    while Index{Physics,B_value_tag}(B_value.name, 1, 1 << (B_value_bits + 1)) in B_layout
+        B_value_bits += 1
+    end
+    @assert B_value_bits == 4
+
+    C_value = inv_C_layout[SIMD(:simd, 1, 2)]
+    C_value_tag = indextag(C_value)::ValueTag
+    C_value_bits = 0
+    while Index{Physics,C_value_tag}(C_value.name, 1, 1 << (C_value_bits + 1)) in C_layout
+        C_value_bits += 1
+    end
+    @assert C_value_bits == 4
+
+    @assert length(A_col) == 4
+    @assert length(A_row) == 4
+    @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
+    @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
+    @assert A_layout[A_col[3]] == Thread(:thread, 2, 2)
+    A_layout[A_col[4]]::Register
+    @assert A_layout[A_col[4]].length == 2
+    @assert A_layout[A_row[1]] == Thread(:thread, 4, 2)
+    @assert A_layout[A_row[2]] == Thread(:thread, 8, 2)
+    @assert A_layout[A_row[3]] == Thread(:thread, 16, 2)
+    A_layout[A_row[4]]::Register
+    @assert A_layout[A_row[4]].length == 2
+
+    @assert length(B_row) == 4
+    @assert length(B_col) == 3
+    @assert B_layout[B_row[1]] == SIMD(:simd, 16, 2)
+    @assert B_layout[B_row[2]] == Thread(:thread, 1, 2)
+    @assert B_layout[B_row[3]] == Thread(:thread, 2, 2)
+    B_layout[B_row[4]]::Register
+    @assert B_layout[B_row[4]].length == 2
+    @assert B_layout[B_col[1]] == Thread(:thread, 4, 2)
+    @assert B_layout[B_col[2]] == Thread(:thread, 8, 2)
+    @assert B_layout[B_col[3]] == Thread(:thread, 16, 2)
+
+    @assert length(C_row) == 4
+    @assert length(C_col) == 3
+    @assert C_layout[C_col[1]] == SIMD(:simd, 16, 2)
+    @assert C_layout[C_col[2]] == Thread(:thread, 1, 2)
+    @assert C_layout[C_col[3]] == Thread(:thread, 2, 2)
+    @assert C_layout[C_row[1]] == Thread(:thread, 4, 2)
+    @assert C_layout[C_row[2]] == Thread(:thread, 8, 2)
+    @assert C_layout[C_row[3]] == Thread(:thread, 16, 2)
+    C_layout[C_row[4]]::Register
+    @assert C_layout[C_row[4]].length == 2
+
+    @assert spectator in A_row
+    @assert spectator in A_col
+    # TODO: Generalize this
+    @assert A_row[3] == spectator
+    @assert A_col[2] == spectator
+
+    # Check that physics indices match
+    @assert C_col == B_col
+    @assert C_row == A_row
+    @assert A_col == B_row
+
+    # Keep only those state symbols that are in the layout
+    function filter_state(state::State, layout::Layout)
+        names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
+        return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
+    end
+
+    tmp_layout = copy(D_layout)
+    delete!(tmp_layout, C_row[4]) # delete registers
+    loop_over_registers(emitter, tmp_layout) do state
+        Astate = filter_state(state, A_layout)
+        Bstate = filter_state(state, B_layout)
+        Cstate = filter_state(state, C_layout)
+        Dstate = filter_state(state, D_layout)
+        # We have 4 A inputs in principle, but sparsity reduces this to 2
+        Astate0 = copy(Astate)
+        Astate1 = copy(Astate)
+        # Astate2 = copy(Astate)
+        # Astate3 = copy(Astate)
+        # A is stored column-major in registers
+        Astate0.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
+        Astate0.dict[A_col[4].name] = get(Astate0.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
+        Astate1.dict[A_row[4].name] = get(Astate1.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
+        Astate1.dict[A_col[4].name] = get(Astate1.dict, A_col[4].name, 0i32) + Int32(0 * A_col[4].offset)
+        # Astate2.dict[A_row[4].name] = get(Astate2.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
+        # Astate2.dict[A_col[4].name] = get(Astate2.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
+        # Astate3.dict[A_row[4].name] = get(Astate3.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
+        # Astate3.dict[A_col[4].name] = get(Astate3.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
+        Bstate0 = copy(Bstate)
+        Bstate1 = copy(Bstate)
+        Bstate0.dict[B_row[4].name] = get(Bstate0.dict, B_row[4].name, 0i32) + Int32(0 * B_row[4].offset)
+        Bstate1.dict[B_row[4].name] = get(Bstate1.dict, B_row[4].name, 0i32) + Int32(1 * B_row[4].offset)
+        Cstate0 = copy(Cstate)
+        Cstate1 = copy(Cstate)
+        Cstate0.dict[C_row[4].name] = get(Cstate0.dict, C_row[4].name, 0i32) + Int32(0 * C_row[4].offset)
+        Cstate1.dict[C_row[4].name] = get(Cstate1.dict, C_row[4].name, 0i32) + Int32(1 * C_row[4].offset)
+
+        A0_name = register_name(A, Astate0)
+        A1_name = register_name(A, Astate1)
+        # A2_name = register_name(A, Astate2)
+        # A3_name = register_name(A, Astate3)
+        B0_name = register_name(B, Bstate0)
+        B1_name = register_name(B, Bstate1)
+        C0_name = register_name(C, Cstate0)
+        C1_name = register_name(C, Cstate1)
+        D0_name = register_name(D, Cstate0)
+        D1_name = register_name(D, Cstate1)
+        @assert A_row[3] == spectator
+        @assert A_col[2] == spectator
+        A_pattern = falses(32, 32)
+        for row in 0:15, col in 0:15
+            sprow = (row >> 2) & 1
+            spcol = (col >> 1) & 1
+            A_pattern[sprow + 1, spcol + 1] = sprow == spcol
+        end
+        A_pattern_manual = [
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+        ]
+        @assert A_pattern == A_pattern_manual
+        function decode_row_pattern(row::Integer, col::Integer)
+            @assert col % 4 == 0
+            c1 = 0
+            while c1 < 4 && !A[row + 1, col + c1 + 1]
+                c1 += 1
+            end
+            @assert c1 <= 3
+            c2 = c1 + 1
+            while c2 < 4 && !A[row + 1, col + c2 + 1]
+                c2 += 1
+            end
+            @assert c2 <= 3
+            c3 = c2 + 1
+            while c3 < 4 && !A[row + 1, col + c3 + 1]
+                c3 += 1
+            end
+            @assert c3 == 4
+            return (c1, c2)
+        end
+        a_row_patterns = [NTuple{2,Int}[decode_row_pattern(row, col) for col in 0:4:15] for row in 0:15]
+        @show a_row_patterns
+        push!(
+            emitter.statements,
+            :(
+                ($D0_name, $D1_name) = IndexSpaces.mma_ap_m16n8k16(
+                    ($A0_name, $A1_name), ($B0_name, $B1_name), ($C0_name, $C1_name), $e, 0i32
                 )
             ),
         )
