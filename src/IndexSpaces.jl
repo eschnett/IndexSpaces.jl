@@ -2593,6 +2593,7 @@ function mma_sp_row_col_m16n8k16_f16!(
             0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
             0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
         ]
+        @show A_pattern A_pattern_manual
         @assert A_pattern == A_pattern_manual
         function decode_row_pattern(row::Integer, col::Integer)
             @assert col % 4 == 0
