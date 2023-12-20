@@ -2614,15 +2614,35 @@ function mma_sp_row_col_m16n8k16_f16!(
             @assert c3 == 4
             return (c1, c2)
         end
-        a_row_patterns = [NTuple{2,Int}[decode_row_pattern(row, col) for col in 0:4:15] for row in 0:15]
+        a_row_patterns = NTuple{2,Int}[decode_row_pattern(row, col) for col in 0:4:15 for row in 0:15]
         @show a_row_patterns
+        e = [Int16x2(reinterpret(Int, vec(a_row_patterns))...) for threadgroup in 0:4:31]
+        @show e
         push!(
             emitter.statements,
-            :(
+            quote
+                # thread = IndexSpaces.cuda_threadidx()
+                # row = 1i32 * (thread ÷ 4i32 % 8i32) # + 8i32 * reg01
+                # col = 2i32 * (thread ÷ 1i32 % 4i32) # + 1i32 * simd01
+                # col0 = col + 0i32
+                # col1 = col + 1i32
+                # col2 = col + 2i32
+                # col3 = col + 3i32
+                # row_spectator = (row >> 2i32) & 1i32
+                # col_spectator0 = (col0 >> 1i32) & 1i32
+                # col_spectator1 = (col1 >> 1i32) & 1i32
+                # col_spectator2 = (col2 >> 1i32) & 1i32
+                # col_spectator3 = (col3 >> 1i32) & 1i32
+                # delta = row_spectator == col_spectator
+                # 
+                # 
+                # col4 = col ÷ 4
+                # 
+                # e = Int2x16()
                 ($D0_name, $D1_name) = IndexSpaces.mma_ap_m16n8k16(
                     ($A0_name, $A1_name), ($B0_name, $B1_name), ($C0_name, $C1_name), $e, 0i32
                 )
-            ),
+            end,
         )
     end
 
