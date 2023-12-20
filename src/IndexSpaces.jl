@@ -2616,7 +2616,7 @@ function mma_sp_row_col_m16n8k16_f16!(
         end
         a_row_patterns = NTuple{2,Int}[decode_row_pattern(row, col) for row in 0:15 for col in 0:4:15]
         @show a_row_patterns
-        e = [Int16x2(reinterpret(Int, vec(a_row_patterns[thread+1:8:31,:]))...) for thread in 0:8:31]
+        e = [Int16x2(reinterpret(Int, vec(a_row_patterns[thread+1:8:16,:]))...) for thread in 0:4:31]
         @show e
         push!(
             emitter.statements,
