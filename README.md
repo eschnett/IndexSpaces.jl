@@ -46,4 +46,4 @@ Intel Skylake vs. Nvidia Tesla V100 (numbers are estimates)
 | L3 cache        |            ? |            ? | L2 cache                 |
 | HBM             |          n/a |        32 GB | memory                   |
 | memory          |       192 GB |          n/a | host memory              |
-|-----------------|--------------|--------------|--------------------------|
+
