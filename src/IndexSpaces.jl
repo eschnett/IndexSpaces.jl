@@ -2598,17 +2598,17 @@ function mma_sp_row_col_m16n8k16_f16!(
         function decode_row_pattern(row::Integer, col::Integer)
             @assert col % 4 == 0
             c1 = 0
-            while c1 < 4 && !A[row + 1, col + c1 + 1]
+            while c1 < 4 && !A_pattern[row + 1, col + c1 + 1]
                 c1 += 1
             end
             @assert c1 <= 3
             c2 = c1 + 1
-            while c2 < 4 && !A[row + 1, col + c2 + 1]
+            while c2 < 4 && !A_pattern[row + 1, col + c2 + 1]
                 c2 += 1
             end
             @assert c2 <= 3
             c3 = c2 + 1
-            while c3 < 4 && !A[row + 1, col + c3 + 1]
+            while c3 < 4 && !A_pattern[row + 1, col + c3 + 1]
                 c3 += 1
             end
             @assert c3 == 4
