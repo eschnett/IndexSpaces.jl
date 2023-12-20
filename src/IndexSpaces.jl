@@ -2481,7 +2481,7 @@ function mma_sp_row_col_m16n8k16_f16!(
     # TODO: Generalize this
     @assert A_row[3] == spectator
     @assert A_col[2] == spectator
-    @assert B_col[3] == spectator
+    @assert B_row[2] == spectator
     @assert C_row[3] == spectator
 
     @assert length(A_col) == 4
@@ -2499,7 +2499,6 @@ function mma_sp_row_col_m16n8k16_f16!(
     @assert length(B_row) == 4
     @assert length(B_col) == 3
     @assert B_layout[B_row[1]] == SIMD(:simd, 16, 2)
-    @assert B_row[2] == spectator
     @assert B_layout[B_row[2]] == Thread(:thread, 1, 2)
     @assert B_layout[B_row[3]] == Thread(:thread, 2, 2)
     B_layout[B_row[4]]::Register
