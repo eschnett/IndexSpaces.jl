@@ -2573,7 +2573,7 @@ function mma_sp_row_col_m16n8k16_f16!(
         for row in 0:15, col in 0:15
             sprow = (row >> 2) & 1
             spcol = (col >> 1) & 1
-            A_pattern[sprow + 1, spcol + 1] = sprow == spcol
+            A_pattern[row + 1, col + 1] = sprow == spcol
         end
         A_pattern_manual = [
             1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
