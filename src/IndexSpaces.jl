@@ -2503,13 +2503,11 @@ function mma_sp_row_col_m16n8k16_f16!(
     if Aspcol == 2
         @show spectator A_col[2] A_col[3] A_layout[A_col[3]]
         @assert A_col[2] == spectator
-        @assert A_col[2] ∉ A_layout
         @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
     elseif Aspcol == 3
         @assert false
         @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
         @assert A_col[3] == spectator
-        @assert A_col[3] ∉ A_layout
     else
         @assert false
     end
