@@ -2474,6 +2474,7 @@ function mma_sp_row_col_m16n8k16_f16!(
     while Index{Physics,C_value_tag}(C_value.name, 1, 1 << (C_value_bits + 1)) in C_layout
         C_value_bits += 1
     end
+    @show C_value_bits
     @assert C_value_bits == 4
 
     # @assert spectator in A_row
