@@ -2486,6 +2486,9 @@ function mma_sp_row_col_m16n8k16_f16!(
         Asprow = 2
         Aspcol = 3
     else
+        @show spectator
+        @show A_row
+        @show A_col
         @assert false
     end
 
