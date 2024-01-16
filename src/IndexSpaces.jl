@@ -2768,25 +2768,10 @@ function apply!(
         value_bits += 1
     end
 
-    # # Keep only those state symbols that are in the layout
-    # function filter_state(state::State, layout::Layout)
-    #     names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
-    #     return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
-    # end
-
-    # Remove all keys in `other` from `layout`
-    function layout_delete!(layout::Layout, other::Layout)
-        for key in keys(other.dict)
-            delete!(layout, key)
-        end
-        return layout
-    end
-
-    # Keep only those state indices that are in the layout
+    # Keep only those state symbols that are in the layout
     function filter_state(state::State, layout::Layout)
-        state_without_layout = layout_delete!(copy(state.dict), layout)
-        state_and_layout = layout_delete!(copy(state.dict), state_without_layout)
-        return State(state.kernel_setup, state_and_layout)
+        names = Set(map(k -> k.name, collect(keys(layout.dict))))::Set{Symbol}
+        return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
     end
 
     loop_over_registers(emitter, res_layout) do state
