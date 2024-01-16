@@ -2475,6 +2475,7 @@ function mma_sp_row_col_m16n8k16_f16!(
         C_value_bits += 1
     end
     @show C_value_bits
+    @show C_value_bits == 4
     @assert C_value_bits == 4
 
     # @assert spectator in A_row
