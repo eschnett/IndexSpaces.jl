@@ -2479,16 +2479,36 @@ function mma_sp_row_col_m16n8k16_f16!(
     # @assert spectator in A_row
     # @assert spectator in A_col
     # TODO: Generalize this
-    @assert A_row[3] == spectator
-    @assert A_col[2] == spectator
-    @assert B_row[2] == spectator
-    @assert C_row[3] == spectator
+    if A_row[3] == spectator && A_col[2] == spectator
+        Asprow = 3
+        Aspcol = 2
+        @assert A_row[3] == spectator
+        @assert A_col[2] == spectator
+        @assert B_row[2] == spectator
+        @assert C_row[3] == spectator
+    elseif A_row[2] == spectator && A_col[3] == spectator
+        Asprow = 2
+        Aspcol = 3
+        @assert A_row[2] == spectator
+        @assert A_col[3] == spectator
+        @assert B_row[3] == spectator
+        @assert C_row[2] == spectator
+    else
+        @assert false
+    end
 
     @assert length(A_col) == 4
     @assert length(A_row) == 4
     @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
-    @assert A_col[2] == spectator
-    @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
+    if Aspcol == 2
+        @assert A_col[2] == spectator
+        @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
+    elseif Aspcol == 3
+        @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
+        @assert A_col[3] == spectator
+    else
+        @assert false
+    end
     @assert A_layout[A_col[4]] == Thread(:thread, 2, 2)
     @assert A_layout[A_row[1]] == Thread(:thread, 4, 2)
     @assert A_layout[A_row[2]] == Thread(:thread, 8, 2)
@@ -2539,15 +2559,9 @@ function mma_sp_row_col_m16n8k16_f16!(
         # We have 4 `A` inputs in principle, but sparsity reduces this to 2
         Astate0 = copy(Astate)
         Astate1 = copy(Astate)
-        # Astate2 = copy(Astate)
-        # Astate3 = copy(Astate)
         # A is stored column-major in registers
         Astate0.dict[A_row[4].name] = get(Astate0.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
         Astate1.dict[A_row[4].name] = get(Astate1.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
-        # Astate2.dict[A_row[4].name] = get(Astate2.dict, A_row[4].name, 0i32) + Int32(0 * A_row[4].offset)
-        # Astate2.dict[A_col[4].name] = get(Astate2.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
-        # Astate3.dict[A_row[4].name] = get(Astate3.dict, A_row[4].name, 0i32) + Int32(1 * A_row[4].offset)
-        # Astate3.dict[A_col[4].name] = get(Astate3.dict, A_col[4].name, 0i32) + Int32(1 * A_col[4].offset)
         Bstate0 = copy(Bstate)
         Bstate1 = copy(Bstate)
         Bstate0.dict[B_row[4].name] = get(Bstate0.dict, B_row[4].name, 0i32) + Int32(0 * B_row[4].offset)
@@ -2559,8 +2573,6 @@ function mma_sp_row_col_m16n8k16_f16!(
 
         A0_name = register_name(A, Astate0)
         A1_name = register_name(A, Astate1)
-        # A2_name = register_name(A, Astate2)
-        # A3_name = register_name(A, Astate3)
         B0_name = register_name(B, Bstate0)
         B1_name = register_name(B, Bstate1)
         C0_name = register_name(C, Cstate0)
@@ -2571,28 +2583,51 @@ function mma_sp_row_col_m16n8k16_f16!(
         @assert A_col[2] == spectator
         A_pattern = falses(16, 16)
         for row in 0:15, col in 0:15
-            sprow = (row >> 2) & 1
-            spcol = (col >> 1) & 1
+            sprow = (row >> (Asprow - 1)) & 1
+            spcol = (col >> (Aspcol - 1)) & 1
             A_pattern[row + 1, col + 1] = sprow == spcol
         end
-        A_pattern_manual = [
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-            0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-        ]
+        if (Asprow, Aspcol) == (3, 2)
+            A_pattern_manual = [
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+            ]
+        elseif (Asprow, Aspcol) == (2, 3)
+            A_pattern_manual = [
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+                0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1
+            ]
+        else
+            @assert false
+        end
         @assert A_pattern == A_pattern_manual
         function decode_row_pattern(row::Integer, col::Integer)
             @assert col % 4 == 0
