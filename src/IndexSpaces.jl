@@ -2477,11 +2477,13 @@ function mma_sp_row_col_m16n8k16_f16!(
     @show C_value_bits
     @show C_value_bits == 4
     @assert C_value_bits == 4
+    @show 11
 
     # @assert spectator in A_row
     # @assert spectator in A_col
     # TODO: Generalize this
     if A_row[3] == spectator && A_col[2] == spectator
+        @show 12
         Asprow = 3
         Aspcol = 2
         @assert A_row[3] == spectator
@@ -2489,6 +2491,7 @@ function mma_sp_row_col_m16n8k16_f16!(
         @assert B_row[2] == spectator
         @assert C_row[3] == spectator
     elseif A_row[2] == spectator && A_col[3] == spectator
+        @show 13
         Asprow = 2
         Aspcol = 3
         @assert A_row[2] == spectator
@@ -2496,8 +2499,10 @@ function mma_sp_row_col_m16n8k16_f16!(
         @assert B_row[3] == spectator
         @assert C_row[2] == spectator
     else
+        @show 14
         @assert false
     end
+    @show 15
 
     @assert length(A_col) == 4
     @assert length(A_row) == 4
