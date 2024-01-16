@@ -2491,9 +2491,7 @@ function mma_sp_row_col_m16n8k16_f16!(
         Asprow = 3
         Aspcol = 2
     else
-        @show spectator
-        @show A_row
-        @show A_col
+        @show spectator A_row A_col
         @assert false
     end
 
@@ -2501,7 +2499,6 @@ function mma_sp_row_col_m16n8k16_f16!(
     @assert length(A_row) == 4
     @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
     if Aspcol == 2
-        @show spectator A_col[2] A_col[3] A_layout[A_col[3]]
         @assert A_col[2] == spectator
         @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
     elseif Aspcol == 3
