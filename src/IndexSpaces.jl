@@ -1988,9 +1988,9 @@ CUDA.@device_override function mma_m16n8k16(A::NTuple{4,Float16x2}, B::NTuple{2,
     return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
 end
 
-mma_sp_m16n8k16(A::NTuple{2,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}, e::Int2x16, f::Integer) = C
+mma_sp_m16n8k16(A::NTuple{2,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}, e::Int2x16, f::Int32) = C
 CUDA.@device_override function mma_sp_m16n8k16(
-    A::NTuple{2,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}, e::Int2x16, f::Integer
+    A::NTuple{2,Float16x2}, B::NTuple{2,Float16x2}, C::NTuple{2,Float16x2}, e::Int2x16, f::Int32
 )
     D = Base.llvmcall(
         """
