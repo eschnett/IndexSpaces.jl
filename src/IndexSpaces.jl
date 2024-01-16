@@ -2581,8 +2581,8 @@ function mma_sp_row_col_m16n8k16_f16!(
         C1_name = register_name(C, Cstate1)
         D0_name = register_name(D, Cstate0)
         D1_name = register_name(D, Cstate1)
-        @assert A_row[3] == spectator
-        @assert A_col[2] == spectator
+        @assert A_row[Asprow] == spectator
+        @assert A_col[Aspcol] == spectator
         A_pattern = falses(16, 16)
         for row in 0:15, col in 0:15
             sprow = (row >> (Asprow - 1)) & 1
