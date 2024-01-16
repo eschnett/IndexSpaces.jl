@@ -2010,7 +2010,7 @@ CUDA.@device_override function mma_sp_m16n8k16(
         C[1].val % Int32,
         C[2].val % Int32,
         e.val % Int32,
-        F % Int32,
+        f % Int32,
     )
     return (Float16x2(D[1] % UInt32), Float16x2(D[2] % UInt32))
 end
