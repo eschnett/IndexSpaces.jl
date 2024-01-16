@@ -2774,10 +2774,18 @@ function apply!(
     #     return State(state.kernel_setup, filter(kv -> kv[1] ∈ names, state.dict))
     # end
 
+    # Remove all keys in `other` from `layout`
+    function layout_delete!(layout::Layout, other::Layout)
+        for key in keys(other.dict)
+            delete!(layout, key)
+        end
+        return layout
+    end
+
     # Keep only those state indices that are in the layout
     function filter_state(state::State, layout::Layout)
-        state_without_layout = delete!(copy(state.dict), layout)
-        state_and_layout = delete!(copy(state.dict), state_without_layout)
+        state_without_layout = layout_delete!(copy(state.dict), layout)
+        state_and_layout = layout_delete!(copy(state.dict), state_without_layout)
         return State(state.kernel_setup, state_and_layout)
     end
 
