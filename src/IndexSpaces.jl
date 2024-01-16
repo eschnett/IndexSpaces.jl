@@ -2474,35 +2474,20 @@ function mma_sp_row_col_m16n8k16_f16!(
     while Index{Physics,C_value_tag}(C_value.name, 1, 1 << (C_value_bits + 1)) in C_layout
         C_value_bits += 1
     end
-    @show C_value_bits
-    @show C_value_bits == 4
     @assert C_value_bits == 4
-    @show 11
 
     # @assert spectator in A_row
     # @assert spectator in A_col
     # TODO: Generalize this
-    if A_row[3] == spectator && A_col[2] == spectator
-        @show 12
-        Asprow = 3
+    if A_row[2] == spectator && A_col[2] == spectator
+        Asprow = 2
         Aspcol = 2
-        @assert A_row[3] == spectator
-        @assert A_col[2] == spectator
-        @assert B_row[2] == spectator
-        @assert C_row[3] == spectator
     elseif A_row[2] == spectator && A_col[3] == spectator
-        @show 13
         Asprow = 2
         Aspcol = 3
-        @assert A_row[2] == spectator
-        @assert A_col[3] == spectator
-        @assert B_row[3] == spectator
-        @assert C_row[2] == spectator
     else
-        @show 14
         @assert false
     end
-    @show 15
 
     @assert length(A_col) == 4
     @assert length(A_row) == 4
@@ -2594,22 +2579,22 @@ function mma_sp_row_col_m16n8k16_f16!(
             spcol = (col >> (Aspcol - 1)) & 1
             A_pattern[row + 1, col + 1] = sprow == spcol
         end
-        if (Asprow, Aspcol) == (3, 2)
+        if (Asprow, Aspcol) == (2, 2)
             A_pattern_manual = [
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
-                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
-                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
                 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
+                1 1 0 0 1 1 0 0 1 1 0 0 1 1 0 0
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
                 0 0 1 1 0 0 1 1 0 0 1 1 0 0 1 1
             ]
