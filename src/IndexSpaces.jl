@@ -2701,7 +2701,7 @@ function mma_sp_row_col_m16n8k16_f16!(
                     else
                         @assert false
                     end
-                    IndexSpaces.mma_ap_m16n8k16(($A0_name, $A1_name), ($B0_name, $B1_name), ($C0_name, $C1_name), e, 0i32)
+                    IndexSpaces.mma_sp_m16n8k16(($A0_name, $A1_name), ($B0_name, $B1_name), ($C0_name, $C1_name), e, 0i32)
                 end
             end,
         )
