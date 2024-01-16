@@ -2483,6 +2483,8 @@ function mma_sp_row_col_m16n8k16_f16!(
         Asprow = 2
         Aspcol = 2
     elseif A_row[2] == spectator && A_col[3] == spectator
+        # This case is not possible; the sparse column must be one of 1 or 2 (one of the two lowest bits)
+        @assert false
         Asprow = 2
         Aspcol = 3
     elseif A_row[3] == spectator && A_col[2] == spectator
@@ -2499,11 +2501,15 @@ function mma_sp_row_col_m16n8k16_f16!(
     @assert length(A_row) == 4
     @assert A_layout[A_col[1]] == SIMD(:simd, 16, 2)
     if Aspcol == 2
+        @show spectator A_col[2] A_col[3] A_layout[A_col[3]]
         @assert A_col[2] == spectator
+        @assert A_col[2] ∉ A_layout
         @assert A_layout[A_col[3]] == Thread(:thread, 1, 2)
     elseif Aspcol == 3
+        @assert false
         @assert A_layout[A_col[2]] == Thread(:thread, 1, 2)
         @assert A_col[3] == spectator
+        @assert A_col[3] ∉ A_layout
     else
         @assert false
     end
