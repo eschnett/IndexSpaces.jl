@@ -2485,6 +2485,9 @@ function mma_sp_row_col_m16n8k16_f16!(
     elseif A_row[2] == spectator && A_col[3] == spectator
         Asprow = 2
         Aspcol = 3
+    elseif A_row[3] == spectator && A_col[2] == spectator
+        Asprow = 3
+        Aspcol = 2
     else
         @show spectator
         @show A_row
