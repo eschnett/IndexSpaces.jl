@@ -2778,7 +2778,7 @@ function apply!(
     function filter_state(state::State, layout::Layout)
         state_without_layout = delete!(copy(state.dict), layout)
         state_and_layout = delete!(copy(state.dict), state_without_layout)
-        return State(state.kernel_setup, state_with_layout)
+        return State(state.kernel_setup, state_and_layout)
     end
 
     loop_over_registers(emitter, res_layout) do state
