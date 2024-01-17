@@ -2699,12 +2699,12 @@ function mma_sp_row_col_m16n8k16_f16!(
                     # else
                     #     @assert false
                     end
-                    IndexSpaces.mma_sp_m16n8k16(($A0_name, $A1_name)::NTuple{2,Float16x2},
-                                                ($B0_name, $B1_name)::NTuple{2,Float16x2},
-                                                ($C0_name, $C1_name), # ::NTuple{2,Float16x2},
+                    IndexSpaces.mma_sp_m16n8k16(($A0_name, $A1_name)::NTuple{2,Float16x2}, # ok
+                                                ($B0_name, $B1_name)::NTuple{2,Float16x2}, # ok
+                                                ($C0_name, $C1_name)::NTuple{2,Float16x2}, # ???
                                                 e, # ::Int2x16,
                                                 0i32, # ::Int32,
-                                                )::NTuple{2,Float16x2}
+                                                )::NTuple{2,Float16x2} # ok
                 end
             end,
         )
