@@ -2699,6 +2699,7 @@ function mma_sp_row_col_m16n8k16_f16!(
                     # else
                     #     @assert false
                     end
+                    # Why are these type assertions necessary? Are they?
                     IndexSpaces.mma_sp_m16n8k16(($A0_name, $A1_name)::NTuple{2,Float16x2}, # ok 1
                                                 ($B0_name, $B1_name)::NTuple{2,Float16x2}, # ok 1
                                                 ($C0_name, $C1_name)::NTuple{2,Float16x2}, # ok 2
