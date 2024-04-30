@@ -3,6 +3,8 @@ using Primes
 using Random
 using Test
 
+const Memory = IndexSpaces.Memory
+
 @enum CHORDTag CplxTag BeamTag DishTag FreqTag PolrTag TimeTag
 
 const Cplx = Index{Physics,CplxTag}
