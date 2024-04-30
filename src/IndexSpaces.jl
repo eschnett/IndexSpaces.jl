@@ -575,26 +575,26 @@ end
 cuda_threadidx() = 0i32
 cuda_warpidx() = 0i32
 cuda_blockidx() = 0i32
-CUDA.@device_override cuda_threadidx() = threadIdx().x - 1i32
-CUDA.@device_override cuda_warpidx() = threadIdx().y - 1i32
-CUDA.@device_override cuda_blockidx() = blockIdx().x - 1i32
+CUDA.@device_override cuda_threadidx() = threadIdx().x::Int32 - 1i32
+CUDA.@device_override cuda_warpidx() = threadIdx().y::Int32 - 1i32
+CUDA.@device_override cuda_blockidx() = blockIdx().x::Int32 - 1i32
 
 indexvalue(::State, ::SIMD) = @assert false # needs to be handled by the caller
-indexvalue(state::State, register::Register) = state.dict[register.name]::Code
+indexvalue(state::State, register::Register) = :($(state.dict[register.name])::Int32)::Code
 function indexvalue(state::State, ::Thread)
-    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx(), 0i32, $(Int32(state.kernel_setup.num_threads))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_threadidx()::Int32, 0i32, $(Int32(state.kernel_setup.num_threads))))::Code
 end
 function indexvalue(state::State, ::Warp)
-    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx(), 0i32, $(Int32(state.kernel_setup.num_warps))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_warpidx()::Int32, 0i32, $(Int32(state.kernel_setup.num_warps))))::Code
 end
 function indexvalue(state::State, ::Block)
-    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx(), 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
+    return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx()::Int32, 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
 end
 function indexvalue(::State, loop::Loop)
-    return :(IndexSpaces.assume_inrange($(loop.name), 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
+    return :(IndexSpaces.assume_inrange($(loop.name)::Int32, 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
 end
 # indexvalue(state::State, unrolled_loop::UnrolledLoop) = state.dict[unrolled_loop.name]::Int32
-indexvalue(::State, unrolled_loop::UnrolledLoop) = unrolled_loop.name::Code
+indexvalue(::State, unrolled_loop::UnrolledLoop) = :($(unrolled_loop.name)::Int32)::Code
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
@@ -605,7 +605,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         machtag = indextag(mach)
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
-        machval = indexvalue(state, mach)
+        machval = indexvalue(state, mach)::Int32
         val = :(($machval ÷ $machoff) % $machlen)
 
         @assert !(phys isa SIMD)
@@ -613,7 +613,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physoff = Int32(phys.offset)
         # physlen = Int32(phys.length)
         physval = :($val * $physoff)
-        oldphysval = get(vals, phystag, 0i32)
+        oldphysval = get(vals, phystag, 0i32)::Int32
         physval = :($oldphysval + $physval)
         vals[phystag] = physval
     end
