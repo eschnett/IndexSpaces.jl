@@ -6,9 +6,8 @@ parallelization.
 * [Documentation](https://eschnett.github.io/IndexSpaces.jl/dev/)
 * [![GitHub
   CI](https://github.com/eschnett/IndexSpaces.jl/workflows/CI/badge.svg)](https://github.com/eschnett/IndexSpaces.jl/actions)
+* [![codecov](https://codecov.io/gh/eschnett/IndexSpaces.jl/branch/main/graph/badge.svg?token=75FT03ULHD)](https://codecov.io/gh/eschnett/IndexSpaces.jl)
 * [![PkgEval](https://juliaci.github.io/NanosoldierReports/pkgeval_badges/I/IndexSpaces.svg)](https://juliaci.github.io/NanosoldierReports/pkgeval_badges/I/IndexSpaces.html)
-
-TODO * [![codecov](https://codecov.io/gh/eschnett/IndexSpaces.jl/branch/main/graph/badge.svg?token=75FT03ULHD)](https://codecov.io/gh/eschnett/IndexSpaces.jl)
 
 (CI code coverage is bad because the CI tests don't test the CUDA
 code; these tests need to be run manually.)
