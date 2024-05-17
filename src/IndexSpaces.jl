@@ -605,7 +605,10 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         machtag = indextag(mach)
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
-        machval = indexvalue(state, mach)::Int32
+        machval = indexvalue(state, mach)
+        if machval isa Number
+            machval::Int32
+        end
         val = :(($machval ÷ $machoff) % $machlen)
 
         @assert !(phys isa SIMD)
@@ -613,7 +616,10 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physoff = Int32(phys.offset)
         # physlen = Int32(phys.length)
         physval = :($val * $physoff)
-        oldphysval = get(vals, phystag, 0i32)::Int32
+        oldphysval = get(vals, phystag, 0i32)
+        if oldphysval isa Number
+            oldphysval::Int32
+        end
         physval = :($oldphysval + $physval)
         vals[phystag] = physval
     end
