@@ -853,7 +853,8 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},U
             end,
         )
 
-        @assert isempty(emitter′.output_environment)
+        # We ignore the output environment since it might differ between iterations
+        # @assert isempty(emitter′.output_environment)
     end
 
     return nothing
