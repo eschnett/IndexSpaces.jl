@@ -1888,7 +1888,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:I
 end
 
 function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair{Register,UnrolledLoop})
-    register, unrolled_loop = register_loop
+    register, loop = register_loop
 
     var_layout = emitter.environment[var]
     phys_register = register.length == 1 ? nothing : inv(var_layout)[register]
@@ -1897,7 +1897,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     res_layout = copy(var_layout)
     if phys_register ≢ nothing
         delete!(res_layout, phys_register)
-        res_layout[phys_register] = unrolled_loop
+        res_layout[phys_register] = loop
     end
     value_type = get_value_type(res_layout)
     emitter.environment[res] = res_layout
@@ -1905,8 +1905,8 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     loop_over_registers(emitter, res_layout) do state
         res_name = register_name(res, state)
         state′ = copy(state)
-        if unrolled_loop.length > 1
-            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
+        if loop.length > 1
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[loop.name]
         end
         var_name = register_name(var, state′)
         push!(emitter.statements, :($res_name = $var_name))
@@ -1989,8 +1989,8 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
     loop_over_registers(emitter, var_layout) do state
         var_name = register_name(var, state)
         state′ = copy(state)
-        if unrolled_loop.length > 1
-            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
+        if loop.length > 1
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[loop.name]
         end
         res_name = register_name(res, state′)
         push!(emitter.statements, :($res_name = $var_name))
