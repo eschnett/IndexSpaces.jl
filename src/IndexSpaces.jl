@@ -778,85 +778,86 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
 end
 
 export unrolled_loop!
-function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},<:Union{Loop,UnrolledLoop}})
-    index, loop = layout
 
-    environment′ = copy(emitter.environment)
-
-    @assert loop.name ∉ keys(environment′.values)
-
-    # @assert index.name ∉ environment′   # (see below for a fix)
-    # environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
-
-    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
-    body!(emitter′)
-
-    push!(
-        emitter.statements,
-        quote
-            $(emitter′.init_statements...)
-        end,
-    )
-    for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
-        push!(
-            emitter.statements,
-            quote
-                let $(loop.name) = $i
-                    $(emitter′.statements...)
-                end
-            end,
-        )
-    end
-
-    for (k, v) in emitter′.output_environment
-        @assert k ∉ keys(emitter.environment)
-        emitter.environment[k] = v
-    end
-
-    return nothing
-end
-
-# function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},UnrolledLoop})
-#     index, unrolled_loop = layout
+# function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},<:Union{Loop,UnrolledLoop}})
+#     index, loop = layout
 # 
-#     for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
-#         environment′ = copy(emitter.environment)
+#     environment′ = copy(emitter.environment)
 # 
-#         # # Add loop index to all layouts
-#         # for (name, layout) in environment′
-#         #     layout = copy(layout)
-#         #     # The loop index may already exist. In this case, remove
-#         #     # it, assuming that the loop "focusses" on a particular
-#         #     # index value.
-#         #     if index ∈ layout
-#         #         delete!(layout, index)
-#         #     end
-#         #     @assert index ∉ layout
-#         #     layout[index] = unrolled_loop
-#         #     environment′[name] = layout
-#         # end
+#     @assert loop.name ∉ keys(environment′.values)
 # 
-#         @assert unrolled_loop.name ∉ keys(environment′.values)
-#         environment′.values[unrolled_loop.name] = i
+#     # @assert index.name ∉ environment′   # (see below for a fix)
+#     # environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 # 
-#         emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
-#         body!(emitter′)
+#     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
+#     body!(emitter′)
 # 
-#         @assert isempty(emitter′.init_statements)
+#     push!(
+#         emitter.statements,
+#         quote
+#             $(emitter′.init_statements...)
+#         end,
+#     )
+#     for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
 #         push!(
 #             emitter.statements,
 #             quote
-#                 let $(unrolled_loop.name) = $i
+#                 let $(loop.name) = $i
 #                     $(emitter′.statements...)
 #                 end
 #             end,
 #         )
+#     end
 # 
-#         @assert isempty(emitter′.output_environment)
+#     for (k, v) in emitter′.output_environment
+#         @assert k ∉ keys(emitter.environment)
+#         emitter.environment[k] = v
 #     end
 # 
 #     return nothing
 # end
+
+function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},UnrolledLoop})
+    index, unrolled_loop = layout
+
+    for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
+        environment′ = copy(emitter.environment)
+
+        # # Add loop index to all layouts
+        # for (name, layout) in environment′
+        #     layout = copy(layout)
+        #     # The loop index may already exist. In this case, remove
+        #     # it, assuming that the loop "focusses" on a particular
+        #     # index value.
+        #     if index ∈ layout
+        #         delete!(layout, index)
+        #     end
+        #     @assert index ∉ layout
+        #     layout[index] = unrolled_loop
+        #     environment′[name] = layout
+        # end
+
+        @assert unrolled_loop.name ∉ keys(environment′.values)
+        environment′.values[unrolled_loop.name] = i
+
+        emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
+        body!(emitter′)
+
+        @assert isempty(emitter′.init_statements)
+        push!(
+            emitter.statements,
+            quote
+                let $(unrolled_loop.name) = $i
+                    $(emitter′.statements...)
+                end
+            end,
+        )
+
+        @assert isempty(emitter′.output_environment)
+    end
+
+    return nothing
+end
 
 ################################################################################
 
@@ -1906,6 +1907,8 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
         @show res_name = register_name(res, state)
         state′ = copy(state)
         if unrolled_loop.length > 1
+            @show unrolled_loop.name
+            @show emitter.environment.values[unrolled_loop.name]
             state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
         end
         @show var_name = register_name(var, state′)
