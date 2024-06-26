@@ -1921,7 +1921,8 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:I
 end
 
 export unselect!
-function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{<:Union{Loop,UnrolledLoop},Register})
+
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{Loop,Register})
     loop, register = loop_register
 
     var_layout = emitter.environment[var]
@@ -1957,6 +1958,47 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
         end
     end
 
+    return nothing
+end
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{Loop,<:Index{Physics}})
+    loop, phys = loop_phys
+    register = emitter.layout[phys]::Register
+    unselect!(emitter, res, var, loop => register)
+    return nothing
+end
+
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{UnrolledLoop,Register})
+    loop, register = loop_register
+
+    var_layout = emitter.environment[var]
+    phys_loop = loop.length == 1 ? nothing : inv(var_layout)[loop]
+
+    @assert res ∉ emitter.environment
+    res_layout = copy(var_layout)
+    if phys_loop ≢ nothing
+        delete!(res_layout, phys_loop)
+        res_layout[phys_loop] = register
+    end
+    value_type = get_value_type(res_layout)
+    emitter.environment[res] = res_layout
+    emitter.output_environment[res] = res_layout
+
+    loop_over_registers(emitter, var_layout) do state
+        var_name = register_name(var, state)
+        state′ = copy(state)
+        if unrolled_loop.length > 1
+            state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
+        end
+        res_name = register_name(res, state′)
+        push!(emitter.statements, :($res_name = $var_name))
+    end
+
+    return nothing
+end
+function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{UnrolledLoop,<:Index{Physics}})
+    loop, phys = loop_phys
+    register = emitter.layout[phys]::Register
+    unselect!(emitter, res, var, loop => register)
     return nothing
 end
 
