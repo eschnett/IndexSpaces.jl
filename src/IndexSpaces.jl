@@ -1887,10 +1887,10 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:I
 end
 
 function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair{Register,UnrolledLoop})
-    register, unrolled_loop = register_loop
+    @show register, unrolled_loop = register_loop
 
-    var_layout = emitter.environment[var]
-    phys_register = register.length == 1 ? nothing : inv(var_layout)[register]
+    @show var_layout = emitter.environment[var]
+    @show phys_register = register.length == 1 ? nothing : inv(var_layout)[register]
 
     @assert res ∉ emitter.environment
     res_layout = copy(var_layout)
@@ -1902,12 +1902,13 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
     emitter.environment[res] = res_layout
 
     loop_over_registers(emitter, res_layout) do state
-        res_name = register_name(res, state)
+        @show state
+        @show res_name = register_name(res, state)
         state′ = copy(state)
         if unrolled_loop.length > 1
             state′.dict[register.name] = get(state′.dict, register.name, 0i32) + emitter.environment.values[unrolled_loop.name]
         end
-        var_name = register_name(var, state′)
+        @show var_name = register_name(var, state′)
         push!(emitter.statements, :($res_name = $var_name))
     end
 
@@ -1960,12 +1961,13 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
 
     return nothing
 end
-function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{Loop,<:Index{Physics}})
-    loop, phys = loop_phys
-    register = emitter.environment[var][phys]::Register
-    unselect!(emitter, res, var, loop => register)
-    return nothing
-end
+# function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{Loop,<:Index{Physics}})
+#     loop, phys = loop_phys
+#     # This does not work, the type will be `Loop`
+#     register = emitter.environment[var][phys]::Register
+#     unselect!(emitter, res, var, loop => register)
+#     return nothing
+# end
 
 function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pair{UnrolledLoop,Register})
     loop, register = loop_register
@@ -1995,12 +1997,13 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
 
     return nothing
 end
-function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{UnrolledLoop,<:Index{Physics}})
-    loop, phys = loop_phys
-    register = emitter.environment[var][phys]::Register
-    unselect!(emitter, res, var, loop => register)
-    return nothing
-end
+# function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{UnrolledLoop,<:Index{Physics}})
+#     loop, phys = loop_phys
+#     # This does not work, the type will be `UnrolledLoop`
+#     register = emitter.environment[var][phys]::Register
+#     unselect!(emitter, res, var, loop => register)
+#     return nothing
+# end
 
 ################################################################################
 
