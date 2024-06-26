@@ -490,6 +490,7 @@ function evaluate_partially(expr::Expr)
         args[1] ≡ :⊻ && args[2] == 0 && return args[3]
         args[1] ≡ :⊻ && args[3] == 0 && return args[2]
     end
+    # TODO: Handle successive calls, e.g. `x * 4 % 4`
     return Expr(head, args...)
 end
 
@@ -540,7 +541,6 @@ function register_name(name::Symbol, state::State)
 end
 
 function loop_over_registers(f, emitter::Emitter, layout::Layout{Physics,Machine})
-    # state = State(emitter.kernel_setup, emitter.environment.values)
     state = State(emitter.kernel_setup)
     registers = sort!(filter!(mach -> mach isa Register, collect(values(layout.dict))))
     function go(state::State, n::Int)
@@ -548,8 +548,9 @@ function loop_over_registers(f, emitter::Emitter, layout::Layout{Physics,Machine
             f(state)
         else
             reg = registers[n]
-            newstate = copy(state)
             if reg.length > 1
+                newstate = copy(state)
+                # Loop over all register values
                 for r in 0:(reg.length - 1)
                     val = get(state.dict, reg.name, 0i32)
                     newstate.dict[reg.name] = val + reg.offset * r
@@ -591,7 +592,9 @@ function indexvalue(state::State, ::Block)
     return :(IndexSpaces.assume_inrange(IndexSpaces.cuda_blockidx()::Int32, 0i32, $(Int32(state.kernel_setup.num_blocks))))::Code
 end
 function indexvalue(::State, loop::Loop)
-    return :(IndexSpaces.assume_inrange($(loop.name)::Int32, 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))))::Code
+    return :(IndexSpaces.assume_inrange(
+        $(loop.name)::Int32, 0i32, $(Int32(loop.offset)), $(Int32(loop.offset * loop.length))
+    ))::Code
 end
 # indexvalue(state::State, unrolled_loop::UnrolledLoop) = state.dict[unrolled_loop.name]::Int32
 indexvalue(::State, unrolled_loop::UnrolledLoop) = :($(unrolled_loop.name)::Int32)::Code
@@ -751,13 +754,10 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     #     environment′[name] = layout
     # end
 
+    @assert loop.name ∉ keys(environment′.values)
+
     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
     body!(emitter′)
-
-    for (k, v) in emitter′.output_environment
-        @assert k ∉ emitter.environment
-        emitter.environment[k] = v
-    end
 
     push!(
         emitter.statements,
@@ -769,89 +769,94 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
         end,
     )
 
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ emitter.environment
+        emitter.environment[k] = v
+    end
+
     return nothing
 end
 
 export unrolled_loop!
+function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
+    index, loop = layout
 
-# function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
-#     index, loop = layout
-# 
-#     environment′ = copy(emitter.environment)
-#     @assert index.name ∉ environment′   # (see below for a fix)
-#     environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
-# 
-#     emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
-#     body!(emitter′)
-# 
-#     for (k, v) in emitter′.output_environment
-#         @assert k ∉ keys(emitter.environment)
-#         emitter.environment[k] = v
-#     end
-# 
-#     push!(
-#         emitter.statements,
-#         quote
-#             $(emitter′.init_statements...)
-#         end,
-#     )
-#     for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
-#         push!(
-#             emitter.statements,
-#             quote
-#                 let
-#                     $(loop.name) = $i
-#                     $(emitter′.statements...)
-#                 end
-#             end,
-#         )
-#     end
-# 
-#     return nothing
-# end
+    environment′ = copy(emitter.environment)
 
-function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},UnrolledLoop})
-    index, unrolled_loop = layout
+    @assert loop.name ∉ keys(environment′.values)
 
-    for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
-        environment′ = copy(emitter.environment)
+    # @assert index.name ∉ environment′   # (see below for a fix)
+    # environment′[index.name] = Layout{Physics,Machine}(Dict(index => loop))
 
-        # # Add loop index to all layouts
-        # for (name, layout) in environment′
-        #     layout = copy(layout)
-        #     # The loop index may already exist. In this case, remove
-        #     # it, assuming that the loop "focusses" on a particular
-        #     # index value.
-        #     if index ∈ layout
-        #         delete!(layout, index)
-        #     end
-        #     @assert index ∉ layout
-        #     layout[index] = unrolled_loop
-        #     environment′[name] = layout
-        # end
+    emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
+    body!(emitter′)
 
-        @assert unrolled_loop.name ∉ keys(environment′.values)
-        environment′.values[unrolled_loop.name] = i
-
-        emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
-
-        body!(emitter′)
-
-        @assert isempty(emitter′.init_statements)
-        @assert isempty(emitter′.output_environment)
+    push!(
+        emitter.statements,
+        quote
+            $(emitter′.init_statements...)
+        end,
+    )
+    for i in Int32(0):Int32(loop.offset):Int32(loop.offset * loop.length - 1)
         push!(
             emitter.statements,
             quote
-                let
-                    $(unrolled_loop.name) = $i
+                let $(loop.name) = $i
                     $(emitter′.statements...)
                 end
             end,
         )
     end
 
+    for (k, v) in emitter′.output_environment
+        @assert k ∉ keys(emitter.environment)
+        emitter.environment[k] = v
+    end
+
     return nothing
 end
+
+# function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},UnrolledLoop})
+#     index, unrolled_loop = layout
+# 
+#     for i in Int32(0):Int32(unrolled_loop.offset):Int32(unrolled_loop.offset * unrolled_loop.length - 1)
+#         environment′ = copy(emitter.environment)
+# 
+#         # # Add loop index to all layouts
+#         # for (name, layout) in environment′
+#         #     layout = copy(layout)
+#         #     # The loop index may already exist. In this case, remove
+#         #     # it, assuming that the loop "focusses" on a particular
+#         #     # index value.
+#         #     if index ∈ layout
+#         #         delete!(layout, index)
+#         #     end
+#         #     @assert index ∉ layout
+#         #     layout[index] = unrolled_loop
+#         #     environment′[name] = layout
+#         # end
+# 
+#         @assert unrolled_loop.name ∉ keys(environment′.values)
+#         environment′.values[unrolled_loop.name] = i
+# 
+#         emitter′ = Emitter(emitter.kernel_setup, environment′, Environment(), Code[], Code[])
+#         body!(emitter′)
+# 
+#         @assert isempty(emitter′.init_statements)
+#         push!(
+#             emitter.statements,
+#             quote
+#                 let $(unrolled_loop.name) = $i
+#                     $(emitter′.statements...)
+#                 end
+#             end,
+#         )
+# 
+#         @assert isempty(emitter′.output_environment)
+#     end
+# 
+#     return nothing
+# end
 
 ################################################################################
 
@@ -868,6 +873,26 @@ function sync_threads!(emitter::Emitter)
     push!(emitter.statements, :(IndexSpaces.cuda_sync_threads()))
     return nothing
 end
+
+cuda_threadfence_block() = nothing
+CUDA.@device_override cuda_threadfence_block() = threadfence_block()
+
+export threadfence_block!
+function threadfence_block!(emitter::Emitter)
+    push!(emitter.statements, :(IndexSpaces.cuda_threadfence_block()))
+    return nothing
+end
+
+# <https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#parallel-synchronization-and-communication-instructions-mbarrier>
+# cuda_mbarrier_init() = "mbarrier.init.shared.b64 [%r15], %r16;"
+# cuda_mbarrier_arrive() = "mbarrier.arrive.shared.b64 %rd7, [%r20];"
+# cuda_mbarrier_test_wait() = "mbarrier.test_wait.shared.b64 p, [%r20], %rd7;"
+# cuda_mbarrier_try_wait() = "mbarrier.try_wait.shared.b64 p, [%r20], %rd7;"
+# cuda_mbarrier_pending_count()
+# cuda_mbarrier_inval()
+
+# <https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#data-movement-and-conversion-instructions-cp-async>
+# cuda_cp_async
 
 ################################################################################
 
@@ -1854,6 +1879,12 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
 
     return nothing
 end
+function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:Index{Physics},Loop})
+    phys, loop = phys_loop
+    register = emitter.layout[phys]::Register
+    select!(emitter, res, var, register => loop)
+    return nothing
+end
 
 function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair{Register,UnrolledLoop})
     register, unrolled_loop = register_loop
@@ -1880,6 +1911,12 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
         push!(emitter.statements, :($res_name = $var_name))
     end
 
+    return nothing
+end
+function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:Index{Physics},UnrolledLoop})
+    phys, loop = phys_loop
+    register = emitter.layout[phys]::Register
+    select!(emitter, res, var, register => loop)
     return nothing
 end
 
@@ -2702,16 +2739,17 @@ function mma_sp_row_col_m16n8k16_f16!(
                         e6
                     elseif threadgroup == 7i32
                         e7
-                    # else
-                    #     @assert false
+                        # else
+                        #     @assert false
                     end
                     # Why are these type assertions necessary? Are they?
-                    IndexSpaces.mma_sp_m16n8k16(($A0_name, $A1_name)::NTuple{2,Float16x2}, # ok 1
-                                                ($B0_name, $B1_name)::NTuple{2,Float16x2}, # ok 1
-                                                ($C0_name, $C1_name)::NTuple{2,Float16x2}, # ok 2
-                                                e::Int2x16,
-                                                0i32, # ::Int32,
-                                                )::NTuple{2,Float16x2} # ok 1
+                    IndexSpaces.mma_sp_m16n8k16(
+                        ($A0_name, $A1_name)::NTuple{2,Float16x2}, # ok 1
+                        ($B0_name, $B1_name)::NTuple{2,Float16x2}, # ok 1
+                        ($C0_name, $C1_name)::NTuple{2,Float16x2}, # ok 2
+                        e::Int2x16,
+                        0i32, # ::Int32,
+                    )::NTuple{2,Float16x2} # ok 1
                 end
             end,
         )
