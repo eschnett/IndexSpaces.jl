@@ -1881,7 +1881,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
 end
 function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:Index{Physics},Loop})
     phys, loop = phys_loop
-    register = emitter.layout[phys]::Register
+    register = emitter.environment[phys]::Register
     select!(emitter, res, var, register => loop)
     return nothing
 end
@@ -1915,7 +1915,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
 end
 function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:Index{Physics},UnrolledLoop})
     phys, loop = phys_loop
-    register = emitter.layout[phys]::Register
+    register = emitter.enviroment[phys]::Register
     select!(emitter, res, var, register => loop)
     return nothing
 end
@@ -1962,7 +1962,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
 end
 function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{Loop,<:Index{Physics}})
     loop, phys = loop_phys
-    register = emitter.layout[phys]::Register
+    register = emitter.environment[phys]::Register
     unselect!(emitter, res, var, loop => register)
     return nothing
 end
@@ -1997,7 +1997,7 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
 end
 function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_phys::Pair{UnrolledLoop,<:Index{Physics}})
     loop, phys = loop_phys
-    register = emitter.layout[phys]::Register
+    register = emitter.environment[phys]::Register
     unselect!(emitter, res, var, loop => register)
     return nothing
 end
