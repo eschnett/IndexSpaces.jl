@@ -1915,7 +1915,7 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
 end
 function select!(emitter::Emitter, res::Symbol, var::Symbol, phys_loop::Pair{<:Index{Physics},UnrolledLoop})
     phys, loop = phys_loop
-    register = emitter.enviroment[phys]::Register
+    register = emitter.environment[phys]::Register
     select!(emitter, res, var, register => loop)
     return nothing
 end
