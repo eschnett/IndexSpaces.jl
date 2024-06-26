@@ -778,7 +778,7 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
 end
 
 export unrolled_loop!
-function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
+function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},<:Union{Loop,UnrolledLoop}})
     index, loop = layout
 
     environment′ = copy(emitter.environment)
