@@ -685,7 +685,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     else
         addr32 = :(+($(addrs32...)))
     end
-    addr32 = evaluate_partiall(addr32)
+    addr32 = evaluate_partially(addr32)
     if length(addrs64) == 0
         addr = addr32
     else
