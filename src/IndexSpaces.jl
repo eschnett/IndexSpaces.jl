@@ -1007,7 +1007,7 @@ function load!(
                 emitter.statements,
                 :(
                     ($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global(
-                        $mem_var, $(postprocess(addr)) + 1i32
+                        $mem_var, $(postprocess(addr)) + 0x1
                     )
                 ),
             )
