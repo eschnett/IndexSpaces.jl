@@ -649,7 +649,8 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     @assert !(is_shared && is_memory)
 
     # addr = 0i32
-    addrs = Code[]
+    addrs32 = Code[]
+    addrs64 = Code[]
     for (phys, mach) in mem_layout.dict
         mach isa SIMD && continue
         # Ensure that we are mapping to memory
@@ -665,19 +666,38 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         val = :(($physval ÷ $physoff) % $physlen)
 
         machoff = Int32(mach.offset)
-        # machlen = Int32(mach.length)
-        machval = :($val * $machoff)
-        # addr = :($addr + $machval)
-        push!(addrs, machval)
+        machlen = Int32(mach.length)
+        if (machlen - 1) * Int64(machoff) <= typemax(Int32)
+            # We can use 32-bit indexing
+            machval = :($val * $machoff)
+            push!(addrs32, machval)
+        else
+            # We need 64-bit indexing
+            @debug "Using 64-bit indexing: $phys, $mach"
+            machval = :($val * $(Int64(machoff)))
+            push!(addrs64, machval)
+        end
     end
-    if length(addrs) == 0
-        addr = 0i32
-    elseif length(addrs) == 1
-        addr = addrs[1]
+    if length(addrs32) == 0
+        addr32 = 0i32
+    elseif length(addrs32) == 1
+        addr32 = addrs32[1]
     else
-        addr = :(+($(addrs...)))
+        addr32 = :(+($(addrs32...)))
     end
-    return evaluate_partially(addr)::Code
+    addr32 = evaluate_partially(addr32)
+    if length(addrs64) == 0
+        addr = addr32
+    else
+        if length(addrs64) == 1
+            addr64 = addrs64[1]
+        else
+            addr64 = :(+($(addrs64...)))
+        end
+        addr64 = evaluate_partially(addr64)
+        addr = :($addr + $addr64)
+    end
+    return addr::Code
 end
 
 ################################################################################
@@ -987,7 +1007,7 @@ function load!(
                 emitter.statements,
                 :(
                     ($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global(
-                        $mem_var, $(postprocess(addr)) + 1i32
+                        $mem_var, $(postprocess(addr)) + 0x1
                     )
                 ),
             )
