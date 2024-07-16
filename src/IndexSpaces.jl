@@ -603,6 +603,30 @@ indexvalue(::State, unrolled_loop::UnrolledLoop) = :($(unrolled_loop.name)::Int3
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
+function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:Code})
+    @assert all(val isa Number ? val in Int32 : true for val in vals32)
+    if isempty(vals32)
+        val32 = 0i32
+    elseif length(vals32) == 1
+        val32 = vals32[1]
+    else
+        val32 = :(+($vals32...))
+    end
+    val32 = evaluate_partially(val32)
+    if isempty(vals64)
+        val = val32
+    else
+        if length(vals64) == 1
+            val64 = vals64[1]
+        else
+            val64 = :(+($vals64...))
+        end
+        val64 = evaluate_partially(val64)
+        val = :($val32 + $val64)
+    end
+    return val::Code
+end
+
 function physics_values(state::State, reg_layout::Layout{Physics,Machine})
     vals = Dict{IndexTag,Code}()
     for (phys, mach) in reg_layout.dict
@@ -619,16 +643,19 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         @assert !(phys isa SIMD)
         phystag = indextag(phys)
         physoff = Int32(phys.offset)
-        # physlen = Int32(phys.length)
-        physval = :($val * $physoff)
-        oldphysval = get(vals, phystag, 0i32)
-        if oldphysval isa Number
-            oldphysval::Int32
+        physlen = Int32(phys.length)
+        physvals32, physvals64 = get!(vals, phystag, (vals32=[], vals64=[]))
+        if (physlen - 1) * Int64(physoff) <= typemax(Int32)
+            # We can use 32-bit indexing
+            physval = :($val * $physoff)
+            push!(physvals32, physval)
+        else
+            # We need 64-bit indexing
+            physval = :($val * $(Int64(physoff)))
+            push!(physvals64, physval)
         end
-        physval = :($oldphysval + $physval)
-        vals[phystag] = physval
     end
-    return Dict{IndexTag,Code}(k => evaluate_partially(v) for (k, v) in vals)
+    return Dict{IndexTag,Code}(k => combine_32_64(v...) for (k, v) in vals)
 end
 
 function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Physics,Machine}, vals::Dict{IndexTag,Code})
@@ -680,25 +707,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
             push!(addrs64, machval)
         end
     end
-    if isempty(addrs32)
-        addr32 = 0i32
-    elseif length(addrs32) == 1
-        addr32 = addrs32[1]
-    else
-        addr32 = :(+($(addrs32...)))
-    end
-    addr32 = evaluate_partially(addr32)
-    if isempty(addrs64)
-        addr = addr32
-    else
-        if length(addrs64) == 1
-            addr64 = addrs64[1]
-        else
-            addr64 = :(+($(addrs64...)))
-        end
-        addr64 = evaluate_partially(addr64)
-        addr = :($addr + $addr64)
-    end
+    addr = combine_32_64(addrs32, addrs64)
     return addr::Code
 end
 
