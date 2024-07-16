@@ -1064,7 +1064,7 @@ function store!(
     mem::Pair{Symbol,Layout{Physics,Machine}},
     reg_var::Symbol;
     align::Int=4,
-    condition=nothing,
+    condition=Returns(true),
     offset::Code=0,
     postprocess=identity,
 )
@@ -1080,7 +1080,7 @@ function store!(
             stmt = quote
                 $mem_var[$(postprocess(:($addr + $offset))) + 0x1] = $reg_name
             end
-            if cond !== nothing
+            if cond !== true
                 stmt = quote
                     if $cond
                         $stmt
@@ -1124,7 +1124,7 @@ function store!(
                     $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
                 )
             end
-            if cond !== nothing
+            if cond !== true
                 stmt = quote
                     if $cond
                         $stmt
