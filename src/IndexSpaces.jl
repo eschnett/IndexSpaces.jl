@@ -603,9 +603,11 @@ indexvalue(::State, unrolled_loop::UnrolledLoop) = :($(unrolled_loop.name)::Int3
 indexvalue(::State, ::Shared) = @assert false
 indexvalue(::State, ::Memory) = @assert false
 
+typerange(::Type{T}) where {T} = typemin(T):typemax(T)
+
 function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:Code})
-    @assert all(val isa Number ? val in Int32 : true for val in vals32)
-    @assert all(val isa Number ? val in Int64 && !(val in Int32) : true for val in vals64)
+    @assert all(val isa Number ? val in typerange(Int32) : true for val in vals32)
+    @assert all(val isa Number ? val in typerange(Int64) && !(val in typerange(Int32)) : true for val in vals64)
     if isempty(vals32)
         val32 = 0i32
     elseif length(vals32) == 1
@@ -646,7 +648,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physoff = Int32(phys.offset)
         physlen = Int32(phys.length)
         physvals32, physvals64 = get!(vals, phystag, (Code[], Code[]))
-        if (physlen - 1) * Int64(physoff) in Int32
+        if (physlen - 1) * Int64(physoff) in typerange(Int32)
             # We can use 32-bit indexing
             physval = :($val * $physoff)
             push!(physvals32, physval)
@@ -697,7 +699,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
 
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
-        if (machlen - 1) * Int64(machoff) in Int32
+        if (machlen - 1) * Int64(machoff) in typerange(Int32)
             # We can use 32-bit indexing
             machval = :($val * $machoff)
             push!(addrs32, machval)
