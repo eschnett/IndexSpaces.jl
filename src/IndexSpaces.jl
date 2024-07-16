@@ -648,7 +648,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
 
     is_shared = any(mach isa Shared for (phys, mach) in mem_layout.dict)
     is_memory = any(mach isa Memory for (phys, mach) in mem_layout.dict)
-    @assert !(is_shared && is_memory)
+    @assert is_shared + is_memory == 1
 
     # addr = 0i32
     addrs32 = Code[]
@@ -680,7 +680,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
             push!(addrs64, machval)
         end
     end
-    if length(addrs32) == 0
+    if isempty(addrs32)
         addr32 = 0i32
     elseif length(addrs32) == 1
         addr32 = addrs32[1]
@@ -688,7 +688,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         addr32 = :(+($(addrs32...)))
     end
     addr32 = evaluate_partially(addr32)
-    if length(addrs64) == 0
+    if isempty(addrs64)
         addr = addr32
     else
         if length(addrs64) == 1
@@ -923,7 +923,7 @@ end
 # Memory access
 
 # Address space 1 is global, 3 is shared
-function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,1})
+function unsafe_load4(ptr::Core.LLVMPtr{Int32,1})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(1)* %0 to [4 x i32] addrspace(1)*
@@ -935,7 +935,7 @@ function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,1})
         ptr,
     )
 end
-function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,3})
+function unsafe_load4(ptr::Core.LLVMPtr{Int32,3})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(3)* %0 to [4 x i32] addrspace(3)*
@@ -947,10 +947,10 @@ function unsafe_load4_global(ptr::Core.LLVMPtr{Int32,3})
         ptr,
     )
 end
-unsafe_load4_global(arr::CuDeviceArray{Int32}, idx::Integer) = unsafe_load4_global(pointer(arr, idx))
-function unsafe_load4_global(arr::CuDeviceArray{T}, idx::Integer) where {T}
+unsafe_load4(arr::CuDeviceArray{Int32}, idx::Integer) = unsafe_load4(pointer(arr, idx))
+function unsafe_load4(arr::CuDeviceArray{T}, idx::Integer) where {T}
     @assert sizeof(T) == sizeof(Int32)
-    res = unsafe_load4_global(reinterpret(Int32, arr), idx)::NTuple{4,Int32}
+    res = unsafe_load4(reinterpret(Int32, arr), idx)::NTuple{4,Int32}
     # return ntuple(n -> reinterpret(T, res[n]), 4)::NTuple{4,T}
     return ntuple(n -> T(res[n] % UInt32), 4)::NTuple{4,T}
 end
@@ -1008,7 +1008,7 @@ function load!(
             push!(
                 emitter.statements,
                 :(
-                    ($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4_global(
+                    ($reg0_name, $reg1_name, $reg2_name, $reg3_name) = IndexSpaces.unsafe_load4(
                         $mem_var, $(postprocess(addr)) + 0x1
                     )
                 ),
@@ -1021,9 +1021,9 @@ function load!(
     return nothing
 end
 
-export unsafe_store4_global!
+export unsafe_store4!
 # Address space 1 is global, 3 is shared
-function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,1}, val::NTuple{4,Int32})
+function unsafe_store4!(ptr::Core.LLVMPtr{Int32,1}, val::NTuple{4,Int32})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(1)* %0 to [4 x i32] addrspace(1)*
@@ -1036,7 +1036,7 @@ function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,1}, val::NTuple{4,Int32})
         val,
     )
 end
-function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,3}, val::NTuple{4,Int32})
+function unsafe_store4!(ptr::Core.LLVMPtr{Int32,3}, val::NTuple{4,Int32})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(3)* %0 to [4 x i32] addrspace(3)*
@@ -1049,13 +1049,13 @@ function unsafe_store4_global!(ptr::Core.LLVMPtr{Int32,3}, val::NTuple{4,Int32})
         val,
     )
 end
-function unsafe_store4_global!(arr::CuDeviceArray{Int32}, idx::Integer, val::NTuple{4,Int32})
-    return unsafe_store4_global!(pointer(arr, idx), val)
+function unsafe_store4!(arr::CuDeviceArray{Int32}, idx::Integer, val::NTuple{4,Int32})
+    return unsafe_store4!(pointer(arr, idx), val)
 end
-function unsafe_store4_global!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{4,T}) where {T}
+function unsafe_store4!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{4,T}) where {T}
     @assert sizeof(T) == sizeof(Int32)
     val′ = ntuple(n -> val[n].val % Int32, 4)::NTuple{4,Int32}
-    return unsafe_store4_global!(reinterpret(Int32, arr), idx, val′)
+    return unsafe_store4!(reinterpret(Int32, arr), idx, val′)
 end
 
 export store!
@@ -1064,7 +1064,7 @@ function store!(
     mem::Pair{Symbol,Layout{Physics,Machine}},
     reg_var::Symbol;
     align::Int=4,
-    condition=Returns(true),
+    condition=nothing,
     offset::Code=0,
     postprocess=identity,
 )
@@ -1077,14 +1077,17 @@ function store!(
             vals = physics_values(state, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
             cond = condition(state)
-            push!(
-                emitter.statements,
-                quote
+            stmt = quote
+                $mem_var[$(postprocess(:($addr + $offset))) + 0x1] = $reg_name
+            end
+            if cond !== nothing
+                stmt = quote
                     if $cond
-                        $mem_var[$(postprocess(:($addr + $offset))) + 0x1] = $reg_name
+                        $stmt
                     end
-                end,
-            )
+                end
+            end
+            push!(emitter.statements, stmt)
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -1116,16 +1119,19 @@ function store!(
             vals = physics_values(state0, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
             cond = condition(state)
-            push!(
-                emitter.statements,
-                quote
+            stmt = quote
+                IndexSpaces.unsafe_store4!(
+                    $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
+                )
+            end
+            if cond !== nothing
+                stmt = quote
                     if $cond
-                        IndexSpaces.unsafe_store4_global!(
-                            $mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name, $reg2_name, $reg3_name)
-                        )
+                        $stmt
                     end
-                end,
-            )
+                end
+            end
+            push!(emitter.statements, stmt)
         end
     else
         @assert false
