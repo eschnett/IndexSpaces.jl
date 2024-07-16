@@ -613,7 +613,7 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
     elseif length(vals32) == 1
         val32 = vals32[1]
     else
-        val32 = :(+($vals32...))
+        val32 = :(+($(vals32...)))
     end
     val32 = evaluate_partially(val32)
     if isempty(vals64)
@@ -622,7 +622,7 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
         if length(vals64) == 1
             val64 = vals64[1]
         else
-            val64 = :(+($vals64...))
+            val64 = :(+($(vals64...)))
         end
         val64 = evaluate_partially(val64)
         val = :($val32 + $val64)
