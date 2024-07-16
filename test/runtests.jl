@@ -159,27 +159,35 @@ Random.seed!(0)
     layouts = [layout_E_memory, layout_E_shared, layout_E_registers]
     for layout in layouts
         @test layout == layout
+        @test layout ⊆ layout
         @test inv(inv(layout)) == layout
 
         layout′ = copy(layout)
         @test layout′ == layout
+        @test layout′ ⊆ layout
         mach_cplx = layout′[cplx]
         mach_dish23 = layout′[dish23]
         mach_time23 = layout′[time23]
         delete!(layout′, cplx)
         @test cplx ∉ layout′
+        @test layout′ ⊆ layout
+        @test layout ⊈ layout′
         delete!(layout′, dish23)
         @test dish23 ∉ layout′
         @test dish2 ∉ layout′
         @test dish3 ∉ layout′
         @test dish1 ∈ layout′
         @test dish4 ∈ layout′
+        @test layout′ ⊆ layout
+        @test layout ⊈ layout′
         delete!(layout′, time23)
         @test time23 ∉ layout′
         @test time2 ∉ layout′
         @test time3 ∉ layout′
         @test time1 ∈ layout′
         @test time4 ∈ layout′
+        @test layout′ ⊆ layout
+        @test layout ⊈ layout′
 
         layout′[cplx] = mach_cplx
         layout′[dish23] = mach_dish23
@@ -187,5 +195,7 @@ Random.seed!(0)
         layout1 = layout′
         layout2 = layout
         @test layout′ == layout
+        @test layout′ ⊆ layout
+        @test layout ⊆ layout′
     end
 end
