@@ -645,7 +645,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         phystag = indextag(phys)
         physoff = Int32(phys.offset)
         physlen = Int32(phys.length)
-        physvals32, physvals64 = get!(vals, phystag, ([], []))
+        physvals32, physvals64 = get!(vals, phystag, (Code[], Code[]))
         if (physlen - 1) * Int64(physoff) in Int32
             # We can use 32-bit indexing
             physval = :($val * $physoff)
