@@ -629,7 +629,7 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
 end
 
 function physics_values(state::State, reg_layout::Layout{Physics,Machine})
-    vals = Dict{IndexTag,NTuple{2,Code}}()
+    vals = Dict{IndexTag,NTuple{2,Vector{Code}}}()
     for (phys, mach) in reg_layout.dict
         mach isa SIMD && continue
         machtag = indextag(mach)
