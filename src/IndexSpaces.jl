@@ -244,12 +244,14 @@ end
 function Base.:(==)(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return layout1.dict == layout2.dict
 end
-function Base.in(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
+function Base.issubset(layout1::Layout{Typ1,Typ2}, layout2::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     for (key, val) in layout1.dict
-        (key in keys(layout2.dict) && layout2.dict[key] == val) || return false
+        (key in layout2 && layout2[key] == val) || return false
     end
     return true
 end
+# Deprecated; only for backward compatibility
+Base.in(layout1::Layout, layout2::Layout) = layout1 ⊆ layout2
 
 function Base.inv(layout::Layout{Typ1,Typ2}) where {Typ1,Typ2}
     return Layout(Dict{Index{Typ2},Index{Typ1}}(v => k for (k, v) in layout.dict))
