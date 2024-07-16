@@ -605,6 +605,7 @@ indexvalue(::State, ::Memory) = @assert false
 
 function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:Code})
     @assert all(val isa Number ? val in Int32 : true for val in vals32)
+    @assert all(val isa Number ? val in Int64 && !(val in Int32) : true for val in vals64)
     if isempty(vals32)
         val32 = 0i32
     elseif length(vals32) == 1
@@ -628,7 +629,7 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
 end
 
 function physics_values(state::State, reg_layout::Layout{Physics,Machine})
-    vals = Dict{IndexTag,Code}()
+    vals = Dict{IndexTag,NTuple{2,Code}}()
     for (phys, mach) in reg_layout.dict
         mach isa SIMD && continue
         machtag = indextag(mach)
@@ -644,8 +645,8 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         phystag = indextag(phys)
         physoff = Int32(phys.offset)
         physlen = Int32(phys.length)
-        physvals32, physvals64 = get!(vals, phystag, (vals32=[], vals64=[]))
-        if (physlen - 1) * Int64(physoff) <= typemax(Int32)
+        physvals32, physvals64 = get!(vals, phystag, ([], []))
+        if (physlen - 1) * Int64(physoff) in Int32
             # We can use 32-bit indexing
             physval = :($val * $physoff)
             push!(physvals32, physval)
@@ -655,7 +656,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
             push!(physvals64, physval)
         end
     end
-    return Dict{IndexTag,Code}(k => combine_32_64(v...) for (k, v) in vals)
+    return Dict{IndexTag,Code}(k => combine_32_64(vals32, vals64) for (k, (vals32, vals64)) in vals)
 end
 
 function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Physics,Machine}, vals::Dict{IndexTag,Code})
@@ -696,7 +697,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
 
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
-        if (machlen - 1) * Int64(machoff) <= typemax(Int32)
+        if (machlen - 1) * Int64(machoff) in Int32
             # We can use 32-bit indexing
             machval = :($val * $machoff)
             push!(addrs32, machval)
