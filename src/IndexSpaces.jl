@@ -678,16 +678,17 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
 
     is_shared = any(mach isa Shared for (phys, mach) in mem_layout.dict)
     is_memory = any(mach isa Memory for (phys, mach) in mem_layout.dict)
-    @assert is_shared + is_memory == 1
+    # If the memory region is very small (4 bytes long) then there are
+    # neither Shared nor Memory references
+    @assert is_shared + is_memory <= 1
 
     # addr = 0i32
     addrs32 = Code[]
     addrs64 = Code[]
     for (phys, mach) in mem_layout.dict
-        mach isa SIMD && continue
-        # Ensure that we are mapping to memory
-        is_shared && mach::Union{Block,Shared,Loop,UnrolledLoop}
-        is_memory && mach::Memory
+        # Ensure that we are mapping to the right kind of memory
+        mach isa Memory && @assert is_shared
+        mach isa Union{Block,Shared,Loop,UnrolledLoop} && @assert is_memory
         # Only memory addresses contribute
         !(mach isa Union{Shared,Memory}) && continue
 
