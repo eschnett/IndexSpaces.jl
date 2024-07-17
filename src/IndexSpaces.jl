@@ -687,8 +687,8 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
     addrs64 = Code[]
     for (phys, mach) in mem_layout.dict
         # Ensure that we are mapping to the right kind of memory
-        mach isa Memory && @assert is_shared
-        mach isa Union{Block,Shared,Loop,UnrolledLoop} && @assert is_memory
+        mach isa Union{Block,Shared,Loop,UnrolledLoop} && @assert is_shared
+        mach isa Memory && @assert is_memory
         # Only memory addresses contribute
         !(mach isa Union{Shared,Memory}) && continue
 
