@@ -1415,19 +1415,6 @@ function int4x8_to_2int8x4_unshifted_withoffset(a::Int4x8)
     return (Int8x4(a_lo), Int8x4(a_hi))::NTuple{2,Int8x4}
 end
 
-# Convert `Int4x8` to `NTuple{2,Int8x4}`, but swap the high and low nibbles and remove the offset encoding.
-function int4x8_to_2int8x4_swapped_withoffset(a::Int4x8)
-    a1 = a.val                         # a + 8, implicit in the offset encoding
-    a2_lo = a1 & 0x0f0f0f0f            # extract low part
-    a3_lo = a2_lo + 0x78787878         # a + 128
-    a4_lo = a3_lo ⊻ 0x80808080         # a
-    a2_hi = (a1 >>> 0x04) & 0x0f0f0f0f # extract high part
-    a3_hi = a2_hi + 0x78787878         # a + 128
-    a4_hi = a3_hi ⊻ 0x80808080         # a
-    a5_lo, a5_hi = a4_hi, a4_lo        # Swap low and high parts
-    return (Int8x4(a5_lo), Int8x4(a5_hi))::NTuple{2,Int8x4}
-end
-
 export widen!
 function widen!(
     emitter::Emitter,
@@ -1486,10 +1473,10 @@ function widen!(
         if indextag(var_value) == indextag(res_value) == IntValueTag
             if var_value.length == 4 && res_value.length == 8
                 @assert !(swapped_withoffset && unshifted_withoffset)
-                if swapped_withoffset
-                    stmt = :(($(res_names...),) = IndexSpaces.int4x8_to_2int8x4_swapped_withoffset($var_name))
-                elseif unshifted_withoffset
+                if unshifted_withoffset
                     stmt = :(($(res_names...),) = IndexSpaces.int4x8_to_2int8x4_unshifted_withoffset($var_name))
+                elseif swapped_withoffset
+                    stmt = :(($(res_names...),) = convert_swapped_withoffset(NTuple{2,Int8x4}, $var_name))
                 else
                     stmt = :(($(res_names...),) = convert(NTuple{2,Int8x4}, $var_name))
                 end
@@ -1526,6 +1513,7 @@ function widen2!(
     simd_register1::Pair{SIMD,Register},
     simd_register2::Pair{SIMD,Register};
     newtype::Union{Nothing,Type}=nothing,
+    swapped_withoffset::Bool=false,
     unshifted_withoffset::Bool=false,
 )
     simd1, register1 = simd_register1
@@ -1584,6 +1572,7 @@ function widen2!(
         end
         if indextag(var_value) == indextag(res_value) == IntValueTag
             if var_value.length == 4 && res_value.length == 16
+                @assert !swapped_withoffset
                 stmt = :(($(res_names...),) = convert(NTuple{4,Int16x2}, $var_name))
             elseif var_value.length == 8 && res_value.length == 32
                 stmt = :(($(res_names...),) = convert(NTuple{4,Int32}, $var_name))
@@ -1592,7 +1581,11 @@ function widen2!(
             end
         elseif indextag(var_value) == IntValueTag && indextag(res_value) == FloatValueTag
             if var_value.length == 4 && res_value.length == 16
-                stmt = :(($(res_names...),) = convert(NTuple{4,Float16x2}, $var_name))
+                if swapped_withoffset
+                    stmt = :(($(res_names...),) = convert_swapped_withoffset(NTuple{4,Float16x2}, $var_name))
+                else
+                    stmt = :(($(res_names...),) = convert(NTuple{4,Float16x2}, $var_name))
+                end
             elseif var_value.length == 8 && res_value.length == 32
                 stmt = :(($(res_names...),) = convert(NTuple{4,Float32}, $var_name))
             else
