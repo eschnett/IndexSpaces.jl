@@ -1038,14 +1038,7 @@ function load!(
             reg1_name = register_name(reg_var, state1)
             vals = physics_values(state0, reg_layout)
             addr = memory_index(reg_layout, mem_layout, vals)
-            push!(
-                emitter.statements,
-                :(
-                    ($reg0_name, $reg1_name) = IndexSpaces.unsafe_load2(
-                        $mem_var, $(postprocess(addr)) + 0x1
-                    )
-                ),
-            )
+            push!(emitter.statements, :(($reg0_name, $reg1_name) = IndexSpaces.unsafe_load2($mem_var, $(postprocess(addr)) + 0x1)))
         end
     elseif align == 16
         # Find registers with strides 1 and 2
@@ -1671,6 +1664,7 @@ function narrow2!(
     register_simd1::Pair{Register,SIMD},
     register_simd2::Pair{Register,SIMD};
     newtype::Union{Nothing,Type}=nothing,
+    swapped_withoffset::Bool=false,
 )
     register1, simd1 = register_simd1
     register2, simd2 = register_simd2
@@ -1751,7 +1745,14 @@ function narrow2!(
         var1_name = register_name(var, state1)
         var2_name = register_name(var, state2)
         var3_name = register_name(var, state3)
-        push!(emitter.statements, :($res_name = Int4x8(($var0_name, $var1_name, $var2_name, $var3_name))))
+        if swapped_withoffset
+            push!(
+                emitter.statements,
+                :($res_name = convert_swapped_withoffset(Int4x8, ($var0_name, $var1_name, $var2_name, $var3_name))),
+            )
+        else
+            push!(emitter.statements, :($res_name = convert(Int4x8, ($var0_name, $var1_name, $var2_name, $var3_name))))
+        end
     end
 
     return nothing
