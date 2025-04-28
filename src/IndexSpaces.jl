@@ -1865,7 +1865,7 @@ function narrow3!(
                     $res_name = Int4x8(
                         $var1_name, $var0_name, $var3_name, $var2_name, $var5_name, $var4_name, $var7_name, $var6_name
                     )
-                    $res_name ⊻= 0x88888888
+                    $res_name ⊻= Int4x8(0x88888888)
                 end,
             )
         else
