@@ -1398,7 +1398,7 @@ function widen!(
     res::Symbol,
     var::Symbol,
     simd_register::Pair{SIMD,Register};
-    newtype::Union{Nothing,Type}=nothing;
+    newtype::Union{Nothing,Type}=nothing,
     swapped_withoffset::Bool=false,
     unshifted_withoffset::Bool=false,
 )
