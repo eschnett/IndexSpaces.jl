@@ -1749,7 +1749,8 @@ function narrow3!(
     var::Symbol,
     register_simd1::Pair{Register,SIMD},
     register_simd2::Pair{Register,SIMD},
-    register_simd3::Pair{Register,SIMD},
+    register_simd3::Pair{Register,SIMD};
+    swapped_withoffset::Bool=false,
 )
     register1, simd1 = register_simd1
     register2, simd2 = register_simd2
@@ -1857,10 +1858,26 @@ function narrow3!(
         var5_name = register_name(var, state5)
         var6_name = register_name(var, state6)
         var7_name = register_name(var, state7)
-        push!(
-            emitter.statements,
-            :($res_name = Int4x8($var0_name, $var1_name, $var2_name, $var3_name, $var4_name, $var5_name, $var6_name, $var7_name)),
-        )
+        if swapped_withoffset
+            push!(
+                emitter.statements,
+                quote
+                    $res_name = Int4x8(
+                        $var1_name, $var0_name, $var3_name, $var2_name, $var5_name, $var4_name, $var7_name, $var6_name
+                    )
+                    $res_name ⊻= 0x88888888
+                end,
+            )
+        else
+            push!(
+                emitter.statements,
+                :(
+                    $res_name = Int4x8(
+                        $var0_name, $var1_name, $var2_name, $var3_name, $var4_name, $var5_name, $var6_name, $var7_name
+                    )
+                ),
+            )
+        end
     end
 
     return nothing
