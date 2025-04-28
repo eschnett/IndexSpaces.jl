@@ -1489,7 +1489,7 @@ function widen2!(
     var::Symbol,
     simd_register1::Pair{SIMD,Register},
     simd_register2::Pair{SIMD,Register};
-    newtype::Union{Nothing,Type}=nothing;
+    newtype::Union{Nothing,Type}=nothing,
     swapped_withoffset::Bool=false,
     unshifted_withoffset::Bool=false,
 )
