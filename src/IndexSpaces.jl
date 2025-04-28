@@ -737,15 +737,12 @@ function block!(body!, emitter::Emitter)
         emitter.environment[k] = v
     end
 
-    push!(
-        emitter.statements,
-        quote
-            $(emitter′.init_statements...)
-            let
-                $(emitter′.statements...)
-            end
-        end,
-    )
+    push!(emitter.statements, quote
+        $(emitter′.init_statements...)
+        let
+            $(emitter′.statements...)
+        end
+    end)
 
     return nothing
 end
@@ -762,15 +759,12 @@ function if!(body!, emitter::Emitter, cond::Code)
         emitter.environment[k] = v
     end
 
-    push!(
-        emitter.statements,
-        quote
-            $(emitter′.init_statements...)
-            if $(cond)
-                $(emitter′.statements...)
-            end
-        end,
-    )
+    push!(emitter.statements, quote
+        $(emitter′.init_statements...)
+        if $(cond)
+            $(emitter′.statements...)
+        end
+    end)
 
     return nothing
 end
@@ -795,13 +789,12 @@ function loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},Loop})
     body!(emitter′)
 
     push!(
-        emitter.statements,
-        quote
+        emitter.statements, quote
             $(emitter′.init_statements...)
             for $(loop.name) in ($(Int32(0))):($(Int32(loop.offset))):($(Int32(loop.offset * loop.length - 1)))
                 $(emitter′.statements...)
             end
-        end,
+        end
     )
 
     for (k, v) in emitter′.output_environment
@@ -879,14 +872,11 @@ function unrolled_loop!(body!, emitter::Emitter, layout::Pair{<:Index{Physics},U
         body!(emitter′)
 
         @assert isempty(emitter′.init_statements)
-        push!(
-            emitter.statements,
-            quote
-                let $(unrolled_loop.name) = $i
-                    $(emitter′.statements...)
-                end
-            end,
-        )
+        push!(emitter.statements, quote
+            let $(unrolled_loop.name) = $i
+                $(emitter′.statements...)
+            end
+        end)
 
         # We ignore the output environment since it might differ between iterations
         # @assert isempty(emitter′.output_environment)
@@ -1241,12 +1231,9 @@ function Base.broadcast!(emitter::Emitter, res::Symbol, var::Symbol, register_th
             state0 = copy(state)
             state0.dict[register.name] = get(state0.dict, register.name, Int32(0)) + Int32(i * register.offset)
             res0_name = register_name(res, state0)
-            push!(
-                emitter.statements,
-                quote
-                    $res0_name = IndexSpaces.cuda_shfl_sync(0xffffffff, $var_name, $i)
-                end,
-            )
+            push!(emitter.statements, quote
+                $res0_name = IndexSpaces.cuda_shfl_sync(0xffffffff, $var_name, $i)
+            end)
         end
         nothing
     end
@@ -1370,12 +1357,9 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
 
     thread_mask = 1u32 << thread_bit
 
-    push!(
-        emitter.statements,
-        quote
-            is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0x0
-        end,
-    )
+    push!(emitter.statements, quote
+        is_lo_thread = IndexSpaces.cuda_threadidx() & $thread_mask == 0x0
+    end)
     loop_over_registers(emitter, tmp_layout) do state
         state0 = copy(state)
         state1 = copy(state)
@@ -1414,7 +1398,7 @@ function widen!(
     res::Symbol,
     var::Symbol,
     simd_register::Pair{SIMD,Register};
-    newtype::Union{Nothing,Type}=nothing,
+    newtype::Union{Nothing,Type}=nothing;
     swapped_withoffset::Bool=false,
     unshifted_withoffset::Bool=false,
 )
@@ -1505,7 +1489,7 @@ function widen2!(
     var::Symbol,
     simd_register1::Pair{SIMD,Register},
     simd_register2::Pair{SIMD,Register};
-    newtype::Union{Nothing,Type}=nothing,
+    newtype::Union{Nothing,Type}=nothing;
     swapped_withoffset::Bool=false,
     unshifted_withoffset::Bool=false,
 )
@@ -1978,14 +1962,11 @@ function select!(emitter::Emitter, res::Symbol, var::Symbol, register_loop::Pair
             if i == 0
                 push!(emitter.statements, :($res_name = zero($value_type)))
             end
-            push!(
-                emitter.statements,
-                quote
-                    if $(loop.name) == $(Int32(i))
-                        $res_name = $var_name
-                    end
-                end,
-            )
+            push!(emitter.statements, quote
+                if $(loop.name) == $(Int32(i))
+                    $res_name = $var_name
+                end
+            end)
         end
     end
 
@@ -2059,14 +2040,11 @@ function unselect!(emitter::Emitter, res::Symbol, var::Symbol, loop_register::Pa
             end
             res_name = register_name(res, state′)
             push!(emitter.init_statements, :($res_name = zero($value_type)))
-            push!(
-                emitter.statements,
-                quote
-                    if $(loop.name) == $(Int32(i))
-                        $res_name = $var_name
-                    end
-                end,
-            )
+            push!(emitter.statements, quote
+                if $(loop.name) == $(Int32(i))
+                    $res_name = $var_name
+                end
+            end)
         end
     end
 
