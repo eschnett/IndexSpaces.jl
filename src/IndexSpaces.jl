@@ -433,7 +433,7 @@ struct KernelSetup
     shmem_bytes::Int
 end
 
-const Code = Union{Expr,Number,Symbol}
+const Code = Union{Expr,Number,Symbol,Int4x2,Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}
 
 # Remove line numbers. Line numbers are usually wrong because they
 # point to this file, instead of the file where the code originates.
