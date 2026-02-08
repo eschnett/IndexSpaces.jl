@@ -433,7 +433,7 @@ struct KernelSetup
     shmem_bytes::Int
 end
 
-const Code = Union{Expr,Number,Symbol,Int4x2,Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}
+const Code = Union{Expr,Number,Symbol,Int2x4,Int4x2,Int2x16,Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}
 
 # Remove line numbers. Line numbers are usually wrong because they
 # point to this file, instead of the file where the code originates.
@@ -1198,7 +1198,7 @@ end
 
 # Layout rearrangements
 
-function CUDA.shfl_sync(threadmask::UInt32, val::T, thread::UInt32) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
+function CUDA.shfl_sync(threadmask::UInt32, val::T, thread::UInt32) where {T<:Union{Int2x16,Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
     return T(shfl_sync(threadmask, val.val, thread))
 end
 
@@ -1263,6 +1263,8 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, index1::Index
     return nothing
 end
 
+get_lo2(r0::Int2x16, r1::Int2x16) = Int2x16(bitifelse(0x33333333, r0.val << 0x0, r1.val << 0x2))
+get_hi2(r0::Int2x16, r1::Int2x16) = Int2x16(bitifelse(0xcccccccc, r0.val >> 0x2, r1.val >> 0x0))
 get_lo4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val << 0x0, r1.val << 0x4))
 get_hi4(r0::Int4x8, r1::Int4x8) = Int4x8(bitifelse(0x0f0f0f0f, r0.val >> 0x4, r1.val >> 0x0))
 get_lo8(r0::T, r1::T) where {T<:Union{Int4x8,Int8x4}} = T(prmt(r0.val, r1.val, 0x6240))
@@ -1323,7 +1325,7 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
     return nothing
 end
 
-function CUDA.shfl_xor_sync(threadmask::UInt32, val::T, mask::UInt32) where {T<:Union{Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
+function CUDA.shfl_xor_sync(threadmask::UInt32, val::T, mask::UInt32) where {T<:Union{Int2x16,Int4x8,Int8x4,Int16x2,Float16x2,BFloat16x2}}
     return T(shfl_xor_sync(threadmask, val.val, mask))
 end
 
@@ -1621,7 +1623,9 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
         res_name = register_name(res, state)
         var0_name = register_name(var, state0)
         var1_name = register_name(var, state1)
-        if value_tag == IntValueTag && simd_bit == 2
+        if value_tag == IntValueTag && simd_bit == 1
+            stmt = :($res_name = Int2x16(($var0_name, $var1_name)))
+        elseif value_tag == IntValueTag && simd_bit == 2
             stmt = :($res_name = Int4x8(($var0_name, $var1_name)))
         elseif value_tag == IntValueTag && simd_bit == 3
             stmt = :($res_name = Int8x4(($var0_name, $var1_name)))
