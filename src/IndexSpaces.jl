@@ -48,13 +48,13 @@ end
 mul(x::Integer) = x
 mul(x::Integer, y::Integer, zs::Integer...) = mul(mul(x, y), zs...)
 
-function idiv(x::Integer, y::Integer)
+@inline function idiv(x::Integer, y::Integer)
     r = x ÷ y
     DEBUG && @assert Int64(r) == Int64(x) ÷ Int64(y)
     return r
 end
 
-function imod(x::Integer, y::Integer)
+@inline function imod(x::Integer, y::Integer)
     r = x % y
     DEBUG && @assert Int64(r) == Int64(x) % Int64(y)
     return r
