@@ -1,17 +1,20 @@
 module IndexSpaces
 
+using BFloat16s
 using CUDA
 using CUDASIMDTypes
 
 ################################################################################
 
-@inline unreachable() = Core.Intrinsics.llvmcall("unreachable;", Nothing, Tuple{})
-# @inline unreachable() = @assert false
-# @inline unreachable() = nothing
+const DEBUG = Base.JLOptions().opt_level == 0
 
 ################################################################################
 
-export i8, i16, i32, i64, u8, u16, u32, u64, f16, f32, f64
+@inline unreachable() = @static DEBUG ? (@assert false) : Core.Intrinsics.llvmcall("unreachable;", Nothing, Tuple{})
+
+################################################################################
+
+export i8, i16, i32, i64, u8, u16, u32, u64, f16, f32, f64, bf16
 struct IntLiteral{I<:Integer} <: Integer end
 Base.convert(::Type{I}, ::IntLiteral{J}) where {I<:Integer,J<:Integer} = convert(I, J(1))
 Base.promote_rule(::Type{<:Integer}, ::Type{IntLiteral{I}}) where {I<:Integer} = I
@@ -29,6 +32,7 @@ const u64 = IntLiteral{UInt64}()
 const f16 = FloatLiteral{Float16}()
 const f32 = FloatLiteral{Float32}()
 const f64 = FloatLiteral{Float64}()
+const bf16 = FloatLiteral{BFloat16}()
 
 ################################################################################
 
@@ -466,11 +470,19 @@ function evaluate_partially(expr::Expr)
     if head ≡ :call && length(args) == 3
         # Evaluate an expression
         if args[2] isa Number && args[3] isa Number
-            args[1] ≡ :+ && return args[2] + args[3]
-            args[1] ≡ :- && return args[2] - args[3]
-            args[1] ≡ :* && return args[2] * args[3]
-            args[1] ≡ :÷ && return args[2] ÷ args[3]
-            args[1] ≡ :% && return args[2] % args[3]
+            @static if DEBUG
+                args[1] ≡ :+ && return Base.checked_add(args[2], args[3])
+                args[1] ≡ :- && return Base.checked_sub(args[2], args[3])
+                args[1] ≡ :* && return Base.checked_mul(args[2], args[3])
+                args[1] ≡ :÷ && return Base.checked_div(args[2], args[3])
+                args[1] ≡ :% && return Base.checked_mod(args[2], args[3])
+            else
+                args[1] ≡ :+ && return args[2] + args[3]
+                args[1] ≡ :- && return args[2] - args[3]
+                args[1] ≡ :* && return args[2] * args[3]
+                args[1] ≡ :÷ && return args[2] ÷ args[3]
+                args[1] ≡ :% && return args[2] % args[3]
+            end
             args[1] ≡ :& && return args[2] & args[3]
             args[1] ≡ :| && return args[2] | args[3]
             args[1] ≡ :⊻ && return args[2] ⊻ args[3]
@@ -613,7 +625,11 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
     elseif length(vals32) == 1
         val32 = vals32[1]
     else
-        val32 = :(+($(vals32...)))
+        @static if DEBUG
+            val32 = :(Base.checked_add($(vals32...)))
+        else
+            val32 = :(+($(vals32...)))
+        end
     end
     val32 = evaluate_partially(val32)
     if isempty(vals64)
@@ -622,10 +638,18 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
         if length(vals64) == 1
             val64 = vals64[1]
         else
-            val64 = :(+($(vals64...)))
+            @static if DEBUG
+                val64 = :(Base.checked_add($(vals64...)))
+            else
+                val64 = :(+($(vals64...)))
+            end
         end
         val64 = evaluate_partially(val64)
-        val = :($val32 + $val64)
+        @static if DEBUG
+            val = :(Base.checked_add($val32, $val64))
+        else
+            val = :($val32 + $val64)
+        end
     end
     return val::Code
 end
@@ -641,7 +665,11 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         if machval isa Number
             machval::Int32
         end
-        val = :(($machval ÷ $machoff) % $machlen)
+        @static if DEBUG
+            val = :(Base.checked_mod(Base.checked_div($machval, $machoff), $machlen))
+        else
+            val = :(($machval ÷ $machoff) % $machlen)
+        end
 
         @assert !(phys isa SIMD)
         phystag = indextag(phys)
@@ -650,11 +678,19 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         physvals32, physvals64 = get!(vals, phystag, (Code[], Code[]))
         if (physlen - 1) * Int64(physoff) in typerange(Int32)
             # We can use 32-bit indexing
-            physval = :($val * $physoff)
+            @static if DEBUG
+                physval = :(Base.checked_mul($val, $physoff))
+            else
+                physval = :($val * $physoff)
+            end
             push!(physvals32, physval)
         else
             # We need 64-bit indexing
-            physval = :($val * $(Int64(physoff)))
+            @static if DEBUG
+                physval = :(Base.checked_mul($val, $(Int64(physoff))))
+            else
+                physval = :($val * $(Int64(physoff)))
+            end
             push!(physvals64, physval)
         end
     end
@@ -696,18 +732,30 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         physoff = Int32(phys.offset)
         physlen = Int32(phys.length)
         physval = vals[phystag]
-        val = :(($physval ÷ $physoff) % $physlen)
+        @static if DEBUG
+            val = :(Base.checked_mod(Base.checked_div($physval, $physoff), $physlen))
+        else
+            val = :(($physval ÷ $physoff) % $physlen)
+        end
 
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
         if (machlen - 1) * Int64(machoff) in typerange(Int32)
             # We can use 32-bit indexing
-            machval = :($val * $machoff)
+            @static if DEBUG
+                machval = :(Base.checked_mul($val, $machoff))
+            else
+                machval = :($val * $machoff)
+            end
             push!(addrs32, machval)
         else
             # We need 64-bit indexing
             @debug "Using 64-bit indexing: $phys, $mach"
-            machval = :($val * $(Int64(machoff)))
+            @static if DEBUG
+                machval = :(Base.checked_mul($val, $(Int64(machoff))))
+            else
+                machval = :($val * $(Int64(machoff)))
+            end
             push!(addrs64, machval)
         end
     end
@@ -1297,7 +1345,10 @@ function Base.permute!(emitter::Emitter, res::Symbol, var::Symbol, register::Reg
 
     emitter.environment[res] = res_layout
 
-    if simd_bit == 2
+    if simd_bit == 1
+        get_lo = :(IndexSpaces.get_lo2)
+        get_hi = :(IndexSpaces.get_hi2)
+    elseif simd_bit == 2
         get_lo = :(IndexSpaces.get_lo4)
         get_hi = :(IndexSpaces.get_hi4)
     elseif simd_bit == 3
