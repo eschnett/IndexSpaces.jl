@@ -39,8 +39,6 @@ function sub(x::Integer, y::Integer)
     DEBUG && @assert Int64(r) == Int64(x) - Int64(y)
     return r
 end
-sub(x::Integer) = x
-sub(x::Integer, y::Integer, zs::Integer...) = sub(sub(x, y), zs...)
 
 function mul(x::Integer, y::Integer)
     r = x * y
@@ -50,21 +48,17 @@ end
 mul(x::Integer) = x
 mul(x::Integer, y::Integer, zs::Integer...) = mul(mul(x, y), zs...)
 
-function div(x::Integer, y::Integer)
+function idiv(x::Integer, y::Integer)
     r = x ÷ y
     DEBUG && @assert Int64(r) == Int64(x) ÷ Int64(y)
     return r
 end
-div(x::Integer) = x
-div(x::Integer, y::Integer, zs::Integer...) = div(div(x, y), zs...)
 
-function mod(x::Integer, y::Integer)
+function imod(x::Integer, y::Integer)
     r = x % y
     DEBUG && @assert Int64(r) == Int64(x) % Int64(y)
     return r
 end
-mod(x::Integer) = x
-mod(x::Integer, y::Integer, zs::Integer...) = mod(mod(x, y), zs...)
 
 ################################################################################
 
@@ -527,8 +521,8 @@ function evaluate_partially(expr::Expr)
             args[1] ≡ :+ && return IndexSpaces.add(args[2], args[3])
             args[1] ≡ :- && return IndexSpaces.sub(args[2], args[3])
             args[1] ≡ :* && return IndexSpaces.mul(args[2], args[3])
-            args[1] ≡ :÷ && return IndexSpaces.div(args[2], args[3])
-            args[1] ≡ :% && return IndexSpaces.mod(args[2], args[3])
+            args[1] ≡ :÷ && return IndexSpaces.idiv(args[2], args[3])
+            args[1] ≡ :% && return IndexSpaces.imod(args[2], args[3])
             args[1] ≡ :& && return args[2] & args[3]
             args[1] ≡ :| && return args[2] | args[3]
             args[1] ≡ :⊻ && return args[2] ⊻ args[3]
@@ -699,7 +693,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         if machval isa Number
             machval::Int32
         end
-        val = :(IndexSpaces.mod(IndexSpaces.div($machval, $machoff), $machlen))
+        val = :(IndexSpaces.imod(IndexSpaces.idiv($machval, $machoff), $machlen))
 
         @assert !(phys isa SIMD)
         phystag = indextag(phys)
@@ -754,7 +748,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         physoff = Int32(phys.offset)
         physlen = Int32(phys.length)
         physval = vals[phystag]
-        val = :(IndexSpaces.mod(IndexSpaces.div($physval, $physoff), $physlen))
+        val = :(IndexSpaces.imod(IndexSpaces.idiv($physval, $physoff), $physlen))
 
         machoff = Int32(mach.offset)
         machlen = Int32(mach.length)
