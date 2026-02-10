@@ -14,6 +14,60 @@ const DEBUG = Base.JLOptions().opt_level == 0
 
 ################################################################################
 
+function checked_pos(x::Integer)
+    r = +x
+    @assert Int64(r) == +Int64(x)
+    return r
+end
+
+function checked_neg(x::Integer)
+    r = -x
+    @assert Int64(r) == -Int64(x)
+    return r
+end
+
+function checked_add(x::Integer, y::Integer)
+    r = x + y
+    @assert Int64(r) == Int64(x) + Int64(y)
+    return r
+end
+checked_add(x::Integer) = x
+checked_add(x::Integer, y::Integer, zs::Integer...) = checked_add(checked_add(x, y), zs...)
+
+function checked_sub(x::Integer, y::Integer)
+    r = x - y
+    @assert Int64(r) == Int64(x) - Int64(y)
+    return r
+end
+checked_sub(x::Integer) = x
+checked_sub(x::Integer, y::Integer, zs::Integer...) = checked_sub(checked_sub(x, y), zs...)
+
+function checked_mul(x::Integer, y::Integer)
+    r = x * y
+    @assert Int64(r) == Int64(x) * Int64(y)
+    return r
+end
+checked_mul(x::Integer) = x
+checked_mul(x::Integer, y::Integer, zs::Integer...) = checked_mul(checked_mul(x, y), zs...)
+
+function checked_div(x::Integer, y::Integer)
+    r = x ÷ y
+    @assert Int64(r) == Int64(x) ÷ Int64(y)
+    return r
+end
+checked_div(x::Integer) = x
+checked_div(x::Integer, y::Integer, zs::Integer...) = checked_div(checked_div(x, y), zs...)
+
+function checked_mod(x::Integer, y::Integer)
+    r = x % y
+    @assert Int64(r) == Int64(x) % Int64(y)
+    return r
+end
+checked_mod(x::Integer) = x
+checked_mod(x::Integer, y::Integer, zs::Integer...) = checked_mod(checked_mod(x, y), zs...)
+
+################################################################################
+
 export i8, i16, i32, i64, u8, u16, u32, u64, f16, f32, f64, bf16
 struct IntLiteral{I<:Integer} <: Integer end
 Base.convert(::Type{I}, ::IntLiteral{J}) where {I<:Integer,J<:Integer} = convert(I, J(1))
@@ -471,11 +525,11 @@ function evaluate_partially(expr::Expr)
         # Evaluate an expression
         if args[2] isa Number && args[3] isa Number
             @static if DEBUG
-                args[1] ≡ :+ && return Base.checked_add(args[2], args[3])
-                args[1] ≡ :- && return Base.checked_sub(args[2], args[3])
-                args[1] ≡ :* && return Base.checked_mul(args[2], args[3])
-                args[1] ≡ :÷ && return Base.checked_div(args[2], args[3])
-                args[1] ≡ :% && return Base.checked_mod(args[2], args[3])
+                args[1] ≡ :+ && return checked_add(args[2], args[3])
+                args[1] ≡ :- && return checked_sub(args[2], args[3])
+                args[1] ≡ :* && return checked_mul(args[2], args[3])
+                args[1] ≡ :÷ && return checked_div(args[2], args[3])
+                args[1] ≡ :% && return checked_mod(args[2], args[3])
             else
                 args[1] ≡ :+ && return args[2] + args[3]
                 args[1] ≡ :- && return args[2] - args[3]
@@ -626,7 +680,7 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
         val32 = vals32[1]
     else
         @static if DEBUG
-            val32 = :(Base.checked_add($(vals32...)))
+            val32 = :(checked_add($(vals32...)))
         else
             val32 = :(+($(vals32...)))
         end
@@ -639,14 +693,14 @@ function combine_32_64(vals32::AbstractVector{<:Code}, vals64::AbstractVector{<:
             val64 = vals64[1]
         else
             @static if DEBUG
-                val64 = :(Base.checked_add($(vals64...)))
+                val64 = :(checked_add($(vals64...)))
             else
                 val64 = :(+($(vals64...)))
             end
         end
         val64 = evaluate_partially(val64)
         @static if DEBUG
-            val = :(Base.checked_add($val32, $val64))
+            val = :(checked_add($val32, $val64))
         else
             val = :($val32 + $val64)
         end
@@ -666,7 +720,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
             machval::Int32
         end
         @static if DEBUG
-            val = :(Base.checked_mod(Base.checked_div($machval, $machoff), $machlen))
+            val = :(checked_mod(checked_div($machval, $machoff), $machlen))
         else
             val = :(($machval ÷ $machoff) % $machlen)
         end
@@ -679,7 +733,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         if (physlen - 1) * Int64(physoff) in typerange(Int32)
             # We can use 32-bit indexing
             @static if DEBUG
-                physval = :(Base.checked_mul($val, $physoff))
+                physval = :(checked_mul($val, $physoff))
             else
                 physval = :($val * $physoff)
             end
@@ -687,7 +741,7 @@ function physics_values(state::State, reg_layout::Layout{Physics,Machine})
         else
             # We need 64-bit indexing
             @static if DEBUG
-                physval = :(Base.checked_mul($val, $(Int64(physoff))))
+                physval = :(checked_mul($val, $(Int64(physoff))))
             else
                 physval = :($val * $(Int64(physoff)))
             end
@@ -733,7 +787,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         physlen = Int32(phys.length)
         physval = vals[phystag]
         @static if DEBUG
-            val = :(Base.checked_mod(Base.checked_div($physval, $physoff), $physlen))
+            val = :(checked_mod(checked_div($physval, $physoff), $physlen))
         else
             val = :(($physval ÷ $physoff) % $physlen)
         end
@@ -743,7 +797,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
         if (machlen - 1) * Int64(machoff) in typerange(Int32)
             # We can use 32-bit indexing
             @static if DEBUG
-                machval = :(Base.checked_mul($val, $machoff))
+                machval = :(checked_mul($val, $machoff))
             else
                 machval = :($val * $machoff)
             end
@@ -752,7 +806,7 @@ function memory_index(reg_layout::Layout{Physics,Machine}, mem_layout::Layout{Ph
             # We need 64-bit indexing
             @debug "Using 64-bit indexing: $phys, $mach"
             @static if DEBUG
-                machval = :(Base.checked_mul($val, $(Int64(machoff))))
+                machval = :(checked_mul($val, $(Int64(machoff))))
             else
                 machval = :($val * $(Int64(machoff)))
             end
