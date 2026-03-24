@@ -14,39 +14,39 @@ const DEBUG = Base.JLOptions().opt_level == 0
 
 ################################################################################
 
-function pos(x::Integer)
+@inline function pos(x::Integer)
     r = +x
     DEBUG && @assert Int64(r) == +Int64(x)
     return r
 end
 
-function neg(x::Integer)
+@inline function neg(x::Integer)
     r = -x
     DEBUG && @assert Int64(r) == -Int64(x)
     return r
 end
 
-function add(x::Integer, y::Integer)
+@inline function add(x::Integer, y::Integer)
     r = x + y
     DEBUG && @assert Int64(r) == Int64(x) + Int64(y)
     return r
 end
-add(x::Integer) = x
-add(x::Integer, y::Integer, zs::Integer...) = add(add(x, y), zs...)
+@inline add(x::Integer) = x
+@inline add(x::Integer, y::Integer, zs::Integer...) = add(add(x, y), zs...)
 
-function sub(x::Integer, y::Integer)
+@inline function sub(x::Integer, y::Integer)
     r = x - y
     DEBUG && @assert Int64(r) == Int64(x) - Int64(y)
     return r
 end
 
-function mul(x::Integer, y::Integer)
+@inline function mul(x::Integer, y::Integer)
     r = x * y
     DEBUG && @assert Int64(r) == Int64(x) * Int64(y)
     return r
 end
-mul(x::Integer) = x
-mul(x::Integer, y::Integer, zs::Integer...) = mul(mul(x, y), zs...)
+@inline mul(x::Integer) = x
+@inline mul(x::Integer, y::Integer, zs::Integer...) = mul(mul(x, y), zs...)
 
 @inline function idiv(x::Integer, y::Integer)
     r = x ÷ y
