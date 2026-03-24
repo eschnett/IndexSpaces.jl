@@ -1,6 +1,6 @@
 name = "IndexSpaces"
 uuid = "3ceaaf38-e7b4-4193-a23a-303dd231a83a"
-version = "1.10.0"
+version = "1.10.1"
 authors = ["Erik Schnetter <schnetter@gmail.com>"]
 
 [deps]
