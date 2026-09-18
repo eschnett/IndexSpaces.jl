@@ -1,3 +1,3 @@
 var documenterSearchIndex = {"docs":
-[{"location":"#IndexSpaces.jl","page":"IndexSpaces.jl","title":"IndexSpaces.jl","text":"","category":"section"}]
+[{"category":"section","location":"#IndexSpaces.jl","page":"IndexSpaces.jl","text":"","title":"IndexSpaces.jl"}]
 }
