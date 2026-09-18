@@ -1637,10 +1637,13 @@ function widen2!(
 end
 
 export narrow!
-function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair{Register,SIMD})
+function narrow!(
+    emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair{Register,SIMD}; newtype::Union{Nothing,Type}=nothing
+)
     register, simd = register_simd
 
     var_layout = emitter.environment[var]
+    var_value = get_value_index(var_layout)::Index{Physics}
 
     # res may or may not already exist
     # @assert res ∉ emitter.environment
@@ -1660,7 +1663,21 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
     inv_res_layout = inv(res_layout)
     value = inv_res_layout[SIMD(:simd, 1, 2)]
     value_tag = indextag(value)::ValueTag
-    delete!(res_layout, Index{Physics,value_tag}(value.name, simd.offset, simd.length))
+    if newtype ≡ nothing
+        delete!(res_layout, Index{Physics,value_tag}(value.name, simd.offset, simd.length))
+    else
+        # Changing the value type: remove the old value index entirely (not just
+        # the narrowed-away part), then insert the new, narrower value index.
+        @assert newtype <: Index{Physics}
+        @assert Index{Physics,value_tag}(value.name, simd.offset, simd.length) ∈ res_layout
+        delete!(res_layout, var_value)
+        res_tag = indextag(newtype)
+        res_value_name = get(
+            Dict(IntValue => :intvalue, FloatValue => :floatvalue, BFloatValue => :bfloatvalue), newtype, var_value.name
+        )
+        res_value = Index{Physics,res_tag}(res_value_name, var_value.offset, var_value.length ÷ simd.length)
+        res_layout[res_value] = SIMD(:simd, var_value.offset, var_value.length ÷ simd.length)
+    end
     res_layout[register_phys] = simd
 
     emitter.environment[res] = res_layout
@@ -1686,6 +1703,8 @@ function narrow!(emitter::Emitter, res::Symbol, var::Symbol, register_simd::Pair
             stmt = :($res_name = Int8x4(($var0_name, $var1_name)))
         elseif value_tag == IntValueTag && simd_bit == 4
             stmt = :($res_name = Int16x2(($var0_name, $var1_name)))
+        elseif value_tag == FloatValueTag && simd_bit == 3 && newtype ≡ IntValue
+            stmt = :($res_name = Int8x4(($var0_name, $var1_name)))
         elseif value_tag == FloatValueTag && simd_bit == 4
             stmt = :($res_name = Float16x2(($var0_name, $var1_name)))
         elseif value_tag == BFloatValueTag && simd_bit == 4
