@@ -249,6 +249,12 @@ sync_threads!(emitter::Emitter)
 Emit `IndexSpaces.cuda_sync_threads()` which maps to `CUDA.sync_threads()` (`__syncthreads()`).
 
 ```julia
+sync_warp!(emitter::Emitter, mask::Integer=0xffffffff)
+```
+
+Emit `IndexSpaces.cuda_sync_warp(mask)` which maps to `CUDA.sync_warp(mask)` (`__syncwarp(mask)`), a warp-level barrier. `mask` selects the participating lanes and defaults to the full warp.
+
+```julia
 threadfence_block!(emitter::Emitter)
 ```
 

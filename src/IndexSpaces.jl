@@ -953,6 +953,15 @@ function sync_threads!(emitter::Emitter)
     return nothing
 end
 
+cuda_sync_warp(mask::UInt32=0xffffffff) = nothing
+CUDA.@device_override cuda_sync_warp(mask::UInt32=0xffffffff) = sync_warp(mask)
+
+export sync_warp!
+function sync_warp!(emitter::Emitter, mask::Integer=0xffffffff)
+    push!(emitter.statements, :(IndexSpaces.cuda_sync_warp($(UInt32(mask)))))
+    return nothing
+end
+
 cuda_threadfence_block() = nothing
 CUDA.@device_override cuda_threadfence_block() = threadfence_block()
 

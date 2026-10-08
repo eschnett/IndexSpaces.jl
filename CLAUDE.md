@@ -86,8 +86,8 @@ julia --optimize=3 --project=@. --threads=$(nproc) kernels/bb.jl
 - `Emitter(KernelSetup(...))` holds an `Environment` (variable name → layout)
   and accumulates statements. Operations mutate the environment and push AST:
   control flow (`block!`, `if!`, `loop!`, `unrolled_loop!`, `trap!`),
-  synchronization (`sync_threads!`, `threadfence_block!`), memory (`load!`,
-  `store!`, `unsafe_store4!`), rearrangement (`widen!`, `widen2!`, `narrow!`,
+  synchronization (`sync_threads!`, `sync_warp!`, `threadfence_block!`),
+  memory (`load!`, `store!`, `unsafe_store4!`), rearrangement (`widen!`, `widen2!`, `narrow!`,
   `narrow2!`, `narrow3!`, `split!`, `select!`, `unselect!`), compute (`apply!`),
   and tensor cores (`mma_row_col_m8n8k16_s8!`, `mma_row_col_m16n8k8_f16!`,
   `mma_row_col_m16n8k16_f16!`, `mma_sp_row_col_m16n8k16_f16!`). The result is
