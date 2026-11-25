@@ -110,7 +110,7 @@ assert on precise index/offset patterns.
 - Emitter operations assert aggressively on layouts. A failed `@assert` about a
   layout usually means the caller's index mapping is wrong, not that the
   operation is buggy.
-- CI (`.github/workflows/CI.yml`) runs on Julia 1.10–1.12 across Linux/macOS/
+- CI (`.github/workflows/CI.yml`) runs on Julia 1.10, 1.12, 1.13 and 1.14 (pre-release) across Linux/macOS/
   Windows without a GPU; keep the non-CUDA parts of the package loadable and
   testable on CPU-only machines.
 - The `julia` installed via juliaup reportedly does not work for profiling with
