@@ -272,8 +272,11 @@ Generate code to load data from memory into registers. The `reg` pair gives the 
 
 **`align`** controls vectorization:
 - `align=4` — scalar load (`arr[idx+1]`)
-- `align=8` — load 2 values via `unsafe_load2` (2 × Int32)
+- `align=8` — load 2 values via `unsafe_load2` (2 × Int32, 8-byte aligned)
 - `align=16` — load 4 values via `unsafe_load4` (4 × Int32, 16-byte aligned)
+
+The vector variants work for global (`Memory`) and shared (`Shared`) memory layouts. The physics
+index at address stride 1 (and 2 for `align=16`) must have length 2 and be mapped to a `Register`.
 
 **`postprocess`** — a function `addr -> expr` applied to the computed address before indexing. Used for modulo addressing (ring buffers) and offset handling.
 
@@ -290,11 +293,13 @@ Generate code to store register values to memory. Same `align` semantics as `loa
 **`offset`** — constant address offset added to the computed address.
 
 ```julia
+unsafe_store2!(ptr::Core.LLVMPtr{Int32, AS}, val::NTuple{2,Int32})
+unsafe_store2!(arr::CuDeviceArray, idx::Integer, val::NTuple{2,T})
 unsafe_store4!(ptr::Core.LLVMPtr{Int32, AS}, val::NTuple{4,Int32})
 unsafe_store4!(arr::CuDeviceArray, idx::Integer, val::NTuple{4,T})
 ```
 
-Low-level 16-byte aligned store via inline LLVM IR. Writes 4 consecutive `Int32` values. The array variant reinterprets sub-32-bit types.
+Low-level 8- or 16-byte aligned stores via inline LLVM IR. Write 2 or 4 consecutive `Int32` values. The array variants reinterpret sub-32-bit types.
 
 ### Data Rearrangement
 
@@ -466,4 +471,4 @@ IndexSpaces.unsafe_load2(arr, idx) -> NTuple{2, T}
 IndexSpaces.unsafe_load4(arr, idx) -> NTuple{4, T}
 ```
 
-16-byte aligned vector loads using inline LLVM IR. Load 2 or 4 consecutive values of type `T` (where `sizeof(T) == sizeof(Int32)`). `unsafe_load2` loads 8 bytes, `unsafe_load4` loads 16 bytes.
+Aligned vector loads using inline LLVM IR. Load 2 or 4 consecutive values of type `T` (where `sizeof(T) == sizeof(Int32)`). `unsafe_load2` loads 8 bytes (8-byte aligned), `unsafe_load4` loads 16 bytes (16-byte aligned).

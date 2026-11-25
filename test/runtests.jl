@@ -199,3 +199,28 @@ Random.seed!(0)
         @test layout ⊆ layout′
     end
 end
+
+@testset "Vector memory access" begin
+    cplx = Cplx(:cplx, 1, 2)
+    beam = Beam(:beam, 1, 8)
+    int32value = IntValue(:intvalue, 1, 32)
+
+    layout_shared = Layout([int32value => SIMD(:simd, 1, 32), cplx => Shared(:shared, 1, 2), beam => Shared(:shared, 2, 8)])
+    layout_memory = Layout([int32value => SIMD(:simd, 1, 32), cplx => Memory(:memory, 1, 2), beam => Memory(:memory, 2, 8)])
+    layout_registers = Layout([int32value => SIMD(:simd, 1, 32), cplx => Register(:cplx, 1, 2), beam => Thread(:thread, 1, 8)])
+
+    @test IndexSpaces.memory_stride_index(layout_shared, 1) == cplx
+    @test IndexSpaces.memory_stride_index(layout_memory, 1) == cplx
+    @test IndexSpaces.memory_stride_index(layout_shared, 2) == Beam(:beam, 1, 2)
+    @test_throws ErrorException IndexSpaces.memory_stride_index(layout_registers, 1)
+
+    for (mem_var, mem_layout) in [(:x_shared, layout_shared), (:x_memory, layout_memory)]
+        emitter = Emitter(KernelSetup(32, 1, 1, 1, 0))
+        apply!(emitter, :x => layout_registers, Int32(0))
+        store!(emitter, mem_var => mem_layout, :x; align=8)
+        load!(emitter, :y => layout_registers, mem_var => mem_layout; align=8)
+        code = string(emitter.statements)
+        @test count("unsafe_store2!", code) == 1
+        @test count("unsafe_load2", code) == 1
+    end
+end
