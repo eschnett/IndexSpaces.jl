@@ -991,7 +991,7 @@ function unsafe_load2(ptr::Core.LLVMPtr{Int32,1})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(1)* %0 to [2 x i32] addrspace(1)*
-           %val = load [2 x i32], [2 x i32] addrspace(1)* %ptr, align 16
+           %val = load [2 x i32], [2 x i32] addrspace(1)* %ptr, align 8
            ret [2 x i32] %val
         """,
         NTuple{2,Int32},
@@ -1003,7 +1003,7 @@ function unsafe_load2(ptr::Core.LLVMPtr{Int32,3})
     return Base.llvmcall(
         """
            %ptr = bitcast i8 addrspace(3)* %0 to [2 x i32] addrspace(3)*
-           %val = load [2 x i32], [2 x i32] addrspace(3)* %ptr, align 16
+           %val = load [2 x i32], [2 x i32] addrspace(3)* %ptr, align 8
            ret [2 x i32] %val
         """,
         NTuple{2,Int32},
@@ -1052,6 +1052,15 @@ function unsafe_load4(arr::CuDeviceArray{T}, idx::Integer) where {T}
     return ntuple(n -> T(res[n] % UInt32), 4)::NTuple{4,T}
 end
 
+# The physics index that a global or shared memory layout maps to the address stride `stride`
+function memory_stride_index(mem_layout::Layout{Physics,Machine}, stride::Integer)
+    inv_layout = inv(mem_layout)
+    for mach in (Memory(:memory, stride, 2), Shared(:shared, stride, 2))
+        mach ∈ inv_layout && return inv_layout[mach]
+    end
+    error("Memory layout has no global or shared memory index with stride $stride: $mem_layout")
+end
+
 export load!
 function load!(
     emitter::Emitter,
@@ -1075,8 +1084,7 @@ function load!(
         end
     elseif align == 8
         # Find registers with stride 1
-        # TODO: Better error message if not accessing global memory
-        phys0 = inv(mem_layout)[Memory(:memory, 1, 2)]
+        phys0 = memory_stride_index(mem_layout, 1)
         register0 = reg_layout[phys0]::Register
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
@@ -1093,10 +1101,9 @@ function load!(
         end
     elseif align == 16
         # Find registers with strides 1 and 2
-        # TODO: Better error message if not accessing global memory
-        phys0 = inv(mem_layout)[Memory(:memory, 1, 2)]
+        phys0 = memory_stride_index(mem_layout, 1)
         register0 = reg_layout[phys0]::Register
-        phys1 = inv(mem_layout)[Memory(:memory, 2, 2)]
+        phys1 = memory_stride_index(mem_layout, 2)
         register1 = reg_layout[phys1]::Register
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
@@ -1134,6 +1141,43 @@ function load!(
     end
 
     return nothing
+end
+
+export unsafe_store2!
+# Address space 1 is global, 3 is shared
+function unsafe_store2!(ptr::Core.LLVMPtr{Int32,1}, val::NTuple{2,Int32})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(1)* %0 to [2 x i32] addrspace(1)*
+           store [2 x i32] %1, [2 x i32] addrspace(1)* %ptr, align 8
+           ret void
+        """,
+        Nothing,
+        Tuple{Core.LLVMPtr{Int32,1},NTuple{2,Int32}},
+        ptr,
+        val,
+    )
+end
+function unsafe_store2!(ptr::Core.LLVMPtr{Int32,3}, val::NTuple{2,Int32})
+    return Base.llvmcall(
+        """
+           %ptr = bitcast i8 addrspace(3)* %0 to [2 x i32] addrspace(3)*
+           store [2 x i32] %1, [2 x i32] addrspace(3)* %ptr, align 8
+           ret void
+        """,
+        Nothing,
+        Tuple{Core.LLVMPtr{Int32,3},NTuple{2,Int32}},
+        ptr,
+        val,
+    )
+end
+function unsafe_store2!(arr::CuDeviceArray{Int32}, idx::Integer, val::NTuple{2,Int32})
+    return unsafe_store2!(pointer(arr, idx), val)
+end
+function unsafe_store2!(arr::CuDeviceArray{T}, idx::Integer, val::NTuple{2,T}) where {T}
+    @assert sizeof(T) == sizeof(Int32)
+    val′ = ntuple(n -> val[n].val % Int32, 2)::NTuple{2,Int32}
+    return unsafe_store2!(reinterpret(Int32, arr), idx, val′)
 end
 
 export unsafe_store4!
@@ -1204,12 +1248,39 @@ function store!(
             end
             push!(emitter.statements, stmt)
         end
+    elseif align == 8
+        # Find registers with stride 1
+        phys0 = memory_stride_index(mem_layout, 1)
+        register0 = reg_layout[phys0]::Register
+        tmp_layout = copy(reg_layout)
+        delete!(tmp_layout, phys0)
+        loop_over_registers(emitter, tmp_layout) do state
+            state0 = copy(state)
+            state1 = copy(state)
+            state0.dict[register0.name] = get(state0.dict, register0.name, Int32(0)) + Int32(0 * register0.offset)
+            state1.dict[register0.name] = get(state1.dict, register0.name, Int32(0)) + Int32(1 * register0.offset)
+            reg0_name = register_name(reg_var, state0)
+            reg1_name = register_name(reg_var, state1)
+            vals = physics_values(state0, reg_layout)
+            addr = memory_index(reg_layout, mem_layout, vals)
+            cond = condition(state)
+            stmt = quote
+                IndexSpaces.unsafe_store2!($mem_var, $(postprocess(:($addr + $offset))) + 0x1, ($reg0_name, $reg1_name))
+            end
+            if cond !== true
+                stmt = quote
+                    if $cond
+                        $stmt
+                    end
+                end
+            end
+            push!(emitter.statements, stmt)
+        end
     elseif align == 16
         # Find registers with strides 1 and 2
-        # TODO: Better error message if not accessing global memory
-        phys0 = inv(mem_layout)[Memory(:memory, 1, 2)]
+        phys0 = memory_stride_index(mem_layout, 1)
         register0 = reg_layout[phys0]::Register
-        phys1 = inv(mem_layout)[Memory(:memory, 2, 2)]
+        phys1 = memory_stride_index(mem_layout, 2)
         register1 = reg_layout[phys1]::Register
         tmp_layout = copy(reg_layout)
         delete!(tmp_layout, phys0)
